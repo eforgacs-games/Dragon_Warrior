@@ -3036,6 +3036,7 @@ msgstr "找到龍王城裏隱藏的下行通道。"
 msgid "Search behind the Dragonlord's throne."
 msgstr "調查龍王王座的後面。"
 
+#: src/achievements.py
 #: src/quest_journal.py
 msgid "Defeat the Dragonlord."
 msgstr "打倒龍王。"
@@ -3452,6 +3453,7 @@ msgstr "女子"
 msgid "WISE MAN"
 msgstr "賢者"
 
+#: src/achievements.py
 #: src/message_log.py
 msgid "DRAGONLORD"
 msgstr "龍王"
@@ -3648,3 +3650,180 @@ msgstr "亂數"
 #: src/options_overlay.py
 msgid "SEEDED"
 msgstr "固定種子"
+
+#: src/achievements.py
+#: src/options_overlay.py
+msgid "ACHIEVEMENTS"
+msgstr "成就"
+
+#: src/controls_screen.py
+msgid "TROPHIES"
+msgstr "成就"
+
+#: src/achievements.py
+msgid "ACHIEVEMENT"
+msgstr "達成成就"
+
+#: src/achievements.py
+msgid "UNLOCKED"
+msgstr "已達成"
+
+#: src/achievements.py
+msgid "FIRST VICTORY"
+msgstr "初次勝利"
+
+#: src/achievements.py
+msgid "Win a fight."
+msgstr "贏得一場戰鬥。"
+
+#: src/achievements.py
+msgid "STONE GUARDIAN"
+msgstr "石之守衛"
+
+#: src/achievements.py
+msgid "Defeat the Golem."
+msgstr "打倒巨像兵。"
+
+#: src/achievements.py
+msgid "DRAGON'S LAIR"
+msgstr "龍之洞窟"
+
+#: src/achievements.py
+msgid "Defeat the Green Dragon."
+msgstr "打倒守護公主的龍。"
+
+#: src/achievements.py
+msgid "HOMECOMING"
+msgstr "凱旋"
+
+#: src/achievements.py
+msgid "Bring Princess Gwaelin home."
+msgstr "將蘿拉公主帶回城堡。"
+
+#: src/achievements.py
+msgid "CURSED"
+msgstr "詛咒"
+
+#: src/achievements.py
+msgid "Find the Death Necklace."
+msgstr "找到死之項鏈。"
+
+#: src/achievements.py
+msgid "RAINBOW BRIDGE"
+msgstr "彩虹橋"
+
+#: src/achievements.py
+msgid "Make the Rainbow Bridge."
+msgstr "架起彩虹橋。"
+
+#: src/achievements.py
+msgid "ERDRICK'S HEIR"
+msgstr "洛特的後裔"
+
+#: src/achievements.py
+msgid "Wear Erdrick's Armor and wield Erdrick's Sword."
+msgstr "穿上洛特之鎧，手持洛特之劍。"
+
+#: src/achievements.py
+msgid "UNDYING"
+msgstr "不死之身"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord without dying."
+msgstr "一次都不死地打倒龍王。"
+
+#: src/achievements.py
+msgid "UNDERDOG"
+msgstr "以下剋上"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord at level 20 or lower."
+msgstr "在20級以下打倒龍王。"
+
+#: src/achievements.py
+msgid "SWIFT"
+msgstr "疾風"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord in under two hours of play."
+msgstr "在遊戲時間2小時內打倒龍王。"
+
+#: src/achievements.py
+msgid "MONSTER HUNTER"
+msgstr "魔物獵人"
+
+#: src/achievements.py
+msgid "Defeat every kind of monster."
+msgstr "打倒所有種類的魔物。"
+
+#: src/achievements.py
+msgid "QUICKSILVER"
+msgstr "水銀"
+
+#: src/achievements.py
+msgid "Defeat a Metal Slime."
+msgstr "打倒金屬史萊姆。"
+
+#: src/achievements.py
+msgid "LEVEL 10"
+msgstr "10級"
+
+#: src/achievements.py
+msgid "Reach level 10."
+msgstr "達到10級。"
+
+#: src/achievements.py
+msgid "LEVEL 20"
+msgstr "20級"
+
+#: src/achievements.py
+msgid "Reach level 20."
+msgstr "達到20級。"
+
+#: src/achievements.py
+msgid "LEVEL 30"
+msgstr "30級"
+
+#: src/achievements.py
+msgid "Reach the highest level."
+msgstr "達到最高等級。"
+
+#: src/achievements.py
+msgid "CENTURION"
+msgstr "百戰老兵"
+
+#: src/achievements.py
+msgid "Win 100 fights."
+msgstr "贏得100場戰鬥。"
+
+#: src/achievements.py
+msgid "DISCRETION"
+msgstr "三十六計"
+
+#: src/achievements.py
+msgid "Run away from 50 fights."
+msgstr "從戰鬥中逃跑50次。"
+
+#: src/achievements.py
+msgid "WANDERER"
+msgstr "流浪者"
+
+#: src/achievements.py
+msgid "Take 10000 steps."
+msgstr "走10000步。"
+
+#: src/achievements.py
+msgid "RICHES"
+msgstr "大富翁"
+
+#: src/achievements.py
+msgid "Carry 65535 gold."
+msgstr "持有65535金幣。"
+
+#: src/achievements.py
+msgid "THOU ART DEAD"
+msgstr "你死了"
+
+#: src/achievements.py
+msgid "Die for the first time."
+msgstr "第一次死亡。"

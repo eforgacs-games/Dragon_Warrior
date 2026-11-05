@@ -121,6 +121,8 @@ ACTIONS: tuple[Action, ...] = (
     _extra('MESSAGE_LOG', "MSG LOG", ('l',), 'x'),
     # P: the stats page (src/stats_screen.py), on the map
     _extra('PLAY_STATS', "STATS", ('p',)),
+    # T: the achievements page (src/achievements.py), on the map
+    _extra('TROPHIES', "TROPHIES", ('t',)),
     # The next game speed, back to 1x after 16x
     _extra('NEXT_SPEED', "NEXT SPEED", (), 'righttrigger'),
 )

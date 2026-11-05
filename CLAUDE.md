@@ -76,6 +76,7 @@ The main `Game` class in `src/game.py` orchestrates:
 - `story_flags.py`: story progress (`StoryFlags`), saved with the game
 - `save_state.py`: full snapshots of the game on the map (not an NES feature)
 - `random_streams.py`: every roll's generator: the NES's own random number (RANDOMNESS NES, the default: NES UpdateRandNum, stepped every frame and every roll), or the hero's and the world's streams (SEEDED, which `--seed` and multiplayer lock it on)
+- `game_events.py`, `play_stats.py`, `achievements.py`: the event bus, the play statistics counted from its events, and the achievements (kept globally, next to the settings) checked on every event
 - `window_renderer.py`: draws NES windows tile by tile
 - `npc_movement.py`: where roaming NPCs may step
 - `checkpoints.py`: named playtest checkpoints in `data/checkpoints/`

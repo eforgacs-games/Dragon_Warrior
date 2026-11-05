@@ -113,6 +113,7 @@ base_config = {
     # STATS PAGE (not NES when on): the STATS key (P) shows the adventure's play statistics on the map
     # (src/stats_screen.py); they're counted either way (src/play_stats.py)
     "STATS_PAGE": False,
+    "ACHIEVEMENTS": False,  # src/achievements.py
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on

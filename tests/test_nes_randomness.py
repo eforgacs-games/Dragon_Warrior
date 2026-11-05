@@ -248,20 +248,26 @@ class TestTheRow(OverlayTestCase):
                    if getattr(row, 'config_key', None) == 'RANDOMNESS')
         return page, (K_PAGEDOWN,) * page + (K_DOWN,) * (FIXED_ROWS + row)
 
+    def randomness_texts(self, page):
+        """The RANDOMNESS row's label and value on the page."""
+        texts = page_texts(self.config, page)
+        label = texts.index("RANDOMNESS")
+        return texts[label:label + 2]
+
     def test_it_switches_between_nes_and_seeded(self):
         page, keys = self.go_to_randomness()
         self.config['RANDOMNESS'] = RANDOMNESS_NES
-        self.assertIn("NES", page_texts(self.config, page)[-1:])
+        self.assertEqual(["RANDOMNESS", "NES"], self.randomness_texts(page))
         self.run_overlay(*keys, K_RIGHT, K_u)
         self.assertEqual(RANDOMNESS_SEEDED, self.config['RANDOMNESS'])
-        self.assertEqual(["RANDOMNESS", "SEEDED"], page_texts(self.config, page)[-2:])
+        self.assertEqual(["RANDOMNESS", "SEEDED"], self.randomness_texts(page))
 
     def test_a_locked_row_shows_seeded_and_does_not_change(self):
         page, keys = self.go_to_randomness()
         self.config['RANDOMNESS'] = RANDOMNESS_NES
         self.config['SEED'] = 1985
         self.addCleanup(self.config.update, SEED=None)
-        self.assertEqual(["RANDOMNESS", "SEEDED"], page_texts(self.config, page)[-2:])
+        self.assertEqual(["RANDOMNESS", "SEEDED"], self.randomness_texts(page))
         sounds = self.run_overlay(*keys, K_RIGHT, K_u)
         self.assertEqual(RANDOMNESS_NES, self.config['RANDOMNESS'])  # kept for when nothing locks it
         self.assertEqual(page, sounds)  # the page turns' sounds, none for the locked row

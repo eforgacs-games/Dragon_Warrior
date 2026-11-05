@@ -109,6 +109,7 @@ them bound.
 | H | Show the controls |
 | Q | The quest journal: the goals you've learned of (QUEST JOURNAL option) |
 | L | The message log: the last 50 messages, to read a hint again (MESSAGE LOG option) |
+| T | The achievements: which you've unlocked, and when (ACHIEVEMENTS option) |
 | M | The dungeon map, on a dark floor: the blocks you've seen there (DUNGEON MAP option) |
 | 1 to 5 | Game speed: 1x, 2x, 4x, 8x or 16x (GAME SPEED option) |
 | Shift+F1 / F2 / F3 | Save state 1, 2 or 3 (SAVE STATES option) |
@@ -280,6 +281,7 @@ With one of these OFF, its key does nothing, as on the NES.
 | AUTO-HEAL | What auto-grind does at the GRIND STOP HP: OFF (NES): stops; ON: heals with all the MP; KEEP 1 HEAL: heals but keeps the MP for one HEAL | OFF | OFF | KEEP 1 HEAL |
 | AUTO-INN | When auto-grind can't go on (HP low with no heal, or no MP left for one): OFF (NES): it stops; ON: it goes to the nearest inn it can pay for and back | OFF | OFF | ON |
 | RANDOMNESS | NES: every roll comes from the NES's own random number, which moves on every frame as well as every roll, so when you press a button changes what happens, as on the NES; SEEDED: the hero's rolls and the world's (the townspeople's wandering) come from two separate generators, so the same play with the same `--seed` gets the same rolls. A seed keeps it on SEEDED (grayed out) | NES | NES | NES |
+| ACHIEVEMENTS | OFF (NES), or ON: achievements unlock as you play (story milestones, every monster, a low-level or deathless Dragonlord, and more), with a banner at the top of the map, and T lists them. They're kept for whoever plays on this computer, across every adventure log, in `achievements.json` next to the settings. Nothing unlocks while a cheat is on (CHEATS, `--dev`) | OFF | OFF | ON |
 
 
 ## Languages

@@ -225,7 +225,8 @@ class TestRows(OverlayTestCase):
                                      ("STATS PAGE", 'STATS_PAGE', ("OFF (NES)", "ON")),
                                      ("AUTO-HEAL", 'AUTO_HEAL', ("OFF (NES)", "ON", "KEEP 1 HEAL")),
                                      ("AUTO-INN", 'AUTO_INN', ("OFF (NES)", "ON")),
-                                     ("RANDOMNESS", 'RANDOMNESS', ("NES", "SEEDED"))])],
+                                     ("RANDOMNESS", 'RANDOMNESS', ("NES", "SEEDED")),
+                                     ("ACHIEVEMENTS", 'ACHIEVEMENTS', ("OFF (NES)", "ON"))])],
                          [(page.title, [(row.label, getattr(row, 'config_key', None), row.value_labels)
                                         for row in page.rows])
                           for page in OPTION_PAGES])
@@ -269,7 +270,8 @@ class TestRows(OverlayTestCase):
                           "CHEATS", "ON", "DUNGEON MAP", "OFF (NES)", "MESSAGE LOG", "OFF (NES)", "CONTROLS"],
                          page_texts(self.config, 2))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "4/4", "CONFIRM NAME", "OFF (NES)", "STATS PAGE", "OFF (NES)",
-                          "AUTO-HEAL", "OFF (NES)", "AUTO-INN", "OFF (NES)", "RANDOMNESS", "NES"],
+                          "AUTO-HEAL", "OFF (NES)", "AUTO-INN", "OFF (NES)", "RANDOMNESS", "NES",
+                          "ACHIEVEMENTS", "OFF (NES)"],
                          page_texts(self.config, 3))
 
     def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):
@@ -449,7 +451,8 @@ class TestPreset(OverlayTestCase):
                           'QUEST_JOURNAL': JOURNAL_OFF, 'AUTOSAVE': False, 'BAG_SIZE': 8,
                           'VIEW': 'NES', 'DUNGEON_MAP': False, 'SMART_A': False,
                           'MESSAGE_LOG': False, 'NAME_CONFIRM': False, 'STATS_PAGE': False, 'AUTO_HEAL': 'Off',
-                          'AUTO_INN': False, 'RANDOMNESS': 'NES'},
+                          'AUTO_INN': False, 'RANDOMNESS': 'NES',
+                          'ACHIEVEMENTS': False},
                          preset_values(PRESET_NES))
         # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'SOUNDTRACK': 'Orchestra',
@@ -460,7 +463,8 @@ class TestPreset(OverlayTestCase):
                           'QUEST_JOURNAL': JOURNAL_HINTS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
                           'VIEW': 'NES', 'DUNGEON_MAP': True, 'SMART_A': True,
                           'MESSAGE_LOG': False, 'NAME_CONFIRM': True, 'STATS_PAGE': True, 'AUTO_HEAL': 'KeepOneHeal',
-                          'AUTO_INN': True, 'RANDOMNESS': 'NES'},
+                          'AUTO_INN': True, 'RANDOMNESS': 'NES',
+                          'ACHIEVEMENTS': True},
                          preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them
         self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])

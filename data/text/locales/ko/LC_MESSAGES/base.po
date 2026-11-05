@@ -2839,6 +2839,7 @@ msgstr "용왕의 성에서 숨겨진 아래로 가는 길을 찾자."
 msgid "Search behind the Dragonlord's throne."
 msgstr "용왕의 옥좌 뒤를 조사하자."
 
+#: src/achievements.py
 #: src/quest_journal.py
 msgid "Defeat the Dragonlord."
 msgstr "용왕을 물리치자."
@@ -3249,6 +3250,7 @@ msgstr "여자"
 msgid "WISE MAN"
 msgstr "현자"
 
+#: src/achievements.py
 #: src/message_log.py
 msgid "DRAGONLORD"
 msgstr "용왕"
@@ -3445,3 +3447,180 @@ msgstr "난수"
 #: src/options_overlay.py
 msgid "SEEDED"
 msgstr "시드 고정"
+
+#: src/achievements.py
+#: src/options_overlay.py
+msgid "ACHIEVEMENTS"
+msgstr "업적"
+
+#: src/controls_screen.py
+msgid "TROPHIES"
+msgstr "업적"
+
+#: src/achievements.py
+msgid "ACHIEVEMENT"
+msgstr "업적 달성"
+
+#: src/achievements.py
+msgid "UNLOCKED"
+msgstr "달성"
+
+#: src/achievements.py
+msgid "FIRST VICTORY"
+msgstr "첫 승리"
+
+#: src/achievements.py
+msgid "Win a fight."
+msgstr "싸움에서 이긴다."
+
+#: src/achievements.py
+msgid "STONE GUARDIAN"
+msgstr "돌의 파수꾼"
+
+#: src/achievements.py
+msgid "Defeat the Golem."
+msgstr "골렘을 물리친다."
+
+#: src/achievements.py
+msgid "DRAGON'S LAIR"
+msgstr "드래곤의 동굴"
+
+#: src/achievements.py
+msgid "Defeat the Green Dragon."
+msgstr "공주를 지키는 드래곤을 물리친다."
+
+#: src/achievements.py
+msgid "HOMECOMING"
+msgstr "귀환"
+
+#: src/achievements.py
+msgid "Bring Princess Gwaelin home."
+msgstr "로라 공주를 성으로 모셔 온다."
+
+#: src/achievements.py
+msgid "CURSED"
+msgstr "저주"
+
+#: src/achievements.py
+msgid "Find the Death Necklace."
+msgstr "죽음의 목걸이를 찾는다."
+
+#: src/achievements.py
+msgid "RAINBOW BRIDGE"
+msgstr "무지개 다리"
+
+#: src/achievements.py
+msgid "Make the Rainbow Bridge."
+msgstr "무지개 다리를 놓는다."
+
+#: src/achievements.py
+msgid "ERDRICK'S HEIR"
+msgstr "로토의 후예"
+
+#: src/achievements.py
+msgid "Wear Erdrick's Armor and wield Erdrick's Sword."
+msgstr "로토의 갑옷을 입고 로토의 검을 든다."
+
+#: src/achievements.py
+msgid "UNDYING"
+msgstr "불사신"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord without dying."
+msgstr "한 번도 죽지 않고 용왕을 물리친다."
+
+#: src/achievements.py
+msgid "UNDERDOG"
+msgstr "약자의 반란"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord at level 20 or lower."
+msgstr "레벨 20 이하로 용왕을 물리친다."
+
+#: src/achievements.py
+msgid "SWIFT"
+msgstr "질풍"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord in under two hours of play."
+msgstr "플레이 시간 2시간 안에 용왕을 물리친다."
+
+#: src/achievements.py
+msgid "MONSTER HUNTER"
+msgstr "마물 사냥꾼"
+
+#: src/achievements.py
+msgid "Defeat every kind of monster."
+msgstr "모든 종류의 마물을 물리친다."
+
+#: src/achievements.py
+msgid "QUICKSILVER"
+msgstr "수은"
+
+#: src/achievements.py
+msgid "Defeat a Metal Slime."
+msgstr "메탈 슬라임을 물리친다."
+
+#: src/achievements.py
+msgid "LEVEL 10"
+msgstr "레벨 10"
+
+#: src/achievements.py
+msgid "Reach level 10."
+msgstr "레벨 10이 된다."
+
+#: src/achievements.py
+msgid "LEVEL 20"
+msgstr "레벨 20"
+
+#: src/achievements.py
+msgid "Reach level 20."
+msgstr "레벨 20이 된다."
+
+#: src/achievements.py
+msgid "LEVEL 30"
+msgstr "레벨 30"
+
+#: src/achievements.py
+msgid "Reach the highest level."
+msgstr "최고 레벨이 된다."
+
+#: src/achievements.py
+msgid "CENTURION"
+msgstr "백전노장"
+
+#: src/achievements.py
+msgid "Win 100 fights."
+msgstr "싸움에서 100번 이긴다."
+
+#: src/achievements.py
+msgid "DISCRETION"
+msgstr "도망도 전략"
+
+#: src/achievements.py
+msgid "Run away from 50 fights."
+msgstr "싸움에서 50번 도망친다."
+
+#: src/achievements.py
+msgid "WANDERER"
+msgstr "방랑자"
+
+#: src/achievements.py
+msgid "Take 10000 steps."
+msgstr "10000걸음 걷는다."
+
+#: src/achievements.py
+msgid "RICHES"
+msgstr "갑부"
+
+#: src/achievements.py
+msgid "Carry 65535 gold."
+msgstr "65535골드를 가진다."
+
+#: src/achievements.py
+msgid "THOU ART DEAD"
+msgstr "죽어 버리다니"
+
+#: src/achievements.py
+msgid "Die for the first time."
+msgstr "처음으로 죽는다."

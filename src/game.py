@@ -61,6 +61,7 @@ from src.player.player import Player
 from src.sound import Sound
 from src.battle_controller import BattleController
 from src.ending import Ending
+from src.achievements import Achievements
 from src.play_stats import PlayClock, PlayStats, subscribe_play_stats
 from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
@@ -149,6 +150,9 @@ class Game:
         self.play_stats = PlayStats()  # the stats page's counts (src/play_stats.py), kept with the adventure log
         self.event_bus = EventBus()  # what happens in the game, for whatever wants to know (src/game_events.py)
         subscribe_play_stats(self.event_bus, lambda: self.play_stats)  # whichever stats a load or rewind has put in
+        # Kept from one adventure to the next (src/achievements.py), checked after the stats have counted each event
+        self.achievements = Achievements.from_config(self, config)
+        self.achievements.subscribe(self.event_bus)
         self.play_clock = PlayClock(self)  # ticks the play time on every loop's frames, once play has started
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]
@@ -170,6 +174,7 @@ class Game:
         self.dungeon_map_requested = False
         self.message_log_requested = False
         self.play_stats_requested = False
+        self.achievements_requested = False
         self.auto_grind_requested = False
         # ('save' or 'load', slot), until everyone is on a tile; then it's due, and the end of that frame carries it out
         # (src/save_state.py run_due_state_request)
@@ -359,6 +364,7 @@ class Game:
             self.clock.tick()  # only measures, for SHOW_FPS
             self.run_due_frames()
             self.drawer.draw_all(self, self.movement.sprites_animate)
+            self.achievements.banner.draw(self.screen, self.color, self.config, self._)
             display.flip()
             self.loop_count += 1
 
