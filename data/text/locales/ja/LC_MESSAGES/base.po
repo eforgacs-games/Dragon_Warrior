@@ -3640,3 +3640,11 @@ msgstr "目標"
 #: src/records.py
 msgid "ERDRICK'S TABLET"
 msgstr "ロトの石板"
+
+#: src/options_overlay.py
+msgid "RANDOMNESS"
+msgstr "乱数"
+
+#: src/options_overlay.py
+msgid "SEEDED"
+msgstr "シード固定"

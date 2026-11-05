@@ -53,6 +53,9 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
                                              stopping, src/auto_grind.py)
     AUTO-INN       OFF (NES) / ON           (AUTO_INN: when auto-grind can't go on, it goes to an inn and back,
                                              src/inn_trip.py)
+    RANDOMNESS     NES / SEEDED             (RANDOMNESS: the NES's random number, or the hero's and the world's
+                                             streams, src/random_streams.py; locked on SEEDED by --seed and in a
+                                             multiplayer game)
 
 Above every page's rows are two more:
 
@@ -65,6 +68,9 @@ differs from both. A new game reads NES: every such row's default (base_config, 
 value. Choosing it goes round NES, MODERN and, once there has been one, the last CUSTOM set of values, so a custom set
 is never lost by trying a preset. The message speed (the NES's own setting, chosen on the title menu too)
 isn't part of either.
+
+A row an option's lock holds (Option.locked_by: RANDOMNESS with a seed or in a multiplayer game) shows the value in
+force, dimmed, and doesn't change; the value it had is kept for when nothing locks it.
 
 PAGE (or START, Page Up and Page Down from any row) shows the next or the previous page; the cursor stays where it is,
 or goes to the new page's last row if it has fewer.
@@ -100,7 +106,7 @@ from src.game_options import AUTO_GRIND, AUTO_GRIND_STOP, AUTO_HEAL, AUTO_INN, A
     CHEAT_KEYS, DIALOG_STYLE, DUNGEON_MAP, ENCOUNTERS, EXP_GOLD, FADE_STYLE, GAME_SPEED_KEYS, LANGUAGE, MENU_SPEED, \
     MESSAGE_LOG, MESSAGE_SPEED, MUSIC, NAME_CONFIRM, NPCS_MAKE_WAY, OPTIONS_BY_CONFIG_KEY, QUEST_JOURNAL, \
     QUICK_ACTION, REWIND, RUN_BUTTON, SAVE_STATES, SCALING, SCANLINES, SHOP_PREVIEW, SMART_A, STATS_PAGE, \
-    STATUS_WINDOW, VIEW, Option, Options, apply_options
+    RANDOMNESS, STATUS_WINDOW, VIEW, Option, Options, apply_options
 from src.languages import LANGUAGES
 from src.options_screen import MESSAGE_SPEED_LABELS
 from src.selection import frame_events, next_frame
@@ -122,6 +128,8 @@ PREVIOUS_PAGE_KEYS = (K_PAGEUP,)
 
 # How dark the map gets behind the window (0 is clear, 255 black)
 OVERLAY_ALPHA = 160
+# How dark a locked row gets (OptionRow.locked)
+LOCKED_ROW_ALPHA = 150
 
 # The presets (PRESET row)
 PRESET_NES = 'NES'
@@ -158,12 +166,22 @@ class OptionRow:
         value = config.get(self.config_key)
         return self.values.index(value) if value in self.values else 0
 
+    def locked(self, config: dict) -> bool:
+        return self.option.locked(config)
+
     def value_label(self, config: dict) -> str:
+        """The label of the value in force: the locked value while the row is locked."""
+        if self.locked(config):
+            return self.value_labels[self.values.index(self.option.in_force(config))]
         return self.value_labels[self.index(config)]
 
-    def change(self, config: dict, step: int) -> None:
-        """Set the next (step 1) or the previous (step -1) value, going round."""
+    def change(self, config: dict, step: int) -> bool:
+        """Set the next (step 1) or the previous (step -1) value, going round. A locked row doesn't change: returns
+        whether it did."""
+        if self.locked(config):
+            return False
         config[self.config_key] = self.values[(self.index(config) + step) % len(self.values)]
+        return True
 
 
 def switch_row(label: str, option: Option) -> OptionRow:
@@ -179,6 +197,9 @@ class ScreenRow:
 
     def value_label(self, config: dict) -> str:
         return ''
+
+    def locked(self, config: dict) -> bool:
+        return False
 
 
 CONTROLS_ROW = ScreenRow("CONTROLS")
@@ -238,6 +259,7 @@ OPTION_PAGES = (
         # Auto-grind's: CONTROLS, with AUTO-GRIND and GRIND STOP, is full
         OptionRow("AUTO-HEAL", AUTO_HEAL, ("OFF (NES)", "ON", "KEEP 1 HEAL")),
         switch_row("AUTO-INN", AUTO_INN),
+        OptionRow("RANDOMNESS", RANDOMNESS, ("NES", "SEEDED")),
     )),
 )
 # The rows with a setting (every row but CONTROLS)
@@ -429,8 +451,8 @@ class OptionsOverlay:
                         self.open_screen(row)
                         drawn = None  # the screen covered the window: draw it again
                 elif key in LEFT_KEYS or key in RIGHT_KEYS or key in A_BUTTON_KEYS:
-                    self.change(-1 if key in LEFT_KEYS else 1)
-                    self.play_sound()
+                    if self.change(-1 if key in LEFT_KEYS else 1):
+                        self.play_sound()
 
     def shown_row(self) -> OptionRow | ScreenRow | None:
         """The page's own row the cursor is on (None on PRESET and PAGE)."""
@@ -443,8 +465,8 @@ class OptionsOverlay:
         self.page = (self.page + step) % len(self.pages)
         self.index = min(self.index, self.row_count - 1)
 
-    def change(self, step: int) -> None:
-        """Left, right or A on the cursor's row."""
+    def change(self, step: int) -> bool:
+        """Left, right or A on the cursor's row. Returns False if nothing changed (a locked row)."""
         if self.index == PRESET_ROW:
             self.change_preset(step)
         elif self.index == PAGE_ROW:
@@ -452,11 +474,13 @@ class OptionsOverlay:
         else:
             row = self.rows[self.index - FIXED_ROWS]
             assert isinstance(row, OptionRow)
-            row.change(self.config, step)
+            if not row.change(self.config, step):
+                return False
             apply_option(self.game, row.config_key)
             # The window's own text in the language just chosen
             self._ = set_gettext_language(self.config.get('LANGUAGE'))
             self.remember_custom()
+        return True
 
     def change_preset(self, step: int) -> None:
         """The next or previous of NES, MODERN and the last CUSTOM values, setting every preset row at once."""
@@ -484,7 +508,20 @@ class OptionsOverlay:
         darken(whole)
         draw_translated_window(screen, options_layout(self.config, self.page), self.game.color, self.config, self._,
                                cursor_index=index, cursor_visible=cursor_visible)
+        self.dim_locked_rows(screen)
         display.update(Rect(0, 0, whole.get_width(), whole.get_height()))
+
+    def dim_locked_rows(self, screen: Surface) -> None:
+        """Lay a translucent black band over each locked row's label and value (grayed out)."""
+        nes_tile = self.config['TILE_SIZE'] // 2
+        window_column, window_row = OPTIONS_WINDOW.x * 2, OPTIONS_WINDOW.y * 2
+        left = (window_column + LABEL_COLUMN) * nes_tile
+        width = (window_column + OPTIONS_WINDOW.width * 2 - 1) * nes_tile - left  # up to the right border
+        for number, row in enumerate(self.rows):
+            if row.locked(self.config):
+                band = Surface((width, nes_tile), SRCALPHA)
+                band.fill((*BLACK, LOCKED_ROW_ALPHA))
+                screen.blit(band, (left, (window_row + FIRST_ROW + 2 * (FIXED_ROWS + number)) * nes_tile))
 
     def close(self, background: Surface) -> None:
         """Put the map frame back as it was when the overlay opened."""

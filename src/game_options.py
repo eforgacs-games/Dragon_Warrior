@@ -22,6 +22,7 @@ from typing import Any, override
 from src.display_filters import SCALING_KEY, SCALING_MODES, SCALING_SMOOTH, SCANLINES_KEY
 from src.languages import LANGUAGE_NAMES
 from src.items import BAG_SIZES, BIG_BAG_SLOTS, INVENTORY_SLOTS
+from src.random_streams import RANDOMNESS_NES, RANDOMNESS_SEEDED
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_LEARNED, JOURNAL_OFF, JOURNAL_SETTINGS, LEGACY_JOURNAL_GOALS
 from src.soundtrack import DEFAULT_SOUNDTRACK, SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack, \
     soundtrack, soundtrack_from_save
@@ -56,7 +57,8 @@ def same_value(value: Any, choice: Any) -> bool:
 class Option:
     """One option (see the module docstring). ``name`` is its Options field (per log) or its Settings field (global);
     ``presets`` is its (NES, MODERN) values, or None for an option the presets leave alone; ``renamed`` maps a value
-    an older build saved to the value it is now."""
+    an older build saved to the value it is now. While any of the config keys in ``locked_by`` is set (not None or
+    False), the option is ``locked_value`` whatever it says (``in_force``), and the overlay grays its row out."""
     name: str
     config_key: str
     values: tuple[Any, ...]
@@ -64,6 +66,8 @@ class Option:
     presets: tuple[Any, Any] | None = None
     save_key: str | None = None
     renamed: tuple[tuple[Any, Any], ...] = ()
+    locked_by: tuple[str, ...] = ()
+    locked_value: Any = None
 
     @property
     def per_log(self) -> bool:
@@ -76,6 +80,14 @@ class Option:
         if any(same_value(value, choice) for choice in self.values):
             return value
         return self.default
+
+    def locked(self, config: dict) -> bool:
+        return any(config.get(key) is not None and config.get(key) is not False for key in self.locked_by)  # SEED 0 too
+
+    def in_force(self, config: dict) -> Any:
+        """What the game goes by: the config's value, or ``locked_value`` while the option is locked. The config's
+        value is kept as it is (and saved with the adventure log), in force again once nothing locks it."""
+        return self.locked_value if self.locked(config) else self.from_config(config)
 
     def from_save(self, save: dict) -> Any:
         """The value a save file (or a save state's options) holds."""
@@ -199,10 +211,18 @@ AUTO_HEAL = Option('auto_heal', 'AUTO_HEAL', AUTO_HEAL_SETTINGS, AUTO_HEAL_OFF, 
 # pay for, stays the night and walks back (src/inn_trip.py). Off, it stops.
 AUTO_INN = Option('auto_inn', 'AUTO_INN', ON_OFF, False, (False, True), 'AutoInn')
 
+# RANDOMNESS (src/random_streams.py): every roll from the NES's own random number (UpdateRandNum, stepped every frame and
+# every roll), or SEEDED, from the hero's and the world's streams, which a seed and multiplayer need: --seed (SEED) and
+# a multiplayer game (MULTIPLAYER) lock it on SEEDED. The NES's in both presets: SEEDED changes how the dice are
+# thrown, not what they give.
+RANDOMNESS = Option('randomness', 'RANDOMNESS', (RANDOMNESS_NES, RANDOMNESS_SEEDED), RANDOMNESS_NES,
+                    (RANDOMNESS_NES, RANDOMNESS_NES), 'Randomness', locked_by=('SEED', 'MULTIPLAYER'),
+                    locked_value=RANDOMNESS_SEEDED)
+
 PER_LOG_OPTIONS = (MESSAGE_SPEED, DIALOG_STYLE, NPCS_MAKE_WAY, FADE_STYLE, AUTO_STAIRS, AUTO_GRIND_STOP, MENU_SPEED,
                    MUSIC, GAME_SPEED_KEYS, SAVE_STATES, REWIND, AUTO_GRIND, CHEAT_KEYS, QUICK_ACTION, ENCOUNTERS,
                    EXP_GOLD, RUN_BUTTON, STATUS_WINDOW, SHOP_PREVIEW, QUEST_JOURNAL, BAG_SIZE, SMART_A, MESSAGE_LOG,
-                   STATS_PAGE, AUTOSAVE, AUTO_HEAL, AUTO_INN)
+                   STATS_PAGE, AUTOSAVE, AUTO_HEAL, AUTO_INN, RANDOMNESS)
 
 # Global, in the order of Settings' fields
 
@@ -256,6 +276,7 @@ class Options:
     autosave: bool | None = AUTOSAVE.default  # None: the config's AUTOSAVE is kept
     auto_heal: str = AUTO_HEAL.default
     auto_inn: bool = AUTO_INN.default
+    randomness: str = RANDOMNESS.default
 
 
 # A new quest's settings when none are chosen: the default message speed and the NES preset's values, as base_config

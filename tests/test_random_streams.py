@@ -109,7 +109,7 @@ class TestSaving(TestCase):
         snapshot = {'random': encode_random_state(old.getstate())}
         migrated = STATE_MIGRATIONS[2](snapshot)
         streams = RandomStreams(0)
-        streams.restore(RandomStreams.decode_save(migrated['random']))
+        streams.restore(RandomStreams.decode_save({**migrated['random'], 'nes': 0}))  # 'nes': from version 4 on
         self.assertIsNone(streams.seed)
         self.assertEqual([old.randint(0, 255) for _ in range(20)], rolls(streams, Stream.HERO))
         # The world's stream is a different one, and the same for the same state

@@ -140,10 +140,11 @@ def fight_mask(tile: str | None, nes_x: int, nes_y: int) -> int | None:
     return 0x1F if (nes_x + nes_y) % 2 == 0 else 0x0F
 
 
-def step_starts_fight(map_identifier: str, tile: str | None, column: int, row: int) -> bool:
-    """The per-step roll: does stepping onto this block start a fight?"""
+def step_starts_fight(map_identifier: str, tile: str | None, column: int, row: int, step_roll: int) -> bool:
+    """The per-step roll: does stepping onto this block start a fight? ``step_roll`` is the RandNumUB CheckBlockDmg
+    drew as the step's checks began (Game.step_roll); ChkFight2 ANDs it with the block's mask."""
     mask = fight_mask(tile, *nes_coordinates(map_identifier, column, row))
-    return mask is not None and hero_random.randint(0, mask) == 0
+    return mask is not None and step_roll & mask == 0
 
 
 def passes_zone_zero_check(tile: str | None) -> bool:
@@ -159,10 +160,12 @@ def pick_enemy(group: Sequence[str]) -> str:
     return group[slot]
 
 
-def roll_encounter(map_identifier: str, tile: str | None, column: int, row: int) -> tuple[str, ...] | None:
-    """One step's encounter check, up to choosing the enemy row: the row to fight from, or None for no fight."""
+def roll_encounter(map_identifier: str, tile: str | None, column: int, row: int,
+                   step_roll: int) -> tuple[str, ...] | None:
+    """One step's encounter check, up to choosing the enemy row: the row to fight from, or None for no fight.
+    ``step_roll`` is the step's RandNumUB (step_starts_fight)."""
     group = encounter_group(map_identifier, column, row)
-    if group is None or not step_starts_fight(map_identifier, tile, column, row):
+    if group is None or not step_starts_fight(map_identifier, tile, column, row, step_roll):
         return None
     if group == 0 and not passes_zone_zero_check(tile):
         return None

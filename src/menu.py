@@ -97,6 +97,14 @@ def wait_for_next_window_row(row_started: float, config: dict) -> None:
     wait_until(row_started + WINDOW_ROW_FRAMES * 1000 / NES_FPS, config)
 
 
+def silver_harp_enemy() -> str:
+    """NES HarpRNGLoop: RandNumUB AND 7, rolled again while it's 5 or 7, is the enemy's number: #0-4 or #6, the six
+    SILVER_HARP_ENEMIES in order."""
+    while (number := hero_random.randint(0, 255) & 0x07) in (5, 7):
+        pass
+    return SILVER_HARP_ENEMIES[min(number, 5)]
+
+
 class CommandMenu:
 
     def __init__(self, game: 'Game') -> None:
@@ -992,7 +1000,7 @@ class CommandMenu:
         self.game.music_player.play_until_end(self.directories.harp_music, self.game.game_state.config)
         self.game.game_state.unpause_all_movement()
         if self.current_map.identifier == 'Alefgard':
-            self.game.battle_ctrl.queue_scripted_battle(hero_random.choice(SILVER_HARP_ENEMIES))
+            self.game.battle_ctrl.queue_scripted_battle(silver_harp_enemy())
             return
         self.resume_music()  # HarpFail: ResumeMusicTbl
         self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)

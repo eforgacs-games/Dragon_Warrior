@@ -15,7 +15,7 @@ from src.direction import Direction
 from src.command_window import held_buttons
 from src.menu import COMMAND_METHODS
 from src.waiting import NES_FPS
-from tests.helpers import new_game
+from tests.helpers import new_game, npc_direction_roll
 
 
 def keys_held(*held_keys):
@@ -79,7 +79,7 @@ class FreezeTestCase(TestCase):
     def let_guard_start_a_step(self, direction=Direction.LEFT.value):
         """Make the roaming guard pick a direction and take its first pixels of a step."""
         self.game.movement.npc_schedule.give_turn_to(0)
-        with patch('src.movement.world_random.choice', return_value=direction):
+        with patch('src.movement.world_random.randint', return_value=npc_direction_roll(direction)):
             self.frame()
         self.frame()
         self.assertTrue(self.guard.is_moving)
@@ -116,7 +116,7 @@ class TestFreezeMovement(FreezeTestCase):
         before = self.guard_position()
         for _ in range(5):
             self.game.movement.npc_schedule.give_turn_to(0)  # the guard would start a step on the next frame
-            with patch('src.movement.world_random.choice', return_value=Direction.LEFT.value):
+            with patch('src.movement.world_random.randint', return_value=npc_direction_roll(Direction.LEFT.value)):
                 self.frames(20)
         self.assertEqual(before, self.guard_position())
         self.assertFalse(self.guard.is_moving)
@@ -130,7 +130,7 @@ class TestFreezeMovement(FreezeTestCase):
             self.game.drawer.set_to_post_initial_dialog(self.game.cmd_menu)
             self.game.game_state.enable_movement = True
             self.game.movement.npc_schedule.give_turn_to(0)
-            with patch('src.movement.world_random.choice', return_value=Direction.LEFT.value):
+            with patch('src.movement.world_random.randint', return_value=npc_direction_roll(Direction.LEFT.value)):
                 self.frame()
         self.assertEqual(before, self.guard_position())
 
@@ -174,7 +174,7 @@ class TestFreezeMovement(FreezeTestCase):
         self.assertEqual(0, self.game.movement.npc_schedule.phase)
         self.game.cmd_menu.menu.disable()
         self.game.cmd_menu.launch_signaled = False
-        with patch('src.movement.world_random.choice', return_value=Direction.LEFT.value):
+        with patch('src.movement.world_random.randint', return_value=npc_direction_roll(Direction.LEFT.value)):
             self.frame()
         self.assertTrue(self.game.movement.npc_schedule.is_decision_frame)
 
@@ -183,7 +183,7 @@ class TestFreezeMovement(FreezeTestCase):
         self.frame(keydown(K_k))
         before = self.guard_position()
         self.game.movement.npc_schedule.give_turn_to(0)
-        with patch('src.movement.world_random.choice', return_value=Direction.LEFT.value), \
+        with patch('src.movement.world_random.randint', return_value=npc_direction_roll(Direction.LEFT.value)), \
                 patch.object(self.game.movement, 'move_player'):
             self.frames(10)
         self.assertEqual(before, self.guard_position())
@@ -191,7 +191,7 @@ class TestFreezeMovement(FreezeTestCase):
     def test_npcs_move_again_once_the_command_menu_closes(self):
         self.open_command_menu()
         self.game.movement.npc_schedule.give_turn_to(0)  # due a step as soon as it may move
-        with patch('src.movement.world_random.choice', return_value=Direction.LEFT.value):
+        with patch('src.movement.world_random.randint', return_value=npc_direction_roll(Direction.LEFT.value)):
             self.close_command_menu()
             self.assertFalse(self.game.cmd_menu.menu.is_enabled())
             self.assertFalse(self.game.movement.world_frozen)
@@ -242,7 +242,7 @@ class TestFreezeMovement(FreezeTestCase):
         before = self.guard_position()
         for _ in range(5):
             self.game.movement.npc_schedule.give_turn_to(0)
-            with patch('src.movement.world_random.choice', return_value=Direction.LEFT.value):
+            with patch('src.movement.world_random.randint', return_value=npc_direction_roll(Direction.LEFT.value)):
                 self.frames(20)
         self.assertEqual(before, self.guard_position())
 
@@ -280,7 +280,7 @@ class TestFreezeMovement(FreezeTestCase):
         self.game.game_state.unpause_all_movement()
         before = self.guard_position()
         self.game.movement.npc_schedule.give_turn_to(0)
-        with patch('src.movement.world_random.choice', return_value=Direction.LEFT.value):
+        with patch('src.movement.world_random.randint', return_value=npc_direction_roll(Direction.LEFT.value)):
             self.frames(20)
         self.assertEqual(before, self.guard_position())
         self.assertFalse(self.game.movement.sprites_animate)

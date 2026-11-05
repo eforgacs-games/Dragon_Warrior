@@ -28,13 +28,14 @@ from src.constants import (
 from src.direction import Direction
 from src.display_filters import PRESENTER
 from src.directories import Directories
-from src.random_streams import RandomStreams, activate as activate_random_streams
+from src.random_streams import RANDOMNESS_NES, RandomStreams, activate as activate_random_streams
 from src.soundtrack import migrate_legacy_music_config
 from src.drawer import Drawer
 from src.dungeon_map import DungeonMap
 from src.field_encounters import FieldEncounters
 from src.game_functions import set_character_position, GameFunctions
 from src.game_events import EventBus
+from src.game_options import RANDOMNESS
 from src.game_state import GameState
 from src.gamepad import connect_gamepad
 from src.hero_damage import HeroDamage
@@ -65,8 +66,8 @@ from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
 from src.autosave import Autosave
-from src.waiting import NES_FPS, SPEED_CHANGED, FrameClock, FramePacer, game_speed, \
-    reset_game_speed, set_game_speed, set_speed_keys_enabled
+from src.waiting import NES_FPS, SPEED_CHANGED, FrameClock, FramePacer, frame_at, game_speed, \
+    reset_game_speed, set_frame_listener, set_game_speed, set_speed_keys_enabled
 from src.waiting import game_ticks as get_ticks  # game time: runs N times as fast at speed N
 from src.map_manager import MapManager
 from src.waiting import MAP_CONTEXT, follow_menu_speed_option, poll_virtual_joypad, quit_if_requested, \
@@ -91,8 +92,10 @@ class Game:
         migrate_legacy_music_config(config)  # a config with the old ORCHESTRA_MUSIC_ENABLED switch (src/soundtrack.py)
         self.config = config
         # Every roll in the game is drawn from these (src/random_streams.py): from --seed's seed if there is one
-        self.random_streams = RandomStreams(config.get('SEED'))  # .get: a config made without base_config
+        self.random_streams = RandomStreams(config.get('SEED'), nes_mode=self.nes_randomness)
         activate_random_streams(self.random_streams)
+        # NES GetJoypadStatus steps the random number every frame (src/random_streams.py)
+        set_frame_listener(lambda: self.random_streams.frames_passed(frame_at(get_ticks())), 'random numbers')
         self.sound = Sound(config)
         self.graphics = Graphics(config)
         self.directories = Directories(config)
@@ -137,6 +140,9 @@ class Game:
         # ENCOUNTERS on HALF (not NES): whether the next random fight that would start is skipped
         # (FieldEncounters.thin_encounters)
         self.skip_next_encounter = False
+        # NES CheckBlockDmg's UpdateRandNum: the RandNumUB the step's fight roll reads (FieldEncounters.handle_battles),
+        # drawn as the step's checks start and read after the hill's pause (hill_pause_frame)
+        self.step_roll = 0
         self.chest_history = TreasureChestHistory()  # which treasure chests have been opened
         self.door_history = OpenDoorHistory()  # which locked doors have been opened since the last overworld visit
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
@@ -314,6 +320,10 @@ class Game:
             else:
                 set_zoom(saved_zoom)
         set_zoom_listener(self.settings.updater('zoom'))
+
+    def nes_randomness(self) -> bool:
+        """Whether every roll comes from the NES's own random number (RANDOMNESS, src/random_streams.py)."""
+        return RANDOMNESS.in_force(self.config) == RANDOMNESS_NES
 
     def set_language(self, language: str) -> None:
         """Play in ``language`` (a name from src/languages.py: 'English', 'Korean', ...) from now on, without a

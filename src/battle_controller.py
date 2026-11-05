@@ -89,6 +89,25 @@ def held_joypad_buttons() -> int:
     return joypad_buttons(lambda button_key: pressed[button_key])
 
 
+# NES DoEnemyAttack: the spells in EnSpell's upper bits (chance in bits 4-5), rolled first, and those in its lower bits
+# (chance in bits 0-1)
+UPPER_ENEMY_SPELLS = frozenset({Spell.SLEEP, Spell.STOPSPELL, Spell.HEAL, Spell.HEALMORE})
+
+
+def enemy_spell_slots(pattern: list) -> tuple[tuple | None, tuple | None]:
+    """The (chance in percent, spell, condition) entries of an Enemy.set_pattern for its upper and its lower spell
+    (None where it has none)."""
+    spells = [entry for entry in pattern if isinstance(entry, tuple)]
+    upper = next((entry for entry in spells if entry[1] in UPPER_ENEMY_SPELLS), None)
+    lower = next((entry for entry in spells if entry[1] not in UPPER_ENEMY_SPELLS), None)
+    return upper, lower
+
+
+def chance_in_quarters(slot: tuple) -> int:
+    """A pattern entry's chance as EnSpell holds it: 25% is 1, 50% 2, 75% 3 (and a test's 100% 4: always)."""
+    return slot[0] // 25
+
+
 class BattleController:
     def __init__(self, game: 'Game') -> None:
         self.game = game
@@ -331,7 +350,7 @@ class BattleController:
         away, then CalcWhoIsNext decides whether the enemy attacks before the hero is ready (StartEnemyTurn) or the
         hero gets the first turn. Returns True if the enemy ran away."""
         enemy = current_battle.enemy
-        if enemy_flees(self.player.strength, enemy.attack, hero_random.randint(0, 255)):
+        if self.enemy_runs(enemy):
             return self.enemy_run_away(current_battle, enemy)
         if player_acts_first(self.player.agility, enemy.defense, hero_random.randint(0, 255), hero_random.randint(0, 255)):
             return False
@@ -572,7 +591,7 @@ class BattleController:
         attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, current_battle.enemy)
         if attack_damage <= 0:
             current_battle.missed_attack(self.cmd_menu)
-        elif not current_battle.enemy.is_asleep and enemy_dodges(current_battle.enemy.dodge, hero_random.randint(0, 255)):
+        elif not current_battle.enemy.is_asleep and self.enemy_dodges_attack(current_battle.enemy):
             # NES SetEnDmg1: a sleeping enemy can't dodge (excellent moves can be dodged too)
             self.sound.play_sound(self.directories.missed_sfx)
             self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!"), **BATTLE_LINE)  # TB17E10
@@ -586,6 +605,21 @@ class BattleController:
                                    self._("The {}'s Hit Points have been reduced by {}.\n")).format(
                     self._(current_battle.enemy.name), attack_damage), **BATTLE_LINE)
             current_battle.enemy.hp -= attack_damage
+
+    def enemy_runs(self, enemy) -> bool:
+        """NES CheckEnRun: whether the enemy runs away. It only rolls (UpdateRandNum) when the hero's strength / 2 is
+        at least the enemy's attack, so against a stronger enemy no random number is used."""
+        if self.player.strength // 2 < enemy.attack:
+            return False
+        return enemy_flees(self.player.strength, enemy.attack, hero_random.randint(0, 255))
+
+    @staticmethod
+    def enemy_dodges_attack(enemy) -> bool:
+        """NES SetEnDmg1: the dodge roll keeps 6 bits of RandNumUB and writes them back (STA RandNumUB), so with the
+        NES's random number the numbers after it follow from the masked byte."""
+        roll = hero_random.randint(0, 255) & 0x3F
+        hero_random.store_upper_byte(roll)
+        return enemy_dodges(enemy.dodge, roll)
 
     # ------------------------------------------------------------------ #
     #  Enemy turn                                                          #
@@ -607,10 +641,12 @@ class BattleController:
     def enemy_turn(self, current_battle: Battle) -> bool:
         """One enemy turn (NES StartEnemyTurn). Returns True if the enemy ran away."""
         enemy = current_battle.enemy
-        # NES (StartEnemyTurn): a sleeping enemy wakes 1 time in 3 (the 2-bit roll is redone on 0) and
-        # acts immediately; otherwise it stays asleep and the player gets another turn.
+        # NES StartEnemyTurn: a sleeping enemy rolls 2 bits of RandNumUB, again while they're 0, and wakes on 1 (1 time
+        # in 3) to act at once; otherwise it stays asleep and the player gets another turn.
         if enemy.is_asleep:
-            if hero_random.randint(1, 3) != 1:
+            while (wake_roll := hero_random.randint(0, 255) & 0x03) == 0:
+                pass
+            if wake_roll != 1:
                 self.cmd_menu.show_line_in_dialog_box(self._("The {} is asleep.").format(self._(enemy.name)),
                                                       **BATTLE_LINE)  # TB16E8
                 return False
@@ -619,97 +655,101 @@ class BattleController:
                                                   **BATTLE_LINE)  # TB1E0
         # NES DoEnemyAttack calls CheckEnRun first: an enemy facing a hero with at least double its attack in
         # strength has a 1 in 4 chance to run away.
-        if enemy_flees(self.player.strength, enemy.attack, hero_random.randint(0, 255)):
+        if self.enemy_runs(enemy):
             return self.enemy_run_away(current_battle, enemy)
         # Rebuild the pattern so HP-based conditions (e.g. HEAL) reflect damage taken this turn.
         enemy.refresh_pattern()
-        if not enemy.pattern:
+        spell = self.choose_enemy_spell(enemy)
+        if spell is None:
             self.enemy_attack(current_battle)
         else:
-            current_index = 0
-            current_enemy_pattern = enemy.pattern[current_index]
-            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+            self.cast_enemy_spell(current_battle, spell)
         return False
 
-    def execute_enemy_pattern(self, current_battle, current_enemy_pattern, current_index, enemy):
-        enemy.refresh_pattern()
-        if isinstance(current_enemy_pattern, tuple):
-            # (chance in percent, spell, whether its condition holds), from Enemy.set_pattern
-            chance_percent, current_spell, may_cast = current_enemy_pattern
-            if current_spell == Spell.SLEEP and self.player.is_asleep:
-                may_cast = False
-            elif current_spell == Spell.STOPSPELL and self.player.is_stopspelled:
-                may_cast = False
-            if may_cast:
-                if hero_random.randint(0, 99) < chance_percent:
-                    if current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
-                        # TB16E12 and TB16E13, both with no WAIT
-                        self.cmd_menu.show_line_in_dialog_box(
-                            self._("{} chants the spell of {}.").format(self._(enemy.name), self._(current_spell)),
-                            **BATTLE_LINE)
-                        # NES EnCastSpell (LEBFE-LEC11): SFX_SPELL, the enemy flashes grey (PaletteFlash with
-                        # SplFlshBGPal), then WaitForMusicEnd lets the spell sound finish
-                        self.sound.play_sound(self.directories.spell_sfx)
-                        self.drawer.flash_enemy_spell(self.screen, enemy.name)
-                        self.sound.wait_for_sfx_end(SPELL_SFX_FRAMES, self.config)
-                    else:
-                        # NES DoFireSFX (LED14): SFX_FIRE starts before "is breathing fire", and nothing waits for it:
-                        # PlayerHit's SFX_PLYR_HIT1 cuts it off
-                        self.sound.play_sound(self.directories.breathe_fire_sfx)
-                        self.cmd_menu.show_line_in_dialog_box(
-                            self._("The {} is breathing fire.\n").format(self._(enemy.name)), **BATTLE_LINE)  # TB16E15
-                    if enemy.is_stopspelled and current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
-                        # NES: a stopspelled enemy still chants, but the spell is blocked (fire breath isn't a spell)
-                        self.cmd_menu.show_line_in_dialog_box(self._("But that spell hath been blocked."),
-                                                              **BATTLE_LINE)  # TB15E10
-                        return
-                    spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
-                    spell_effect = hero_random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
-                    match current_spell:
-                        case Spell.HEAL | Spell.HEALMORE:
-                            # NES EnemyAddHP: capped at the enemy's base HP
-                            enemy.recover_hp(spell_effect)
-                            self.cmd_menu.show_line_in_dialog_box(
-                                self._("The {} hath recovered.").format(self._(enemy.name)), **BATTLE_LINE)  # TB17E9
-                        case Spell.SLEEP:
-                            # NES EnCastSleep: always works; the enemy moves again straight away (see enemy_move)
-                            self.player.is_asleep = True
-                            self.player_fell_asleep = True
-                            self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), **BATTLE_LINE)  # TB17E6
-                        case Spell.HURT | Spell.HURTMORE:
-                            if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
-                                spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
-                            self.game.hero_damage.receive_damage(spell_effect)
-                        case Spell.STOPSPELL:
-                            # NES EnCastStopspell: Erdrick's Armor always blocks it; otherwise it works when bit 0 of a
-                            # random byte is set (50%). It lasts for the rest of the fight.
-                            if self.player.armor != "Erdrick's Armor" and coin_flip():
-                                self.player.is_stopspelled = True
-                                message = self._("{}'s spell is blocked.").format(self.player.name)
-                            else:
-                                message = self._("The spell will not work.")
-                            self.cmd_menu.show_line_in_dialog_box(message, **BATTLE_LINE)  # TB16E14 or TB15E11
-                            if self.player.is_stopspelled:
-                                self.auto_grind.stopspell_hit()
-                        case Spell.FIREBREATH | Spell.FIREBREATH2:
-                            if self.player.armor == "Erdrick's Armor":
-                                spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
-                            self.game.hero_damage.receive_damage(spell_effect)
-                else:
-                    self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
-            else:
-                self.increment_and_execute_enemy_pattern(current_battle, current_index, enemy)
-        elif isinstance(current_enemy_pattern, str):
-            if current_enemy_pattern == Spell.ATTACK:
-                self.enemy_attack(current_battle)
+    def choose_enemy_spell(self, enemy) -> str | None:
+        """NES DoEnemyAttack, after CheckEnRun: the spell the enemy casts this turn, or None to attack. A roll for its
+        upper spell (SLEEP, STOPSPELL, HEAL or HEALMORE): cast when bits 4-5 of RandNumUB are below the spell's chance
+        in quarters (EnSpell bits 4-5) and the spell would do something (the hero isn't asleep or stopspelled already,
+        the enemy's HP is down to a quarter for a heal); if not, a roll for its lower spell (HURT, HURTMORE or fire)
+        on bits 0-1 (EnSpell bits 0-1). Both rolls are made whatever the enemy knows, so one with no spells rolls
+        twice before it attacks."""
+        upper, lower = enemy_spell_slots(enemy.pattern)
+        upper_roll = (hero_random.randint(0, 255) & 0x30) >> 4
+        if upper is not None and upper_roll < chance_in_quarters(upper) and self.enemy_may_cast(upper):
+            return upper[1]
+        lower_roll = hero_random.randint(0, 255) & 0x03
+        if lower is not None and lower_roll < chance_in_quarters(lower) and self.enemy_may_cast(lower):
+            return lower[1]
+        return None
 
-    def increment_and_execute_enemy_pattern(self, current_battle, current_index, enemy):
-        current_index += 1
-        if enemy.pattern:
-            current_enemy_pattern = enemy.pattern[current_index]
-            self.execute_enemy_pattern(current_battle, current_enemy_pattern, current_index, enemy)
+    def enemy_may_cast(self, slot: tuple) -> bool:
+        """Whether the spell would do something: its pattern entry's condition (HEAL's and HEALMORE's HP), and the
+        hero not already asleep (SLEEP) or stopspelled (STOPSPELL)."""
+        _, spell, condition = slot
+        if spell == Spell.SLEEP and self.player.is_asleep:
+            return False
+        if spell == Spell.STOPSPELL and self.player.is_stopspelled:
+            return False
+        return bool(condition)
+
+    def cast_enemy_spell(self, current_battle, current_spell) -> None:
+        """NES EnCastSpell and the spell's own routine (EnCastSleep, EnCastHurt, ...)."""
+        enemy = current_battle.enemy
+        if current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
+            # TB16E12 and TB16E13, both with no WAIT
+            self.cmd_menu.show_line_in_dialog_box(
+                self._("{} chants the spell of {}.").format(self._(enemy.name), self._(current_spell)),
+                **BATTLE_LINE)
+            # NES EnCastSpell (LEBFE-LEC11): SFX_SPELL, the enemy flashes grey (PaletteFlash with
+            # SplFlshBGPal), then WaitForMusicEnd lets the spell sound finish
+            self.sound.play_sound(self.directories.spell_sfx)
+            self.drawer.flash_enemy_spell(self.screen, enemy.name)
+            self.sound.wait_for_sfx_end(SPELL_SFX_FRAMES, self.config)
         else:
-            self.enemy_attack(current_battle)
+            # NES DoFireSFX (LED14): SFX_FIRE starts before "is breathing fire", and nothing waits for it:
+            # PlayerHit's SFX_PLYR_HIT1 cuts it off
+            self.sound.play_sound(self.directories.breathe_fire_sfx)
+            self.cmd_menu.show_line_in_dialog_box(
+                self._("The {} is breathing fire.\n").format(self._(enemy.name)), **BATTLE_LINE)  # TB16E15
+        if enemy.is_stopspelled and current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
+            # NES: a stopspelled enemy still chants, but the spell is blocked (fire breath isn't a spell)
+            self.cmd_menu.show_line_in_dialog_box(self._("But that spell hath been blocked."),
+                                                  **BATTLE_LINE)  # TB15E10
+            return
+        # The HP the spell takes or gives: AND #$07 or #$0F of RandNumUB, plus the spell's least (EnCastHurt, ...).
+        # SLEEP and STOPSPELL roll nothing here (STOPSPELL's own roll is below).
+        lowest, highest = enemy_spell_lookup[current_spell]
+        spell_effect = hero_random.randint(lowest, highest) if highest else 0
+        match current_spell:
+            case Spell.HEAL | Spell.HEALMORE:
+                # NES EnemyAddHP: capped at the enemy's base HP
+                enemy.recover_hp(spell_effect)
+                self.cmd_menu.show_line_in_dialog_box(
+                    self._("The {} hath recovered.").format(self._(enemy.name)), **BATTLE_LINE)  # TB17E9
+            case Spell.SLEEP:
+                # NES EnCastSleep: always works; the enemy moves again straight away (see enemy_move)
+                self.player.is_asleep = True
+                self.player_fell_asleep = True
+                self.cmd_menu.show_line_in_dialog_box(self._("Thou art asleep.\n"), **BATTLE_LINE)  # TB17E6
+            case Spell.HURT | Spell.HURTMORE:
+                if self.player.armor in ("Magic Armor", "Erdrick's Armor"):
+                    spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
+                self.game.hero_damage.receive_damage(spell_effect)
+            case Spell.STOPSPELL:
+                # NES EnCastStopspell: Erdrick's Armor always blocks it; otherwise it works when bit 0 of a
+                # random byte is set (50%). It lasts for the rest of the fight.
+                if self.player.armor != "Erdrick's Armor" and coin_flip():
+                    self.player.is_stopspelled = True
+                    message = self._("{}'s spell is blocked.").format(self.player.name)
+                else:
+                    message = self._("The spell will not work.")
+                self.cmd_menu.show_line_in_dialog_box(message, **BATTLE_LINE)  # TB16E14 or TB15E11
+                if self.player.is_stopspelled:
+                    self.auto_grind.stopspell_hit()
+            case Spell.FIREBREATH | Spell.FIREBREATH2:
+                if self.player.armor == "Erdrick's Armor":
+                    spell_effect = spell_effect // 3 * 2  # NES: divide by 3, then double
+                self.game.hero_damage.receive_damage(spell_effect)
 
     def enemy_attack(self, current_battle):
         self.enemy_attack_message(current_battle.enemy)

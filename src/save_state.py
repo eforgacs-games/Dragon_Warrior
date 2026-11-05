@@ -68,7 +68,7 @@ if TYPE_CHECKING:
 
 # Raise it whenever what a snapshot holds changes, with a STATE_MIGRATIONS step from the version before (and a sample
 # state of that version in tests/sample_saves/), so states saved before load as they should rather than wrong
-STATE_FORMAT_VERSION = 3
+STATE_FORMAT_VERSION = 4
 VERSION_KEY = 'version'
 SAVE_STATE_SLOTS = (1, 2, 3)
 # What a save state key asks for (MapHotkeys.press_save_state): (SAVE or LOAD, slot)
@@ -99,10 +99,13 @@ GAME_STATE_VALUES = ('tiles_moved_total', 'light_diameter', 'radiant_timer', 'li
 # Game's values: the step counts the fight rolls read, the repel timer and whether it's still to tick for the step
 # just taken, Magic Armor's step count, and whether ENCOUNTERS HALF skips the next fight
 GAME_VALUES = ('tiles_moved_since_spawn', 'last_amount_of_tiles_moved', 'repel_timer', 'repel_tick_pending',
-               'magic_armor_steps', 'last_zone', 'initial_dialog_enabled', 'skip_next_encounter')
+               'magic_armor_steps', 'last_zone', 'initial_dialog_enabled', 'skip_next_encounter', 'step_roll')
 # The Game and MovementController values version 2 added, and what a version 1 state had in effect (_from_version_1)
 GAME_VALUES_ADDED_IN_VERSION_2 = {'repel_tick_pending': False, 'skip_next_encounter': False}
 MOVEMENT_VALUES_ADDED_IN_VERSION_2 = {'running_step': False}
+# The Game value version 4 added: the step's RandNumUB (Game.step_roll). A version 3 state was saved either between
+# steps, when it isn't read again, or during a hill's pause, whose roll then reads 0 (a fight, on a hill).
+GAME_VALUES_ADDED_IN_VERSION_4 = {'step_roll': 0}
 # MovementController's frame counters (src/movement.py), and whether the hero's step under way is a running one
 # (RUN BUTTON)
 MOVEMENT_VALUES = ('hero_standing', 'step_ends', 'hill_pause_frames', 'freeze_wait_frames', 'running_step')
@@ -144,11 +147,19 @@ def _from_version_2(snapshot: dict[str, Any]) -> dict[str, Any]:
                                    Stream.WORLD.value: encode_random_state(world.getstate())}}
 
 
+def _from_version_3(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Version 3 to 4: the step's RandNumUB (GAME_VALUES_ADDED_IN_VERSION_4) and the NES's random number (RANDOMNESS,
+    src/random_streams.py), which starts at 0."""
+    return {**snapshot, 'game': {**GAME_VALUES_ADDED_IN_VERSION_4, **snapshot['game']},
+            'random': {**snapshot['random'], 'nes': 0}}
+
+
 # STATE_MIGRATIONS[n] turns a snapshot in format n into format n + 1, for every version from 1 (the first, in 1.0) up to
 # STATE_FORMAT_VERSION
 STATE_MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {
     1: _from_version_1,
     2: _from_version_2,
+    3: _from_version_3,
 }
 
 

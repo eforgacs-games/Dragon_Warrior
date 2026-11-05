@@ -3437,3 +3437,11 @@ msgstr "목표"
 #: src/records.py
 msgid "ERDRICK'S TABLET"
 msgstr "로토의 석판"
+
+#: src/options_overlay.py
+msgid "RANDOMNESS"
+msgstr "난수"
+
+#: src/options_overlay.py
+msgid "SEEDED"
+msgstr "시드 고정"

@@ -80,3 +80,9 @@ def fake_game_clock(start_ms: int = 0) -> FakeClock:
     for name, value in (('_speed', 1), ('_real_anchor', 0), ('_game_anchor', 0), ('_rounding_carry', 0.0)):
         patch(f'src.waiting.{name}', value).start()
     return clock
+
+
+def npc_direction_roll(direction: int) -> int:
+    """The RandNumUB that turns a roaming NPC to ``direction`` (NES SetNPCDir: bits 5-6, AND #$60, an NES direction:
+    src/direction.py nes_direction)."""
+    return (direction - 2) % 4 << 5
