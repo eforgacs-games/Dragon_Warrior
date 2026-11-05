@@ -12,7 +12,7 @@ The goal is to match the NES game. Formulas, messages and behavior are checked a
 ## Development Commands
 
 ### Running the Game
-- **Main game**: `uv run python -m src.game` (or `python src/game.py`). Flags: `--dev` (`dev_config`), `--checkpoint <name>` (start from a playtest checkpoint; see `PLAYTEST.md`), `--language English|Korean|Japanese|"Traditional Chinese"|"Simplified Chinese"|English2014`, `--smoke-test` (load every game file, play a few scenes headless, exit 0 or 1; the release workflow runs it)
+- **Main game**: `uv run python -m src.game` (or `python src/game.py`). Flags: `--dev` (`dev_config`), `--checkpoint <name>` (start from a playtest checkpoint; see `PLAYTEST.md`), `--language English|Korean|Japanese|"Traditional Chinese"|"Simplified Chinese"|English2014`, `--seed <n>` (seed the random numbers: the same play meets the same rolls), `--smoke-test` (load every game file, play a few scenes headless, exit 0 or 1; the release workflow runs it)
 - **Entry point**: `uv run python -m src.main` starts the game with `prod_config` and no flags (`python src/main.py` fails: it doesn't put the repository root on `sys.path` the way `src/game.py` does)
 
 ### Testing
@@ -75,6 +75,7 @@ The main `Game` class in `src/game.py` orchestrates:
 - `game_options.py`: every option of the options overlay, declared once (per adventure log or global settings)
 - `story_flags.py`: story progress (`StoryFlags`), saved with the game
 - `save_state.py`: full snapshots of the game on the map (not an NES feature)
+- `random_streams.py`: every roll's generator: the hero's stream (encounters, fights, spells, chests) and the world's (NPCs, flavor lines), seeded by `--seed`
 - `window_renderer.py`: draws NES windows tile by tile
 - `npc_movement.py`: where roaming NPCs may step
 - `checkpoints.py`: named playtest checkpoints in `data/checkpoints/`

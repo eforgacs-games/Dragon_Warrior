@@ -2,15 +2,16 @@
 
 The NES (UpdateRandNum, Bank03) keeps a 16-bit random number and most rolls read its upper byte, RandNumUB, then
 test bits of it: ``AND #$01`` for 50%, ``AND #$1F`` + ``BEQ`` for 1 in 32, and so on. These helpers say what the roll
-means; the bit tests stay inside them, and each call reads one byte from ``random.randint(0, 255)`` exactly as the
-inline expressions they replace did (so seeded runs and the tests' ``random.randint`` patches see the same calls).
+means; the bit tests stay inside them, and each call reads one byte from ``hero_random.randint(0, 255)`` exactly as
+the inline expressions they replace did (so seeded runs and the tests' ``hero_random.randint`` patches see the same
+calls). Every roll here is the hero's (the HERO stream, src/random_streams.py).
 """
-import random
+from src.random_streams import hero_random
 
 
 def random_byte() -> int:
     """A random 0-255 (NES RandNumUB)."""
-    return random.randint(0, 255)
+    return hero_random.randint(0, 255)
 
 
 def coin_flip() -> bool:

@@ -92,7 +92,7 @@ class TestBattleCommandWindowRemoval(TestCase):
             return False
         with patch.object(self.controller, 'fight'), patch.object(self.controller, 'enemy_move', side_effect=fall_asleep):
             self.choose('Fight')
-            with patch('src.battle_controller.random.randint', return_value=0):
+            with patch('src.battle_controller.hero_random.randint', return_value=0):
                 self.choose(None)
         self.assertEqual("Thou art still asleep.\n", self.cmd_menu.show_line_in_dialog_box.call_args.args[0])
         self.assertEqual([self.battle_scene], self.seen_with_lines)

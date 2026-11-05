@@ -229,9 +229,9 @@ class TestTreasure(unittest.TestCase):
         # NES TRSR_GLD1: 5 + (random AND $0F), rolled when the chest is opened
         gold_chest = treasure['GarinsGraveB1'][(1, 13)]
         self.assertEqual(gold_chest['item'], 'GOLD')
-        with patch('src.items.random.randint', return_value=0):
+        with patch('src.items.hero_random.randint', return_value=0):
             self.assertEqual(roll_treasure_gold(gold_chest['gold']), 5)
-        with patch('src.items.random.randint', return_value=255):
+        with patch('src.items.hero_random.randint', return_value=255):
             self.assertEqual(roll_treasure_gold(gold_chest['gold']), 20)
 
     def test_gold_ranges_match_nes(self):

@@ -213,8 +213,8 @@ class TestGame(TestCase):
                 with self.subTest(enemy=name, roll=roll):
                     self.game.player.current_hp = self.game.player.max_hp
                     battle = Battle(self.game.config, name, self.game.current_map)
-                    with patch('src.battle_controller.random.randint', side_effect=lambda a, b: roll if b == 99 else a), \
-                            patch('src.battle_controller.random.random', return_value=0.99), \
+                    with patch('src.battle_controller.hero_random.randint', side_effect=lambda a, b: roll if b == 99 else a), \
+                            patch('src.battle_controller.hero_random.random', return_value=0.99), \
                             patch.object(self.game.sound, 'wait_for_sfx_end'), patch.object(self.game, 'drawer'), \
                             patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'):
                         self.game.battle_ctrl.enemy_move(battle)
@@ -954,7 +954,7 @@ class TestGame(TestCase):
         # The first frame on a map is the first pair's decision frame (NES InitMapData: NPCUpdateCntr = 0)
         guard = self.game.current_map.roaming_characters[0]
         start = guard.rect.topleft
-        with patch('src.movement.random.choice', return_value=Direction.DOWN.value):
+        with patch('src.movement.world_random.choice', return_value=Direction.DOWN.value):
             self.game.movement.sprites_frame()
         self.assertTrue(guard.is_moving)
         self.assertEqual(Direction.DOWN.value, guard.direction_value)

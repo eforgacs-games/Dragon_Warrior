@@ -23,6 +23,7 @@ from pygame.sprite import Group
 from src.color import BLACK, LOW_HP_RED, WHITE
 from src.config.test_config import test_config
 from src.drawer import Drawer, TileIndex, first_frame_background, map_surface
+from src.random_streams import seed_all
 from src.sprites.base_sprite import BaseSprite
 from src.text import TextPaths, blit_text_to_screen, draw_text, set_font_by_ascii_chars
 from src.directories import Directories
@@ -123,7 +124,7 @@ class TestTileIndex(DisplayTestCase):
 
 def walk_frames(scan: bool) -> list[bytes]:
     """The screens of 120 frames of Brecconary, the hero walking left and right, the NPCs roaming."""
-    random.seed(241)
+    seed_all(241)
     game = make_game('Brecconary')
     if scan:
         game.drawer.tile_index = SimpleNamespace(tiles_at=linear_tiles_at)
@@ -200,7 +201,7 @@ class TestFirstFrameBackground(DisplayTestCase):
 
 
 def map_change_frames(copies: bool) -> list[bytes]:
-    random.seed(241)
+    seed_all(241)
     game = make_game('Brecconary')
     with ExitStack() as stack:
         if copies:

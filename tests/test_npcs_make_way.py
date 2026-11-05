@@ -117,7 +117,7 @@ class MakeWayTestCase(TestCase):
         self.check_nobody_overlaps()
 
     def frames(self, count, held=(), random_direction=Direction.LEFT.value):
-        with patch('src.movement.random.choice', return_value=random_direction):
+        with patch('src.movement.world_random.choice', return_value=random_direction):
             for _ in range(count):
                 self.frame(held=held)
 

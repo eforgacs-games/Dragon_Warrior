@@ -28,6 +28,7 @@ from src.constants import (
 from src.direction import Direction
 from src.display_filters import PRESENTER
 from src.directories import Directories
+from src.random_streams import RandomStreams, activate as activate_random_streams
 from src.soundtrack import migrate_legacy_music_config
 from src.drawer import Drawer
 from src.dungeon_map import DungeonMap
@@ -89,6 +90,9 @@ class Game:
 
         migrate_legacy_music_config(config)  # a config with the old ORCHESTRA_MUSIC_ENABLED switch (src/soundtrack.py)
         self.config = config
+        # Every roll in the game is drawn from these (src/random_streams.py): from --seed's seed if there is one
+        self.random_streams = RandomStreams(config.get('SEED'))  # .get: a config made without base_config
+        activate_random_streams(self.random_streams)
         self.sound = Sound(config)
         self.graphics = Graphics(config)
         self.directories = Directories(config)
@@ -685,6 +689,8 @@ def run():
     parser.add_argument("--language", choices=LANGUAGE_NAMES,
                         help="play in this language this time, whatever the options say (default: the language "
                              "chosen in the options, or the system's)")
+    parser.add_argument("--seed", type=int,
+                        help="seed the random numbers, so the same play meets the same rolls (src/random_streams.py)")
     parser.add_argument("--smoke-test", action="store_true",
                         help="check that every game file is there and loads, play a few scripted scenes headless and "
                              "exit with 0, or 1 on any problem (the release workflow runs this on each build; see "
@@ -695,6 +701,8 @@ def run():
         config = {**config, 'LANGUAGE': args.language, 'LANGUAGE_FROM_COMMAND_LINE': True}
     if args.checkpoint:
         config = {**config, 'CHECKPOINT': args.checkpoint, 'SPLASH_SCREEN_ENABLED': False}
+    if args.seed is not None:
+        config = {**config, 'SEED': args.seed}
     if args.smoke_test:
         # The scenes load their own starts (src/smoke_test.py SMOKE_SCENES)
         config = {**config, 'SPLASH_SCREEN_ENABLED': False, 'CHECKPOINT': None}

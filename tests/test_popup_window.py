@@ -196,6 +196,6 @@ class TestOtherPopupRedraws(PopupWindowTestCase):
         self.player.current_hp = 2
         self.game.load_window_palette()
         self.player.inventory = ['Herb']
-        with patch('src.menu.random.randint', return_value=23):
+        with patch('src.menu.hero_random.randint', return_value=23):
             self.cmd_menu.herb()
         self.assertEqual(self.popups(), [(15, 1, 100, WHITE)])

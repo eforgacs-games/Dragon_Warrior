@@ -5,7 +5,6 @@ controller holds a reference to the game (MovementGame) and reads what it shares
 player, the map, the camera) from it each time, since the game replaces some of them (a map change makes a new map).
 Where an NPC may step, as far as the map goes, is src/npc_movement.py; when the NPCs move is src/npc_schedule.py.
 """
-import random
 from typing import TYPE_CHECKING, Any, Protocol
 
 from pygame import key
@@ -22,6 +21,7 @@ from src.map_hotkeys import MAP_REQUESTS
 from src.npc_movement import npc_may_step_onto, step
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
 from src.player.player import Player
+from src.random_streams import world_random
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
@@ -618,7 +618,7 @@ class MovementController:
     def start_npc_step(self, roaming_character: RoamingCharacter) -> None:
         """NES SetNPCDir and the checks after it: turn to a random direction, and take the first pixel of a step that
         way if nothing is in the way (move checks it)."""
-        roaming_character.direction_value = random.choice(list(map(int, Direction)))
+        roaming_character.direction_value = world_random.choice(list(map(int, Direction)))
         self.begin_npc_step(roaming_character)
 
     def begin_npc_step(self, roaming_character: RoamingCharacter) -> bool:
@@ -643,7 +643,7 @@ class MovementController:
         hero's path: it stands still for at least 64 frames (about a second) after arriving."""
         sideways = [direction for direction in map(int, Direction) if direction % 2 != hero_direction % 2]
         facing = roaming_character.direction_value
-        for direction in [*random.sample(sideways, len(sideways)), hero_direction]:
+        for direction in [*world_random.sample(sideways, len(sideways)), hero_direction]:
             roaming_character.direction_value = direction
             if self.begin_npc_step(roaming_character):
                 roaming_character.turns_to_rest = 1

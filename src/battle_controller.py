@@ -7,7 +7,6 @@ delegates to it; BattleController holds a back-reference to Game so it can
 reach shared resources (player, cmd_menu, screen, sound, drawer, …).
 """
 
-import random
 from collections.abc import Callable
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -30,6 +29,7 @@ from src.enemy_spells import enemy_spell_lookup
 from src.game_events import FightLost, FightWon, RanAway
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
+from src.random_streams import hero_random
 from src.selection import frame_events, next_frame
 from src.sound import SPELL_SFX_FRAMES
 from src.spells import Spell
@@ -331,9 +331,9 @@ class BattleController:
         away, then CalcWhoIsNext decides whether the enemy attacks before the hero is ready (StartEnemyTurn) or the
         hero gets the first turn. Returns True if the enemy ran away."""
         enemy = current_battle.enemy
-        if enemy_flees(self.player.strength, enemy.attack, random.randint(0, 255)):
+        if enemy_flees(self.player.strength, enemy.attack, hero_random.randint(0, 255)):
             return self.enemy_run_away(current_battle, enemy)
-        if player_acts_first(self.player.agility, enemy.defense, random.randint(0, 255), random.randint(0, 255)):
+        if player_acts_first(self.player.agility, enemy.defense, hero_random.randint(0, 255), hero_random.randint(0, 255)):
             return False
         self.cmd_menu.show_line_in_dialog_box(
             self._("The {} attacked before {} was ready.").format(self._(enemy.name), self.player.name),
@@ -572,7 +572,7 @@ class BattleController:
         attack_damage = current_battle.calculate_attack_damage(self.cmd_menu, self.player, current_battle.enemy)
         if attack_damage <= 0:
             current_battle.missed_attack(self.cmd_menu)
-        elif not current_battle.enemy.is_asleep and enemy_dodges(current_battle.enemy.dodge, random.randint(0, 255)):
+        elif not current_battle.enemy.is_asleep and enemy_dodges(current_battle.enemy.dodge, hero_random.randint(0, 255)):
             # NES SetEnDmg1: a sleeping enemy can't dodge (excellent moves can be dodged too)
             self.sound.play_sound(self.directories.missed_sfx)
             self.cmd_menu.show_line_in_dialog_box(self._("It is dodging!"), **BATTLE_LINE)  # TB17E10
@@ -610,7 +610,7 @@ class BattleController:
         # NES (StartEnemyTurn): a sleeping enemy wakes 1 time in 3 (the 2-bit roll is redone on 0) and
         # acts immediately; otherwise it stays asleep and the player gets another turn.
         if enemy.is_asleep:
-            if random.randint(1, 3) != 1:
+            if hero_random.randint(1, 3) != 1:
                 self.cmd_menu.show_line_in_dialog_box(self._("The {} is asleep.").format(self._(enemy.name)),
                                                       **BATTLE_LINE)  # TB16E8
                 return False
@@ -619,7 +619,7 @@ class BattleController:
                                                   **BATTLE_LINE)  # TB1E0
         # NES DoEnemyAttack calls CheckEnRun first: an enemy facing a hero with at least double its attack in
         # strength has a 1 in 4 chance to run away.
-        if enemy_flees(self.player.strength, enemy.attack, random.randint(0, 255)):
+        if enemy_flees(self.player.strength, enemy.attack, hero_random.randint(0, 255)):
             return self.enemy_run_away(current_battle, enemy)
         # Rebuild the pattern so HP-based conditions (e.g. HEAL) reflect damage taken this turn.
         enemy.refresh_pattern()
@@ -641,7 +641,7 @@ class BattleController:
             elif current_spell == Spell.STOPSPELL and self.player.is_stopspelled:
                 may_cast = False
             if may_cast:
-                if random.randint(0, 99) < chance_percent:
+                if hero_random.randint(0, 99) < chance_percent:
                     if current_spell not in (Spell.FIREBREATH, Spell.FIREBREATH2):
                         # TB16E12 and TB16E13, both with no WAIT
                         self.cmd_menu.show_line_in_dialog_box(
@@ -664,7 +664,7 @@ class BattleController:
                                                               **BATTLE_LINE)  # TB15E10
                         return
                     spell_effect_lower_bound, spell_effect_upper_bound = enemy_spell_lookup[current_spell]
-                    spell_effect = random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
+                    spell_effect = hero_random.randint(spell_effect_lower_bound, spell_effect_upper_bound)
                     match current_spell:
                         case Spell.HEAL | Spell.HEALMORE:
                             # NES EnemyAddHP: capped at the enemy's base HP

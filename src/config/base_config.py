@@ -114,6 +114,7 @@ base_config = {
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on
     "CHECKPOINT": None,  # e.g. "rainbow_bridge": start from data/checkpoints/<name>.json (also --checkpoint)
+    "SEED": None,  # an int: the seed of the random numbers (also --seed; src/random_streams.py), or None for a new one
     "SAVE_DIR": None,  # None saves to src/saves
     # The global settings file (zoom, fullscreen, game speed, language; src/settings.py): USER_SETTINGS is the user's
     # config folder (or $DRAGON_WARRIOR_SETTINGS), a path that file, None keeps no settings file

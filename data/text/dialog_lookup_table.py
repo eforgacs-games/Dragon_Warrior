@@ -1,4 +1,3 @@
-import random
 from functools import partial
 from collections.abc import Callable
 from typing import cast
@@ -19,6 +18,7 @@ from src.maps import DragonWarriorMap
 from src.game_events import EventBus, GoldEarned, GoldSpent
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE
+from src.random_streams import world_random
 from src.records import king_lorik_charge
 from src.window_renderer import draw_window as generated_window
 from src.windows import BUY_SELL_LAYOUT, WindowLayout, shop_inventory_layout
@@ -619,7 +619,7 @@ class DialogLookup:
     def princess_gwaelin_throne_room(self):
         """NES PrincessDialog: two random bits pick what Gwaelin says when spoken to in the throne room."""
         _ = self._
-        random_bits = random.randint(0, 3)
+        random_bits = world_random.randint(0, 3)
         if random_bits == 0:
             self.even_when_we_two_are_parted()
         elif random_bits == 3:

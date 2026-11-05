@@ -1,7 +1,6 @@
 """Rewind (src/rewind.py): hold Backspace on the map to step back through the last snapshots. Not NES."""
 import json
 import os
-import random
 import sys
 from unittest.mock import patch
 
@@ -14,6 +13,7 @@ from pygame.event import Event
 
 from src.battle_controller import BattleOutcome
 from src.debug_tools import DebugTools
+from src.random_streams import seed_all
 from src.rewind import REWIND_CAPACITY, REWIND_INTERVAL_FRAMES
 from src.options_overlay import apply_option
 from src.save_state import take_snapshot
@@ -46,7 +46,7 @@ class RewindTestCase(SaveStateTestCase):
         super().setUp()
         self.rewind = self.game.rewind
         self.go_to(self.game, 'Brecconary')
-        random.seed(SEED)
+        seed_all(SEED)
 
     def press_backspace(self):
         self.game._handle_pygame_events([key(K_BACKSPACE)])

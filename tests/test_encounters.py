@@ -1,4 +1,3 @@
-import random
 import unittest
 from collections import Counter
 from unittest.mock import patch
@@ -14,6 +13,7 @@ from src.encounters import (
 )
 from src.enemy_lookup import enemy_string_lookup
 from src.maps import map_lookup
+from src.random_streams import seed_all
 from tests.helpers import new_game
 
 # The NES data, copied byte for byte from Bank03 of the nmikstas disassembly.
@@ -203,7 +203,7 @@ class TestFightChance(unittest.TestCase):
 
     def test_parity_uses_nes_coordinates(self):
         # Alefgard's layout is offset by (8, 7), an odd sum, so layout (column + row) even is NES (x + y) odd.
-        with patch('src.encounters.random.randint', return_value=1) as randint:
+        with patch('src.encounters.hero_random.randint', return_value=1) as randint:
             step_starts_fight('Alefgard', 'GRASS', 20, 20)
             self.assertEqual(randint.call_args.args, (0, 0x0F))
             step_starts_fight('Alefgard', 'GRASS', 20, 21)
@@ -213,7 +213,7 @@ class TestFightChance(unittest.TestCase):
             self.assertEqual(randint.call_args.args, (0, 0x1F))
 
     def test_seeded_fight_rate_per_block(self):
-        random.seed(230)
+        seed_all(230)
         trials = 64000
         # (map, tile, column, row, expected chance)
         for map_identifier, tile, column, row, expected in (
@@ -236,18 +236,18 @@ class TestZoneZero(unittest.TestCase):
 
     def test_zone_zero_check(self):
         # HighFightModifier (hills: RandNumUB AND 3) and NormFightModifier (RandNumUB AND 1)
-        with patch('src.encounters.random.randint', return_value=0) as randint:
+        with patch('src.encounters.hero_random.randint', return_value=0) as randint:
             self.assertTrue(passes_zone_zero_check('HILLS'))
             self.assertEqual(randint.call_args.args, (0, 3))
             self.assertTrue(passes_zone_zero_check('GRASS'))
             self.assertEqual(randint.call_args.args, (0, 1))
-        with patch('src.encounters.random.randint', return_value=1):
+        with patch('src.encounters.hero_random.randint', return_value=1):
             self.assertFalse(passes_zone_zero_check('HILLS'))
             self.assertFalse(passes_zone_zero_check('GRASS'))
 
     def test_zone_zero_rate_near_tantegel(self):
         # Two zone-0 squares: NES zones (2, 2) and (3, 2). Grass at even/odd parity: 1/16 * 1/2 = 1/32.
-        random.seed(43)
+        seed_all(43)
         trials = 64000
         column, row = 40 + 8, 35 + 7  # NES (40, 35): zone (2, 2), x + y odd
         self.assertEqual(encounter_group('Alefgard', column, row), 0)
@@ -258,16 +258,16 @@ class TestZoneZero(unittest.TestCase):
 
     def test_other_zones_skip_the_check(self):
         column, row = 60 + 8, 35 + 7  # NES (60, 35): zone (4, 2), row $02
-        with patch('src.encounters.random.randint', return_value=0) as randint, \
+        with patch('src.encounters.hero_random.randint', return_value=0) as randint, \
                 patch.object(encounters, 'passes_zone_zero_check') as zone_zero:
             self.assertEqual(roll_encounter('Alefgard', 'GRASS', column, row), ENEMY_GROUPS[2])
         zone_zero.assert_not_called()
         randint.assert_called_once()
 
     def test_no_fight_when_the_step_roll_fails(self):
-        with patch('src.encounters.random.randint', return_value=1):
+        with patch('src.encounters.hero_random.randint', return_value=1):
             self.assertIsNone(roll_encounter('GarinsGraveB2', 'BRICK', 5, 5))
-        with patch('src.encounters.random.randint', return_value=0):
+        with patch('src.encounters.hero_random.randint', return_value=0):
             self.assertEqual(roll_encounter('GarinsGraveB2', 'BRICK', 5, 5), ENEMY_GROUPS[7])
             self.assertIsNone(roll_encounter('ErdricksCaveB1', 'BRICK', 5, 5))
 
@@ -277,13 +277,13 @@ class TestPickEnemy(unittest.TestCase):
     def test_rerolls_slots_five_to_seven(self):
         # GetEnemyInRow: RandNumUB AND 7, again while >= 5
         group = ENEMY_GROUPS[0x13]
-        with patch('src.encounters.random.randint', side_effect=[7, 5, 6, 3]) as randint:
+        with patch('src.encounters.hero_random.randint', side_effect=[7, 5, 6, 3]) as randint:
             self.assertEqual(pick_enemy(group), group[3])
         self.assertEqual(randint.call_count, 4)
         self.assertEqual(randint.call_args.args, (0, 7))
 
     def test_each_slot_equally_likely(self):
-        random.seed(5)
+        seed_all(5)
         trials = 50000
         counts = Counter(pick_enemy(ENEMY_GROUPS[0x13]) for _ in range(trials))
         # Ghost, Magician, Scorpion: 1 slot each; Druin: 2 slots
@@ -322,7 +322,7 @@ class TestHandleBattles(unittest.TestCase):
         self.game.tiles_moved_since_spawn += 1
 
     def fight_roll(self):
-        with patch('src.encounters.random.randint', return_value=0) as randint, \
+        with patch('src.encounters.hero_random.randint', return_value=0) as randint, \
                 patch.object(self.game.battle_ctrl, 'run_battle') as run_battle:
             self.game.field_encounters.handle_battles()
             while self.game.movement.hill_pause_frames:  # on a hill, the roll comes after the pause
@@ -409,7 +409,7 @@ class TestHandleBattles(unittest.TestCase):
         self.step_onto('GarinsGraveB2', 3, 12)
         self.assertIn((3, 12), self.game.current_map.staircases)
         self.game.tiles_moved_since_spawn = self.game.last_amount_of_tiles_moved + 5  # past a new map's wait for stairs
-        with patch('src.encounters.random.randint', return_value=0), \
+        with patch('src.encounters.hero_random.randint', return_value=0), \
                 patch.object(self.game.battle_ctrl, 'run_battle', return_value=outcome) as run_battle:
             self.game.field_encounters.handle_battles()
         run_battle.assert_called_once()
