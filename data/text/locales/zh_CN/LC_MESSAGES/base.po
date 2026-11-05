@@ -3899,3 +3899,7 @@ msgstr "P2 左"
 #: src/controls_screen.py
 msgid "P2 RIGHT"
 msgstr "P2 右"
+
+#: data/text/dialog_lookup_table.py
+msgid "Who will it be?"
+msgstr "要让谁来？"

@@ -17,7 +17,12 @@ fled. A lost fight takes both back to King Lorik, as on the NES. One successful 
 
 The second hero's turns are player 2's: their command, their SPELL and ITEM windows and their action's messages read
 player 2's joypad (src/controls.py player_input: the numpad, or a second controller, src/gamepad.py), the rest of the
-fight player 1's. The inns, shops and chests that ask which hero come next.
+fight player 1's.
+
+In the world: an inn charges each hero its price and both rest (data/text/dialog_lookup_table.py); a shop first asks
+who is shopping and runs for that hero (``for_a_chosen_hero``), with the party's gold; a chest's item goes to the first
+hero with room for it, and the first hero may drop something for it if neither has (CommandMenu.take_item); STATUS
+shows each hero's status in turn. The second hero's own ITEM and SPELL on the map come next.
 """
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -84,8 +89,9 @@ def living(game: Any) -> list[Player]:
 def acting(game: Any, hero: Player) -> Iterator[None]:
     """For the length of the block, ``hero`` is the hero the game acts on: ``game.player``, and the CommandMenu's and
     its DialogLookup's ``player``, which the fight, the spells and the items read (src/battle_controller.py), while
-    ``game.first_hero`` keeps the first hero (``heroes``). The hero before is put back afterwards, whatever happens.
-    With ``hero`` the one acting already, nothing changes."""
+    ``game.first_hero`` keeps the first hero (``heroes``). The gold is the party's: the hero has it for the block, and
+    what's left goes back. The hero before is put back afterwards, whatever happens. With ``hero`` the one acting
+    already, nothing changes."""
     previous = game.player
     if hero is previous:
         yield
@@ -95,14 +101,21 @@ def acting(game: Any, hero: Player) -> Iterator[None]:
     outermost = not isinstance(getattr(game, 'first_hero', None), Player)
     if outermost:
         game.first_hero = previous
+    hero.gold = previous.gold  # the party's gold, whoever spends it
     game.player = cmd_menu.player = hero
     if dialog_lookup is not None:
         dialog_lookup.player = hero
     try:
         yield
     finally:
+        previous.gold = hero.gold
         game.player = cmd_menu.player = previous
         if dialog_lookup is not None:
             dialog_lookup.player = previous
         if outermost:
             game.first_hero = None
+
+
+def someone_chosen(game: Any) -> bool:
+    """Whether a hero has been chosen to act (``acting`` is under way), so nothing asks again."""
+    return isinstance(getattr(game, 'first_hero', None), Player)
