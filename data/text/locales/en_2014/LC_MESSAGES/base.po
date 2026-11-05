@@ -3700,3 +3700,23 @@ msgstr "CHESTS OPENED"
 #: src/stats_screen.py
 msgid "MONSTERS DEFEATED"
 msgstr "MONSTERS DEFEATED"
+
+#: src/auto_grind.py
+msgid "Auto-grind: not in this fight"
+msgstr "Auto-grind: not in this fight"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: MP too low to heal"
+msgstr "Auto-grind stopped: MP too low to heal"
+
+#: src/options_overlay.py
+msgid "DANGER"
+msgstr "DANGER"
+
+#: src/options_overlay.py
+msgid "AUTO-HEAL"
+msgstr "AUTO-HEAL"
+
+#: src/options_overlay.py
+msgid "KEEP 1 HEAL"
+msgstr "KEEP 1 HEAL"

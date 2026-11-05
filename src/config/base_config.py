@@ -62,8 +62,11 @@ base_config = {
     "AUTO_STAIRS": False,  # STAIRS: True steps onto stairs to take them (not NES); False needs the STAIRS command (NES)
     "AUTO_BATTLE": False,
     # GRIND STOP (not NES): the HP at which auto-grind (G, src/auto_grind.py) stops: "RedHP" (the NES's low HP, where
-    # the windows turn red), "HalfHP" or "ThreeQuartersHP"
+    # the windows turn red), "HalfHP", "ThreeQuartersHP" or "Danger" (what the area's monsters can do: src/grind_safety.py)
     "AUTO_GRIND_STOP": "RedHP",
+    # AUTO-HEAL (not NES): at the GRIND STOP HP, auto-grind heals instead of stopping: "Off", "On" (with all the MP) or
+    # "KeepOneHeal" (keeping the MP for one HEAL)
+    "AUTO_HEAL": "Off",
     # MENU SPEED (not NES, #440): "Normal" keeps the selection windows (their cursor's blink and held button repeat) at
     # 1x whatever the game speed (keys 1 to 5); "FollowGameSpeed" speeds them up with the game (src/waiting.py)
     "MENU_SPEED": "Normal",

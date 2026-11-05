@@ -16,6 +16,7 @@ from pygame import KEYDOWN, Surface, display, event, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
+from src.controls import pressed
 from src.common import A_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, reject_keys, singular_or_plural
 from src.menu import BATTLE_LINE
 from src.cursor import BlinkingCursor
@@ -117,6 +118,8 @@ class BattleController:
         # Set by start_scripted_battle for the fight it starts (auto-grind stops before a scripted fight's first
         # command)
         self.scripted_fight = False
+        # The fight under way is a scripted one (or the Dragonlord's second form): G can't start auto-grind in it
+        self.special_fight = False
 
     # ------------------------------------------------------------------ #
     #  Properties that forward to game for brevity inside this class       #
@@ -245,7 +248,8 @@ class BattleController:
                                              self.cmd_menu, self.graphics, self.directories,
                                              self.game.color, self.player)
         scripted, self.scripted_fight = self.scripted_fight, False
-        if scripted or enemy_name == 'Dragonlord 2':
+        self.special_fight = scripted or enemy_name == 'Dragonlord 2'
+        if self.special_fight:
             # Auto-grind never fights a guardian or the Dragonlord: the player chooses from the first command on
             self.auto_grind.scripted_fight_starts()
         # The first player turn opens the command window (StartPlayerTurn): if the enemy attacks first, there is none
@@ -380,6 +384,8 @@ class BattleController:
                 tapped = 0  # keys pressed since the last call, which may have been let go already
                 for current_event in frame_events():  # quits if the window is closed; 1 to 5 only set the speed
                     if current_event.type == KEYDOWN:
+                        if self.press_auto_grind(current_event):
+                            continue
                         tapped |= key_joypad_buttons(current_event.key)
                 presses = self.command_buttons.read(held_joypad_buttons(), tapped)  # WndGetButtons
                 selected_executed_option = self.process_command_input(presses)
@@ -437,6 +443,15 @@ class BattleController:
                         self.player.is_dead = True
                 current_battle.no_op = False
         return run_away
+
+    def press_auto_grind(self, current_event) -> bool:
+        """G (AUTO_GRIND) at the command window, with the AUTO-GRIND option on: auto-grind takes over from this turn
+        (AutoGrind.start_in_fight). Returns whether the key was G's. While auto-grind runs, G stops it before it gets
+        here (AutoGrind.real_key)."""
+        if not (pressed(current_event, 'AUTO_GRIND') and self.config.get('AUTO_GRIND')) or self.grinding:
+            return False
+        self.auto_grind.start_in_fight()
+        return True
 
     def open_command_window(self) -> None:
         """StartPlayerTurn and ShowCmbtCmd (LE5EF): "Command?" (TextBlock15 entry 8), then Dowindow WND_CMD_CMB, whose

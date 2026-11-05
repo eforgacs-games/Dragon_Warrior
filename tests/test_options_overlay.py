@@ -215,14 +215,15 @@ class TestRows(OverlayTestCase):
                                         ("SAVE STATES", 'SAVE_STATES', ("OFF (NES)", "ON")),
                                         ("REWIND", 'REWIND', ("OFF (NES)", "ON")),
                                         ("AUTO-GRIND", 'AUTO_GRIND', ("OFF (NES)", "ON")),
-                                        ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP")),
+                                        ("GRIND STOP", 'AUTO_GRIND_STOP', ("RED HP", "HALF HP", "3/4 HP", "DANGER")),
                                         ("MENU SPEED", 'MENU_SPEED', ("NORMAL", "FOLLOW GAME")),
                                         ("CHEATS", 'CHEAT_KEYS', ("OFF (NES)", "ON")),
                                         ("DUNGEON MAP", 'DUNGEON_MAP', ("OFF (NES)", "ON")),
                                         ("MESSAGE LOG", 'MESSAGE_LOG', ("OFF (NES)", "ON")),
                                         ("CONTROLS", None, ())]),
                           ("OTHER", [("CONFIRM NAME", 'NAME_CONFIRM', ("OFF (NES)", "ON")),
-                                     ("STATS PAGE", 'STATS_PAGE', ("OFF (NES)", "ON"))])],
+                                     ("STATS PAGE", 'STATS_PAGE', ("OFF (NES)", "ON")),
+                                     ("AUTO-HEAL", 'AUTO_HEAL', ("OFF (NES)", "ON", "KEEP 1 HEAL"))])],
                          [(page.title, [(row.label, getattr(row, 'config_key', None), row.value_labels)
                                         for row in page.rows])
                           for page in OPTION_PAGES])
@@ -265,7 +266,8 @@ class TestRows(OverlayTestCase):
                           "REWIND", "ON", "AUTO-GRIND", "OFF (NES)", "GRIND STOP", "3/4 HP", "MENU SPEED", "NORMAL",
                           "CHEATS", "ON", "DUNGEON MAP", "OFF (NES)", "MESSAGE LOG", "OFF (NES)", "CONTROLS"],
                          page_texts(self.config, 2))
-        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "4/4", "CONFIRM NAME", "OFF (NES)", "STATS PAGE", "OFF (NES)"],
+        self.assertEqual(["PRESET", "CUSTOM", "PAGE", "4/4", "CONFIRM NAME", "OFF (NES)", "STATS PAGE", "OFF (NES)",
+                          "AUTO-HEAL", "OFF (NES)"],
                          page_texts(self.config, 3))
 
     def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):
@@ -311,14 +313,14 @@ class TestRows(OverlayTestCase):
                 # what the next save keeps (CommandMenu.save)
                 self.assertEqual(options_from_config(expected), options_from_config(self.config))
 
-    def test_grind_stop_goes_round_all_three(self):
+    def test_grind_stop_goes_round_all_four(self):
         settings = []
-        for _ in range(3):
+        for _ in range(4):
             self.run_overlay(*down_to("GRIND STOP"), K_RIGHT, K_u)
             settings.append(self.config['AUTO_GRIND_STOP'])
-        self.assertEqual(['HalfHP', 'ThreeQuartersHP', 'RedHP'], settings)
+        self.assertEqual(['HalfHP', 'ThreeQuartersHP', 'Danger', 'RedHP'], settings)
         self.run_overlay(*down_to("GRIND STOP"), K_LEFT, K_u)
-        self.assertEqual('ThreeQuartersHP', self.config['AUTO_GRIND_STOP'])
+        self.assertEqual('Danger', self.config['AUTO_GRIND_STOP'])
 
     def test_message_speed_goes_round_all_three(self):
         speeds = []
@@ -444,7 +446,7 @@ class TestPreset(OverlayTestCase):
                           'CHEAT_KEYS': False, 'RUN_BUTTON': False, 'SHOP_PREVIEW': False,
                           'QUEST_JOURNAL': JOURNAL_OFF, 'AUTOSAVE': False, 'BAG_SIZE': 8,
                           'VIEW': 'NES', 'DUNGEON_MAP': False, 'SMART_A': False,
-                          'MESSAGE_LOG': False, 'NAME_CONFIRM': False, 'STATS_PAGE': False},
+                          'MESSAGE_LOG': False, 'NAME_CONFIRM': False, 'STATS_PAGE': False, 'AUTO_HEAL': 'Off'},
                          preset_values(PRESET_NES))
         # MODERN: every convenience but the cheats; the number of fights and what they give stay the NES's
         self.assertEqual({'DIALOG_STYLE': CLASSIC, 'FADE_STYLE': FADE_STYLE_NES, 'SOUNDTRACK': 'Orchestra',
@@ -454,7 +456,7 @@ class TestPreset(OverlayTestCase):
                           'CHEAT_KEYS': False, 'RUN_BUTTON': True, 'SHOP_PREVIEW': True,
                           'QUEST_JOURNAL': JOURNAL_HINTS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
                           'VIEW': 'NES', 'DUNGEON_MAP': True, 'SMART_A': True,
-                          'MESSAGE_LOG': True, 'NAME_CONFIRM': True, 'STATS_PAGE': True},
+                          'MESSAGE_LOG': True, 'NAME_CONFIRM': True, 'STATS_PAGE': True, 'AUTO_HEAL': 'KeepOneHeal'},
                          preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them
         self.assertNotIn('TEXT_SPEED', [row.config_key for row in PRESET_ROWS])

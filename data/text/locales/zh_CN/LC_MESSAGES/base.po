@@ -3522,3 +3522,23 @@ msgstr "打开的宝箱"
 #: src/stats_screen.py
 msgid "MONSTERS DEFEATED"
 msgstr "打倒的魔物"
+
+#: src/auto_grind.py
+msgid "Auto-grind: not in this fight"
+msgstr "自动升级: 这场战斗不能用"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: MP too low to heal"
+msgstr "自动升级 停止: MP不够回复"
+
+#: src/options_overlay.py
+msgid "DANGER"
+msgstr "危险"
+
+#: src/options_overlay.py
+msgid "AUTO-HEAL"
+msgstr "自动回复"
+
+#: src/options_overlay.py
+msgid "KEEP 1 HEAL"
+msgstr "留1次霍伊米"

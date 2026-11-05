@@ -171,7 +171,10 @@ on).
 - **Auto-grind** (G): on a map with random fights, the hero paces back and forth between two tiles and chooses FIGHT
   in every fight, until something needs you: HP at or below the GRIND STOP setting (checked at the start of every
   turn, so you can still heal or run), the hero asleep or his spells blocked, a guardian or the Dragonlord, or a level
-  up (press G to go on). G or any other key stops it.
+  up (press G to go on). G or any other key stops it. G at the battle's command window starts it from that turn.
+  With AUTO-HEAL on, low HP doesn't stop it while there's MP to heal: it casts HEAL or HEALMORE (whichever gives more
+  HP for the MP) through the menus, in a fight at the start of a turn or on the map after it, until HP is out of
+  danger, and stops when the MP runs out (KEEP 1 HEAL stops while there's still enough for one HEAL, for the way back).
 
 The game speed, the window zoom and fullscreen are remembered for the next time you play.
 
@@ -258,7 +261,7 @@ With one of these OFF, its key does nothing, as on the NES.
 | SAVE STATES | F1 to F3 and Shift+F1 to F3 | OFF | OFF | ON |
 | REWIND | Backspace | OFF | OFF | ON |
 | AUTO-GRIND | G | OFF | OFF | ON |
-| GRIND STOP | When auto-grind stops: RED HP (the NES's low HP, where the windows turn red), HALF HP or 3/4 HP | RED HP | RED HP | RED HP |
+| GRIND STOP | When auto-grind stops (or heals): RED HP (the NES's low HP, where the windows turn red), HALF HP, 3/4 HP or DANGER (when the next enemy turn could kill the hero in a fight, or the next fight could on the map, from the strongest monster around and your armor) | RED HP | RED HP | RED HP |
 | MENU SPEED | NORMAL: the menus' cursor stays at normal speed whatever the game speed; FOLLOW GAME: it speeds up too | NORMAL | NORMAL | NORMAL |
 | CHEATS | F4 auto-battle and F9 invulnerability | OFF | OFF | OFF |
 | DUNGEON MAP | M on a dark floor shows the blocks you've seen there | OFF | OFF | ON |
@@ -270,6 +273,7 @@ With one of these OFF, its key does nothing, as on the NES.
 | Setting | Values | Default | NES | MODERN |
 | --- | --- | --- | --- | --- |
 | CONFIRM NAME | OFF (NES): the 8th letter ends the name; ON: a full name waits on END so you can still change it, and START ends the name from anywhere | OFF | OFF | ON |
+| AUTO-HEAL | What auto-grind does at the GRIND STOP HP: OFF (NES): stops; ON: heals with all the MP; KEEP 1 HEAL: heals but keeps the MP for one HEAL | OFF | OFF | KEEP 1 HEAL |
 
 
 ## Languages
