@@ -422,6 +422,7 @@ def run_client(address: str, settings_controls: Any = None) -> int:
                         try:
                             frames.get_nowait()  # the newest picture only
                         except queue.Empty:
+                            # Queue state may change between full() and get_nowait(); safe to ignore.
                             pass
                     frames.put(frame)
         except (OSError, ConnectionError, ProtocolError) as error:
