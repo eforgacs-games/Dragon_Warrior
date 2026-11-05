@@ -313,9 +313,23 @@ def take_snapshot(game: 'Game') -> dict[str, Any]:
     }
 
 
-def decode_snapshot(snapshot: Any) -> dict[str, Any]:
+def hero_block(hero: dict[str, Any], layout: list[list[int]], tile_size: int | None) -> tuple[int, int]:
+    """The block the hero is on: where their position (rect) is when they're standing on a block and ``tile_size`` is
+    known, their row and column otherwise (in a step: the block it started from). ValueError if it's off the map."""
+    row, column = int(hero['row']), int(hero['column'])
+    x, y = hero['rect']
+    if tile_size and not hero['is_moving'] and x % tile_size == 0 and y % tile_size == 0:
+        row, column = y // tile_size, x // tile_size
+    if not (0 <= row < len(layout) and 0 <= column < len(layout[row])):
+        raise ValueError(f"the hero's block {(row, column)} is off the map")
+    return row, column
+
+
+def decode_snapshot(snapshot: Any, tile_size: int | None = None) -> dict[str, Any]:
     """Check a snapshot and turn its JSON values back into the game's (tuples, the random state), without changing
-    the game. Raises StateError for one from a newer format version or one that can't be read."""
+    the game. Raises StateError for one from a newer format version or one that can't be read. With the game's
+    ``tile_size``, a hero standing on a block is put on the block their position (rect) is on: an autosave written as
+    the hero arrived on a map used to keep the last map's block (hero_block)."""
     if not isinstance(snapshot, dict):
         raise StateError(UNREADABLE)
     snapshot = migrate_snapshot(snapshot)
@@ -337,6 +351,7 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
         for name in PLAYER_LISTS:
             hero[name] = [None if value is None and name == 'inventory' else str(value) for value in hero[name]]
         hero['rect'] = [int(value) for value in hero['rect']]
+        hero['row'], hero['column'] = hero_block(hero, layouts[snapshot['map']], tile_size)
         roaming = []
         for values in snapshot['roaming']:
             values = dict(values)
@@ -399,7 +414,7 @@ def restore_snapshot(game: 'Game', snapshot: dict[str, Any], fade_in: bool = Tru
     state: the screen cuts to black and the map fades in, as when a saved game is loaded (Game.load_game), and its
     music starts. Without it (the rewind), the map is just drawn, and its music only restarts if the map changes.
     Raises StateError, before anything has changed, if the snapshot can't be loaded."""
-    state = decode_snapshot(snapshot)
+    state = decode_snapshot(snapshot, game.tile_size)
     old_map = game.current_map
     old_tiles = map_layout_changes(old_map.identifier, old_map.layout) \
         if old_map.identifier in pristine_layouts() else None
