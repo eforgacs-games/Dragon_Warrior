@@ -19,6 +19,7 @@ from pygame.display import set_caption
 from pygame.event import Event
 
 from data.text.intro_lookup_table import ControlInfo
+from src.achievements import AchievementsScreen
 from src.controls import LOAD_STATE_ACTIONS, SAVE_STATE_ACTIONS, actions_for_event, pressed
 from src.display_filters import PRESENTER
 from src.dungeon_map import DungeonMapOverlay, dungeon_map_enabled
@@ -52,6 +53,7 @@ MAP_REQUESTS = (
     MapRequest('dungeon_map_requested', 'open_dungeon_map'),  # M
     MapRequest('message_log_requested', 'open_message_log'),  # L
     MapRequest('play_stats_requested', 'open_play_stats'),  # P
+    MapRequest('achievements_requested', 'open_achievements'),  # T
     MapRequest('auto_grind_requested', 'start_auto_grind'),  # G
 )
 
@@ -156,6 +158,11 @@ class MapHotkeys:
         """P (STATS): the stats page (src/stats_screen.py), when the STATS PAGE option is on."""
         if pressed(keydown_event, 'PLAY_STATS') and self.config.get('STATS_PAGE'):
             self.request('play_stats_requested')
+
+    def press_trophies(self, keydown_event: Event) -> None:
+        """T (TROPHIES): the achievements page (src/achievements.py), when the ACHIEVEMENTS option is on."""
+        if pressed(keydown_event, 'TROPHIES') and self.config.get('ACHIEVEMENTS'):
+            self.request('achievements_requested')
 
     def press_auto_grind(self, keydown_event: Event) -> None:
         """G: auto-grind (src/auto_grind.py), when the AUTO-GRIND option is on. While it runs, G (or any key but 1 to
@@ -346,6 +353,9 @@ class MapHotkeys:
     def open_play_stats(self) -> None:
         StatsScreen(self.game).run()
 
+    def open_achievements(self) -> None:
+        AchievementsScreen(self.game).run()
+
     def start_auto_grind(self) -> None:
         self.game.auto_grind.start()
 
@@ -358,6 +368,7 @@ KEY_HANDLERS = (
     'press_select',
     'press_message_log',
     'press_play_stats',
+    'press_trophies',
     'press_auto_grind',
     'press_dungeon_map',
     'press_help',

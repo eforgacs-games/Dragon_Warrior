@@ -201,6 +201,9 @@ MESSAGE_LOG = Option('message_log', 'MESSAGE_LOG', ON_OFF, False, (False, False)
 # STATS PAGE (#414): the STATS key (P) shows the adventure's play statistics on the map (src/stats_screen.py). They're
 # counted whatever it says (src/play_stats.py). Information only: on in MODERN.
 STATS_PAGE = Option('stats_page', 'STATS_PAGE', ON_OFF, False, (False, True), 'StatsPage')
+# ACHIEVEMENTS (#425): achievements are unlocked, shown in a banner and on the TROPHIES key's page (T,
+# src/achievements.py). Off, nothing is unlocked.
+ACHIEVEMENTS = Option('achievements', 'ACHIEVEMENTS', ON_OFF, False, (False, True), 'Achievements')
 # AUTOSAVE: the autosave slot (src/autosave.py); the NES only saves with King Lorik
 AUTOSAVE = AutosaveOption('autosave', 'AUTOSAVE', ON_OFF, None, (False, True), 'Autosave')
 # AUTO-HEAL: when auto-grind's HP is low (GRIND STOP), it casts HEAL or HEALMORE instead of stopping, until HP is out
@@ -222,7 +225,7 @@ RANDOMNESS = Option('randomness', 'RANDOMNESS', (RANDOMNESS_NES, RANDOMNESS_SEED
 PER_LOG_OPTIONS = (MESSAGE_SPEED, DIALOG_STYLE, NPCS_MAKE_WAY, FADE_STYLE, AUTO_STAIRS, AUTO_GRIND_STOP, MENU_SPEED,
                    MUSIC, GAME_SPEED_KEYS, SAVE_STATES, REWIND, AUTO_GRIND, CHEAT_KEYS, QUICK_ACTION, ENCOUNTERS,
                    EXP_GOLD, RUN_BUTTON, STATUS_WINDOW, SHOP_PREVIEW, QUEST_JOURNAL, BAG_SIZE, SMART_A, MESSAGE_LOG,
-                   STATS_PAGE, AUTOSAVE, AUTO_HEAL, AUTO_INN, RANDOMNESS)
+                   STATS_PAGE, AUTOSAVE, AUTO_HEAL, AUTO_INN, RANDOMNESS, ACHIEVEMENTS)
 
 # Global, in the order of Settings' fields
 
@@ -277,6 +280,7 @@ class Options:
     auto_heal: str = AUTO_HEAL.default
     auto_inn: bool = AUTO_INN.default
     randomness: str = RANDOMNESS.default
+    achievements: bool = ACHIEVEMENTS.default
 
 
 # A new quest's settings when none are chosen: the default message speed and the NES preset's values, as base_config

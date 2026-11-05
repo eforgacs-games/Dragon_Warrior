@@ -516,8 +516,8 @@ GAME_NOT_KEPT = {
     'show_coordinates', 'last_coordinates', 'debug_tools', 'splash_screen_enabled', 'start_time',
     # Requests for a window or a state: a snapshot is taken with none asked for, and putting one back clears them
     'paused', 'pause_requested', 'cmd_menu_requested', 'options_requested', 'message_log_requested',
-    'auto_grind_requested', 'dungeon_map_requested', 'play_stats_requested', 'smart_a_pending', 'state_request',
-    'state_request_due',
+    'auto_grind_requested', 'dungeon_map_requested', 'play_stats_requested', 'achievements_requested',
+    'smart_a_pending', 'state_request', 'state_request_due',
     # Only set and read during a map change
     'last_map',
     # The snapshots' own machinery, and auto-grind, which drives the game rather than being part of it
@@ -533,6 +533,9 @@ GAME_NOT_KEPT = {
     'screen', 'big_map', 'graphics', 'tile_size', 'foreground_rects', 'loop_count', 'events', 'clock', 'frame_clock',
     'frame_pacer', 'calculation', 'directories', 'game_functions', 'music_player', 'sound', 'title_menu', 'ending',
     'settings',
+    # Kept for whoever plays on this computer, not with an adventure (src/achievements.py): putting a state back
+    # doesn't lock what was unlocked since
+    'achievements',
 }
 # The MovementController attributes a snapshot deliberately doesn't keep
 MOVEMENT_NOT_KEPT = {

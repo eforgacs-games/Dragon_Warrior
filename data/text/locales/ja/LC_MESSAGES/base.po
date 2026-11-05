@@ -3036,6 +3036,7 @@ msgstr "竜王の城の 隠された 下り道を 探そう。"
 msgid "Search behind the Dragonlord's throne."
 msgstr "竜王の 玉座の 後ろを 調べよう。"
 
+#: src/achievements.py
 #: src/quest_journal.py
 msgid "Defeat the Dragonlord."
 msgstr "竜王を 倒そう。"
@@ -3452,6 +3453,7 @@ msgstr "女"
 msgid "WISE MAN"
 msgstr "賢者"
 
+#: src/achievements.py
 #: src/message_log.py
 msgid "DRAGONLORD"
 msgstr "竜王"
@@ -3648,3 +3650,180 @@ msgstr "乱数"
 #: src/options_overlay.py
 msgid "SEEDED"
 msgstr "シード固定"
+
+#: src/achievements.py
+#: src/options_overlay.py
+msgid "ACHIEVEMENTS"
+msgstr "じっせき"
+
+#: src/controls_screen.py
+msgid "TROPHIES"
+msgstr "じっせき"
+
+#: src/achievements.py
+msgid "ACHIEVEMENT"
+msgstr "じっせき かいじょ"
+
+#: src/achievements.py
+msgid "UNLOCKED"
+msgstr "かいじょ"
+
+#: src/achievements.py
+msgid "FIRST VICTORY"
+msgstr "はじめての しょうり"
+
+#: src/achievements.py
+msgid "Win a fight."
+msgstr "たたかいに かつ。"
+
+#: src/achievements.py
+msgid "STONE GUARDIAN"
+msgstr "いしの まもりて"
+
+#: src/achievements.py
+msgid "Defeat the Golem."
+msgstr "ゴーレムを たおす。"
+
+#: src/achievements.py
+msgid "DRAGON'S LAIR"
+msgstr "ドラゴンの どうくつ"
+
+#: src/achievements.py
+msgid "Defeat the Green Dragon."
+msgstr "ひめを まもる ドラゴンを たおす。"
+
+#: src/achievements.py
+msgid "HOMECOMING"
+msgstr "きかん"
+
+#: src/achievements.py
+msgid "Bring Princess Gwaelin home."
+msgstr "ローラ姫を 城へ つれかえる。"
+
+#: src/achievements.py
+msgid "CURSED"
+msgstr "のろい"
+
+#: src/achievements.py
+msgid "Find the Death Necklace."
+msgstr "しのくびかざりを みつける。"
+
+#: src/achievements.py
+msgid "RAINBOW BRIDGE"
+msgstr "虹の橋"
+
+#: src/achievements.py
+msgid "Make the Rainbow Bridge."
+msgstr "虹の橋を かける。"
+
+#: src/achievements.py
+msgid "ERDRICK'S HEIR"
+msgstr "ロトの しそん"
+
+#: src/achievements.py
+msgid "Wear Erdrick's Armor and wield Erdrick's Sword."
+msgstr "ロトのよろいを きて ロトのつるぎを もつ。"
+
+#: src/achievements.py
+msgid "UNDYING"
+msgstr "ふじみ"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord without dying."
+msgstr "いちども しなずに 竜王を たおす。"
+
+#: src/achievements.py
+msgid "UNDERDOG"
+msgstr "げこくじょう"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord at level 20 or lower."
+msgstr "レベル20 いかで 竜王を たおす。"
+
+#: src/achievements.py
+msgid "SWIFT"
+msgstr "しっぷう"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord in under two hours of play."
+msgstr "プレイ時間 2時間 いないに 竜王を たおす。"
+
+#: src/achievements.py
+msgid "MONSTER HUNTER"
+msgstr "まもの ハンター"
+
+#: src/achievements.py
+msgid "Defeat every kind of monster."
+msgstr "すべての しゅるいの まものを たおす。"
+
+#: src/achievements.py
+msgid "QUICKSILVER"
+msgstr "すいぎん"
+
+#: src/achievements.py
+msgid "Defeat a Metal Slime."
+msgstr "メタルスライムを たおす。"
+
+#: src/achievements.py
+msgid "LEVEL 10"
+msgstr "レベル10"
+
+#: src/achievements.py
+msgid "Reach level 10."
+msgstr "レベル10に なる。"
+
+#: src/achievements.py
+msgid "LEVEL 20"
+msgstr "レベル20"
+
+#: src/achievements.py
+msgid "Reach level 20."
+msgstr "レベル20に なる。"
+
+#: src/achievements.py
+msgid "LEVEL 30"
+msgstr "レベル30"
+
+#: src/achievements.py
+msgid "Reach the highest level."
+msgstr "さいこう レベルに なる。"
+
+#: src/achievements.py
+msgid "CENTURION"
+msgstr "ひゃくせんれんま"
+
+#: src/achievements.py
+msgid "Win 100 fights."
+msgstr "たたかいに 100かい かつ。"
+
+#: src/achievements.py
+msgid "DISCRETION"
+msgstr "にげるが かち"
+
+#: src/achievements.py
+msgid "Run away from 50 fights."
+msgstr "たたかいから 50かい にげる。"
+
+#: src/achievements.py
+msgid "WANDERER"
+msgstr "たびびと"
+
+#: src/achievements.py
+msgid "Take 10000 steps."
+msgstr "10000ぽ あるく。"
+
+#: src/achievements.py
+msgid "RICHES"
+msgstr "おおがねもち"
+
+#: src/achievements.py
+msgid "Carry 65535 gold."
+msgstr "65535ゴールド もつ。"
+
+#: src/achievements.py
+msgid "THOU ART DEAD"
+msgstr "しんで しまうとは"
+
+#: src/achievements.py
+msgid "Die for the first time."
+msgstr "はじめて しぬ。"

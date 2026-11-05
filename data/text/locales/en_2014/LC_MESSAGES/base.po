@@ -3213,6 +3213,7 @@ msgstr "Find the hidden staircase in the Dragonlord's Castle."
 msgid "Search behind the Dragonlord's throne."
 msgstr "Search behind the Dragonlord's throne."
 
+#: src/achievements.py
 #: src/quest_journal.py
 msgid "Defeat the Dragonlord."
 msgstr "Defeat the Dragonlord."
@@ -3629,6 +3630,7 @@ msgstr "WOMAN"
 msgid "WISE MAN"
 msgstr "WISE MAN"
 
+#: src/achievements.py
 #: src/message_log.py
 msgid "DRAGONLORD"
 msgstr "DRAGONLORD"
@@ -3826,3 +3828,180 @@ msgstr "RANDOMNESS"
 #: src/options_overlay.py
 msgid "SEEDED"
 msgstr "SEEDED"
+
+#: src/achievements.py
+#: src/options_overlay.py
+msgid "ACHIEVEMENTS"
+msgstr "ACHIEVEMENTS"
+
+#: src/controls_screen.py
+msgid "TROPHIES"
+msgstr "TROPHIES"
+
+#: src/achievements.py
+msgid "ACHIEVEMENT"
+msgstr "ACHIEVEMENT"
+
+#: src/achievements.py
+msgid "UNLOCKED"
+msgstr "UNLOCKED"
+
+#: src/achievements.py
+msgid "FIRST VICTORY"
+msgstr "FIRST VICTORY"
+
+#: src/achievements.py
+msgid "Win a fight."
+msgstr "Win a battle."
+
+#: src/achievements.py
+msgid "STONE GUARDIAN"
+msgstr "STONE GUARDIAN"
+
+#: src/achievements.py
+msgid "Defeat the Golem."
+msgstr "Defeat the golem."
+
+#: src/achievements.py
+msgid "DRAGON'S LAIR"
+msgstr "DRAGON'S LAIR"
+
+#: src/achievements.py
+msgid "Defeat the Green Dragon."
+msgstr "Defeat the green dragon."
+
+#: src/achievements.py
+msgid "HOMECOMING"
+msgstr "HOMECOMING"
+
+#: src/achievements.py
+msgid "Bring Princess Gwaelin home."
+msgstr "Bring Princess Gwaelin home."
+
+#: src/achievements.py
+msgid "CURSED"
+msgstr "CURSED"
+
+#: src/achievements.py
+msgid "Find the Death Necklace."
+msgstr "Find the Choker."
+
+#: src/achievements.py
+msgid "RAINBOW BRIDGE"
+msgstr "RAINBOW BRIDGE"
+
+#: src/achievements.py
+msgid "Make the Rainbow Bridge."
+msgstr "Make the rainbow bridge."
+
+#: src/achievements.py
+msgid "ERDRICK'S HEIR"
+msgstr "ERDRICK'S HEIR"
+
+#: src/achievements.py
+msgid "Wear Erdrick's Armor and wield Erdrick's Sword."
+msgstr "Wear Erdrick's Armour and wield Erdrick's Sword."
+
+#: src/achievements.py
+msgid "UNDYING"
+msgstr "UNDYING"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord without dying."
+msgstr "Defeat the Dragonlord without dying."
+
+#: src/achievements.py
+msgid "UNDERDOG"
+msgstr "UNDERDOG"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord at level 20 or lower."
+msgstr "Defeat the Dragonlord at level 20 or lower."
+
+#: src/achievements.py
+msgid "SWIFT"
+msgstr "SWIFT"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord in under two hours of play."
+msgstr "Defeat the Dragonlord in under two hours of play."
+
+#: src/achievements.py
+msgid "MONSTER HUNTER"
+msgstr "MONSTER HUNTER"
+
+#: src/achievements.py
+msgid "Defeat every kind of monster."
+msgstr "Defeat every kind of monster."
+
+#: src/achievements.py
+msgid "QUICKSILVER"
+msgstr "QUICKSILVER"
+
+#: src/achievements.py
+msgid "Defeat a Metal Slime."
+msgstr "Defeat a metal slime."
+
+#: src/achievements.py
+msgid "LEVEL 10"
+msgstr "LEVEL 10"
+
+#: src/achievements.py
+msgid "Reach level 10."
+msgstr "Reach level 10."
+
+#: src/achievements.py
+msgid "LEVEL 20"
+msgstr "LEVEL 20"
+
+#: src/achievements.py
+msgid "Reach level 20."
+msgstr "Reach level 20."
+
+#: src/achievements.py
+msgid "LEVEL 30"
+msgstr "LEVEL 30"
+
+#: src/achievements.py
+msgid "Reach the highest level."
+msgstr "Reach the highest level."
+
+#: src/achievements.py
+msgid "CENTURION"
+msgstr "CENTURION"
+
+#: src/achievements.py
+msgid "Win 100 fights."
+msgstr "Win 100 battles."
+
+#: src/achievements.py
+msgid "DISCRETION"
+msgstr "DISCRETION"
+
+#: src/achievements.py
+msgid "Run away from 50 fights."
+msgstr "Run away from 50 battles."
+
+#: src/achievements.py
+msgid "WANDERER"
+msgstr "WANDERER"
+
+#: src/achievements.py
+msgid "Take 10000 steps."
+msgstr "Take 10000 steps."
+
+#: src/achievements.py
+msgid "RICHES"
+msgstr "RICHES"
+
+#: src/achievements.py
+msgid "Carry 65535 gold."
+msgstr "Carry 65535 gold coins."
+
+#: src/achievements.py
+msgid "THOU ART DEAD"
+msgstr "THOU ART DEAD"
+
+#: src/achievements.py
+msgid "Die for the first time."
+msgstr "Die for the first time."
