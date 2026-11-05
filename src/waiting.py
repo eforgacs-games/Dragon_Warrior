@@ -142,9 +142,11 @@ class GamepadHook(Protocol):
     """What this module needs of a gamepad (src/gamepad.py Gamepad, or Gamepads for both players')."""
 
     @property
-    def held(self) -> set[int]: ...
+    def held(self) -> set[int]:
+        """The keys it holds down."""
 
-    def poll(self) -> None: ...
+    def poll(self) -> None:
+        """Post the presses due since the last poll."""
 
 
 _gamepad: GamepadHook | None = None  # the player's gamepad, if the game has connected one (src/gamepad.py)
