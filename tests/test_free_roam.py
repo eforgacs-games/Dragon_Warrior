@@ -278,3 +278,14 @@ class TestGwaelin(FreeRoamTestCase):
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
             self.game.hero_death.set_post_death_attributes()
         self.assertTrue(self.game.story_flags.carrying_gwaelin)
+
+
+class TestTheControllers(FreeRoamTestCase):
+
+    def test_polled_once_a_frame_for_both(self):
+        from src import waiting
+        polls = []
+        with patch.object(waiting, '_gamepad', type('Pad', (), {'held': set(),
+                                                                 'poll': lambda pad: polls.append(1)})()):
+            self.frames(1)
+        self.assertEqual([1], polls)  # the main loop's; the heroes' tasks poll nothing

@@ -509,6 +509,7 @@ class Game:
     def free_roam_frame(self) -> None:
         """One frame of the main loop while the heroes roam apart: the window's events to both heroes' tasks (each
         reads its own player's keys), a frame of each, then both halves of the window shown."""
+        poll_virtual_joypad(MAP_CONTEXT)  # the controllers, once for both heroes (a task polls nothing)
         events = [current_event for current_event in get() if not handle_zoom_event(current_event)]
         for current_event in events:
             quit_if_requested(current_event)
