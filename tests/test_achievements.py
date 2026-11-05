@@ -76,7 +76,7 @@ class TestWhenEachIsEarned(TestCase):
         self.game.player.level = 20
         self.game.play_stats.play_time_ms = 2 * 60 * 60 * 1000 - 1
         self.game.play_stats.won_fight('Dragonlord 2')  # his two forms are one fight, counted as the Dragonlord
-        self.assertTrue({'dragonlord', 'no_deaths', 'low_level', 'fast'} <= earned(self.game))
+        self.assertLessEqual({'dragonlord', 'no_deaths', 'low_level', 'fast'}, earned(self.game))
 
     def test_the_challenges_missed(self):
         self.game.player.level = 21
