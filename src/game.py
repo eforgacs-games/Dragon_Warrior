@@ -499,6 +499,8 @@ class Game:
         """The heroes travel together again: the second hero back behind the first, one screen."""
         for session in list(self.sessions[1:]):
             self.remove_hero_session(session)
+        if self.free_roam_scheduler is not None:
+            self.free_roam_scheduler.close()
         self.free_roam_scheduler = None
         self.free_roam_tasks = []
         self.screen = self.set_screen(self.screen.get_height(), self.screen.get_width())
