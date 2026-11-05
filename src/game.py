@@ -62,6 +62,7 @@ from src.sound import Sound
 from src.battle_controller import BattleController
 from src.ending import Ending
 from src.achievements import Achievements
+from src.party import new_hero, party_of
 from src.play_stats import PlayClock, PlayStats, subscribe_play_stats
 from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
@@ -209,6 +210,8 @@ class Game:
                              images=self.current_map.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
                              current_map=self.current_map, god_mode=self.game_state.config['GOD_MODE'],
                              fighters_ring_attack_bonus=self.game_state.config['FIGHTERS_RING_ATTACK_BONUS'])
+        # The party's second hero (src/party.py), with HEROES on 2; None for the NES's one
+        self.companion: Player | None = None
         self.last_coordinates = None
         self.player.restore_hp()
         self.tile_size = self.game_state.config["TILE_SIZE"]
@@ -343,6 +346,11 @@ class Game:
         self.cmd_menu.set_language(language)
         set_caption(self._("Dragon Warrior"))
         self.settings.update(language=language)
+
+    @property
+    def party(self) -> list[Player]:
+        """The heroes (src/party.py): the first, then the second if there is one."""
+        return party_of(self.player, self.companion)
 
     def main(self) -> None:
         """
@@ -648,6 +656,10 @@ class Game:
         out, so the screen cuts to black and the map appears with a single PalFadeIn."""
         save = SaveFile.from_save(save_file)
         save.restore_player(self.player)
+        self.companion = None
+        if save.companion is not None:
+            self.companion = new_hero(self)
+            save.companion.restore(self.companion)
         self.story_flags = save.story_flags
         self.dungeon_map = DungeonMap.from_save(save.dungeon_map)
         self.play_stats = PlayStats.from_save(save.play_stats)

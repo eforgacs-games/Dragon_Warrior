@@ -3827,3 +3827,19 @@ msgstr "しんで しまうとは"
 #: src/achievements.py
 msgid "Die for the first time."
 msgstr "はじめて しぬ。"
+
+#: src/title_menu.py
+msgid "Now the second hero's name.\n"
+msgstr "つぎに ふたりめの ゆうしゃの なまえを きめよう。\n"
+
+#: src/options_overlay.py
+msgid "HEROES"
+msgstr "ゆうしゃ"
+
+#: src/options_overlay.py
+msgid "1 (NES)"
+msgstr "1 (NES)"
+
+#: src/options_overlay.py
+msgid "2"
+msgstr "2"

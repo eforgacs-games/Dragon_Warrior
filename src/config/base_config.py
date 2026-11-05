@@ -114,6 +114,7 @@ base_config = {
     # (src/stats_screen.py); they're counted either way (src/play_stats.py)
     "STATS_PAGE": False,
     "ACHIEVEMENTS": False,  # src/achievements.py
+    "PARTY": 1,  # the heroes a new quest starts with (src/party.py); a global setting
     "RENDER_TEXT": True,
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on

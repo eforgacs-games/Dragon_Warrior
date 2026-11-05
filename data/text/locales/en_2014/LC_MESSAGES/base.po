@@ -4005,3 +4005,19 @@ msgstr "THOU ART DEAD"
 #: src/achievements.py
 msgid "Die for the first time."
 msgstr "Die for the first time."
+
+#: src/title_menu.py
+msgid "Now the second hero's name.\n"
+msgstr "Now the second hero's name.\n"
+
+#: src/options_overlay.py
+msgid "HEROES"
+msgstr "HEROES"
+
+#: src/options_overlay.py
+msgid "1 (NES)"
+msgstr "1 (NES)"
+
+#: src/options_overlay.py
+msgid "2"
+msgstr "2"

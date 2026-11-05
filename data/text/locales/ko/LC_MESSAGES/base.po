@@ -3624,3 +3624,19 @@ msgstr "죽어 버리다니"
 #: src/achievements.py
 msgid "Die for the first time."
 msgstr "처음으로 죽는다."
+
+#: src/title_menu.py
+msgid "Now the second hero's name.\n"
+msgstr "이제 두 번째 용사의 이름을 정하자.\n"
+
+#: src/options_overlay.py
+msgid "HEROES"
+msgstr "용사"
+
+#: src/options_overlay.py
+msgid "1 (NES)"
+msgstr "1 (NES)"
+
+#: src/options_overlay.py
+msgid "2"
+msgstr "2"

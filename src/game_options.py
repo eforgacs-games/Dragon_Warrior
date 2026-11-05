@@ -242,7 +242,12 @@ DUNGEON_MAP = Option('dungeon_map', 'DUNGEON_MAP', ON_OFF, False, (False, True))
 # CONFIRM NAME: a full name waits on END, START ends the name (src/name_entry.py)
 NAME_CONFIRM = Option('name_confirm', 'NAME_CONFIRM', ON_OFF, False, (False, True))
 
-GLOBAL_OPTIONS = (LANGUAGE, SCANLINES, SCALING, VIEW, DUNGEON_MAP, NAME_CONFIRM)
+# HEROES (co-op, #438): how many heroes a new quest starts with, the NES's one or a party of two (src/party.py). It
+# only changes the next BEGIN A NEW QUEST: a log keeps the party it was started with. Co-op isn't a convenience: no
+# preset changes it.
+PARTY = Option('party', 'PARTY', (1, 2), 1)
+
+GLOBAL_OPTIONS = (LANGUAGE, SCANLINES, SCALING, VIEW, DUNGEON_MAP, NAME_CONFIRM, PARTY)
 
 ALL_OPTIONS = PER_LOG_OPTIONS + GLOBAL_OPTIONS
 OPTIONS_BY_CONFIG_KEY = {option.config_key: option for option in ALL_OPTIONS}

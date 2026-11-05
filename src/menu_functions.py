@@ -54,15 +54,16 @@ class NameSelection:
                                                  self.log_window), (0, 0))
         display.update(screen.get_rect())
 
-    def select_name(self, blink_start, screen, command_menu) -> str | None:
-        """The name entered, or None if Escape was pressed to leave the name entry (back to the title menu)."""
+    def select_name(self, blink_start, screen, command_menu, prompt: str | None = None) -> str | None:
+        """The name entered, or None if Escape was pressed to leave the name entry (back to the title menu).
+        ``prompt``: said before how to type the name (the second hero's, src/party.py)."""
         # CONFIRM NAME (not NES): a full name waits on END, and START ends the name from anywhere
         confirm = bool(self.config.get('NAME_CONFIRM'))
         entry = NameEntry(confirm)
         enable_joystick_input = False
         # No cursor until the alphabet window's selection starts (WndDoSelect)
         self.draw(screen, entry, cursor_visible=None)
-        command_menu.show_line_in_dialog_box(self.control_info.input_name_prompt, letter_by_letter=False,
+        command_menu.show_line_in_dialog_box((prompt or '') + self.control_info.input_name_prompt, letter_by_letter=False,
                                              hide_arrow=False)
         self.draw(screen, entry, cursor_visible=None)
         # The alphabet window's cursor blinks like every NES window cursor (src/cursor.py), restarting whenever it

@@ -85,7 +85,7 @@ class TestPresets(TestCase):
                 self.assertEqual(option.presets[0], expected, option.name)
 
     def test_options_no_preset_changes(self):
-        self.assertEqual({'TEXT_SPEED', 'LANGUAGE', 'SCANLINES', 'SCALING'},
+        self.assertEqual({'TEXT_SPEED', 'LANGUAGE', 'SCANLINES', 'SCALING', 'PARTY'},
                          {option.config_key for option in ALL_OPTIONS if option.presets is None})
 
 

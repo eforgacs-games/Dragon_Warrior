@@ -226,7 +226,8 @@ class TestRows(OverlayTestCase):
                                      ("AUTO-HEAL", 'AUTO_HEAL', ("OFF (NES)", "ON", "KEEP 1 HEAL")),
                                      ("AUTO-INN", 'AUTO_INN', ("OFF (NES)", "ON")),
                                      ("RANDOMNESS", 'RANDOMNESS', ("NES", "SEEDED")),
-                                     ("ACHIEVEMENTS", 'ACHIEVEMENTS', ("OFF (NES)", "ON"))])],
+                                     ("ACHIEVEMENTS", 'ACHIEVEMENTS', ("OFF (NES)", "ON")),
+                                     ("HEROES", 'PARTY', ("1 (NES)", "2"))])],
                          [(page.title, [(row.label, getattr(row, 'config_key', None), row.value_labels)
                                         for row in page.rows])
                           for page in OPTION_PAGES])
@@ -271,7 +272,7 @@ class TestRows(OverlayTestCase):
                          page_texts(self.config, 2))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "4/4", "CONFIRM NAME", "OFF (NES)", "STATS PAGE", "OFF (NES)",
                           "AUTO-HEAL", "OFF (NES)", "AUTO-INN", "OFF (NES)", "RANDOMNESS", "NES",
-                          "ACHIEVEMENTS", "OFF (NES)"],
+                          "ACHIEVEMENTS", "OFF (NES)", "HEROES", "1 (NES)"],
                          page_texts(self.config, 3))
 
     def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):
@@ -384,7 +385,7 @@ class TestRows(OverlayTestCase):
         # the language, the display filters, the view and the dungeon map are the player's, kept in the global settings
         # (src/settings.py)
         self.assertEqual({**changed, 'LANGUAGE': 'English', 'SCANLINES': False, 'SCALING': 'Smooth', 'VIEW': 'NES',
-                          'DUNGEON_MAP': False, 'NAME_CONFIRM': False},
+                          'DUNGEON_MAP': False, 'NAME_CONFIRM': False, 'PARTY': 1},
                          own_settings(loaded.game_state.config))
         # The language is the player's, kept in the global settings (src/settings.py), not the adventure's
         self.assertEqual(('Korean', True, SCALING_PIXEL_PERFECT),
