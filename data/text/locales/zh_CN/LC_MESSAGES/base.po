@@ -3856,6 +3856,7 @@ msgstr "{}还在睡觉……\n"
 msgid "{} is asleep.\n"
 msgstr "{}睡着了！\n"
 
+#: data/text/dialog_lookup_table.py
 #: src/battle_controller.py
 msgid "{} hath fallen.\n"
 msgstr "{}倒下了！\n"
@@ -3903,3 +3904,15 @@ msgstr "P2 右"
 #: data/text/dialog_lookup_table.py
 msgid "Who will it be?"
 msgstr "要让谁来？"
+
+#: src/options_overlay.py
+msgid "FALLEN HEROES"
+msgstr "倒下的勇者"
+
+#: src/options_overlay.py
+msgid "INN"
+msgstr "到旅馆"
+
+#: src/options_overlay.py
+msgid "GET UP"
+msgstr "站起来"

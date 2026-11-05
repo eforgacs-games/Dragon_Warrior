@@ -538,7 +538,7 @@ GAME_NOT_KEPT = {
     'achievements',
     # The party's second hero is kept in its own entry (src/party.py), and put back on the map under the first
     # (src/follower.py)
-    'companion', 'follower', 'first_hero',
+    'companion', 'follower', 'first_hero', 'fallen_sheets',
 }
 # The MovementController attributes a snapshot deliberately doesn't keep
 MOVEMENT_NOT_KEPT = {

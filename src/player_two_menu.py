@@ -51,6 +51,9 @@ def open_player_two_menu(game: 'Game') -> None:
     if hero is None:
         return
     cmd_menu = game.cmd_menu
+    if cmd_menu.dialog_lookup.has_fallen(hero):  # down until an inn: nothing to do (src/party.py)
+        game.game_state.unpause_all_movement()
+        return
     config = game.game_state.config
     layout = menu_layout(hero.name)
     with acting(game, hero), player_input(PLAYER_TWO):

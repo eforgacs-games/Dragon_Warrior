@@ -227,7 +227,8 @@ class TestRows(OverlayTestCase):
                                      ("AUTO-INN", 'AUTO_INN', ("OFF (NES)", "ON")),
                                      ("RANDOMNESS", 'RANDOMNESS', ("NES", "SEEDED")),
                                      ("ACHIEVEMENTS", 'ACHIEVEMENTS', ("OFF (NES)", "ON")),
-                                     ("HEROES", 'PARTY', ("1 (NES)", "2"))])],
+                                     ("HEROES", 'PARTY', ("1 (NES)", "2")),
+                                     ("FALLEN HEROES", 'FALLEN', ("INN", "GET UP"))])],
                          [(page.title, [(row.label, getattr(row, 'config_key', None), row.value_labels)
                                         for row in page.rows])
                           for page in OPTION_PAGES])
@@ -272,7 +273,8 @@ class TestRows(OverlayTestCase):
                          page_texts(self.config, 2))
         self.assertEqual(["PRESET", "CUSTOM", "PAGE", "4/4", "CONFIRM NAME", "OFF (NES)", "STATS PAGE", "OFF (NES)",
                           "AUTO-HEAL", "OFF (NES)", "AUTO-INN", "OFF (NES)", "RANDOMNESS", "NES",
-                          "ACHIEVEMENTS", "OFF (NES)", "HEROES", "1 (NES)"],
+                          "ACHIEVEMENTS", "OFF (NES)", "HEROES", "1 (NES)",
+                          "FALLEN HEROES", "INN"],
                          page_texts(self.config, 3))
 
     def test_the_window_is_the_same_size_on_every_page_and_fits_the_screen(self):

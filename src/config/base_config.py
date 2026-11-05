@@ -114,6 +114,7 @@ base_config = {
     # (src/stats_screen.py); they're counted either way (src/play_stats.py)
     "STATS_PAGE": False,
     "ACHIEVEMENTS": False,  # src/achievements.py
+    "FALLEN": "Inn",  # a party's fallen hero stays down until an inn (src/party.py)
     "PARTY": 1,  # the heroes a new quest starts with (src/party.py); a global setting
     "RENDER_TEXT": True,
     "NO_BLIT": False,

@@ -9,7 +9,8 @@ second hero starts on the first hero's block, under them, and comes out from und
 The second hero blocks the NPCs as the first does (MovementController.character_in_path), but not the first hero,
 who can turn back and step onto their block: they swap places, the second taking the first's old block. They're
 drawn under the first hero, in their own colors: the first hero's blue (NES $11) is green ($1A) on them
-(COMPANION_COLORS), with the sprite sheet for their own weapon and shield.
+(COMPANION_COLORS), with the sprite sheet for their own weapon and shield; grey while they've fallen (greyed). A fallen
+first hero is grey too (Game.set_player_images_by_equipment).
 
 Nothing here runs without a second hero: ``sync`` takes the second hero off the map if the party has none.
 """
@@ -17,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 
 from pygame import PixelArray, Surface
 from pygame.sprite import LayeredDirty
-from pygame.transform import scale
+from pygame.transform import grayscale, scale
 
 from src.direction import Direction
 
@@ -46,6 +47,11 @@ def recolored(sheet: Surface, colors: dict[tuple[int, int, int], tuple[int, int,
         pixels.replace(old, new)
     del pixels  # unlocks the surface
     return copy
+
+
+def greyed(sheet: Any) -> tuple[list[Surface], ...]:
+    """A sprite sheet's images in grey: a party's fallen hero (src/party.py), down until an inn."""
+    return tuple([grayscale(image) for image in images] for images in sheet)
 
 
 def direction_between(origin: Cell, destination: Cell) -> int | None:
@@ -174,12 +180,14 @@ class Follower:
             path = directories.ARMED_HERO_WITH_SHIELD_PATH if companion.shield else directories.ARMED_HERO_PATH
         else:
             path = directories.UNARMED_HERO_WITH_SHIELD_PATH if companion.shield else directories.UNARMED_HERO_PATH
-        if path not in self._sheets:
+        key = path + ('/fallen' if companion.is_dead else '')
+        if key not in self._sheets:
             current_map = self.game.current_map
             sheet = current_map.graphics.get_image(path)
             sheet = scale(sheet, (sheet.get_width() * current_map.scale, sheet.get_height() * current_map.scale))
-            self._sheets[path] = parse_animated_sprite_sheet(recolored(sheet, COMPANION_COLORS), self.game.config)
-        return self._sheets[path]
+            sheet = parse_animated_sprite_sheet(recolored(sheet, COMPANION_COLORS), self.game.config)
+            self._sheets[key] = greyed(sheet) if companion.is_dead else sheet
+        return self._sheets[key]
 
     def cells(self) -> list[Cell]:
         """The blocks the second hero holds: where they stand, and their step's two blocks."""

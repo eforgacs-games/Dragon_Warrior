@@ -29,7 +29,7 @@ from src.enemy_spells import enemy_spell_lookup
 from src.game_events import FightLost, FightWon, RanAway
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
-from src.party import acting, companion_of, heroes, in_party_mode, living
+from src.party import acting, companion_of, heroes, in_party_mode, living, stays_down
 from src.random_streams import hero_random
 from src.selection import frame_events, next_frame
 from src.sound import SPELL_SFX_FRAMES
@@ -308,8 +308,8 @@ class BattleController:
                 self.game.event_bus.emit(RanAway())
             outcome = BattleOutcome.ESCAPED
         self.cmd_menu.current_battle = None
-        if outcome != BattleOutcome.DEFEAT:
-            self.get_fallen_heroes_up()
+        if outcome != BattleOutcome.DEFEAT and not stays_down(self.config):
+            self.get_fallen_heroes_up()  # FALLEN HEROES on GET UP; on INN they stay down until an inn
         if outcome == BattleOutcome.ESCAPED and not current_battle.enemy_fled:
             # The one place the hero's escape resumes the map's music (ResumeMusicTbl). An enemy that ran away has
             # already resumed it, before ExitFight's press (enemy_run_away). After a win, Battle.check_player_level_up
@@ -376,7 +376,8 @@ class BattleController:
         return False
 
     def get_fallen_heroes_up(self) -> None:
-        """A party's hero who fell in a fight that was won or fled gets back up with 1 HP (not NES)."""
+        """A party's hero who fell in a fight that was won or fled gets back up with 1 HP (FALLEN HEROES on GET UP; not
+        NES)."""
         for hero in heroes(self.game):
             if hero.is_dead:
                 hero.is_dead = False

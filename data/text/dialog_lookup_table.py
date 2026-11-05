@@ -52,7 +52,7 @@ def for_a_chosen_hero(shop: Callable[..., Any]) -> Callable[..., Any]:
         if not in_party_mode(game) or someone_chosen(game):
             return shop(self, *args, **kwargs)
         hero = self.choose_hero()
-        if hero is None:
+        if hero is None or self.has_fallen(hero):
             return None
         with acting(game, hero):
             return shop(self, *args, **kwargs)
@@ -1011,6 +1011,13 @@ class DialogLookup:
         chosen = self.select_from_text_menu([hero.name for hero in party], HERO_CHOICE_WINDOW)
         return None if chosen is None else party[chosen]
 
+    def has_fallen(self, hero: Any) -> bool:
+        """Whether a party's hero has fallen and can't act (src/party.py): if so, the player is told."""
+        if not hero.is_dead:
+            return False
+        self.command_menu.show_line_in_dialog_box(self._("{} hath fallen.\n").format(hero.name), skip_text=True)
+        return True
+
     def select_from_text_menu(self, lines: list[str], window: Window, initial_index: int = 0) -> int | None:
         """A double spaced selection window of one column, like BuySellDat or YesNo1Dat: after the top border and a
         blank row, each line is at tile column 2 with a blank row after it (cursor home Y = 2)."""
@@ -1342,7 +1349,8 @@ class DialogLookup:
         screen_fade(fade_out=True, screen=self.screen, config=self.config)  # PalFadeOut (LD8DC)
         # LD8DF-LD8FB, with the screen black: MSC_INN starts and HP and MP are restored,
         # WaitForMusicEnd lets the jingle finish, then MSC_VILLAGE starts, and only then PalFadeIn
-        for hero in heroes(game):  # a party's heroes all stay (src/party.py)
+        for hero in heroes(game):  # a party's heroes all stay, and a fallen one is up again (src/party.py)
+            hero.is_dead = False
             hero.restore_hp()
             hero.restore_mp()
         game.music_player.play_until_end(self.directories.inn_music, config)

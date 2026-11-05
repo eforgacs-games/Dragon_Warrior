@@ -4034,6 +4034,7 @@ msgstr "{} is asleep...\n"
 msgid "{} is asleep.\n"
 msgstr "{} falls asleep!\n"
 
+#: data/text/dialog_lookup_table.py
 #: src/battle_controller.py
 msgid "{} hath fallen.\n"
 msgstr "{} has been defeated!\n"
@@ -4081,3 +4082,15 @@ msgstr "P2 RIGHT"
 #: data/text/dialog_lookup_table.py
 msgid "Who will it be?"
 msgstr "Who will it be?"
+
+#: src/options_overlay.py
+msgid "FALLEN HEROES"
+msgstr "FALLEN HEROES"
+
+#: src/options_overlay.py
+msgid "INN"
+msgstr "INN"
+
+#: src/options_overlay.py
+msgid "GET UP"
+msgstr "GET UP"

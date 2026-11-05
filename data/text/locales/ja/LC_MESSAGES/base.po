@@ -3856,6 +3856,7 @@ msgstr "{}は まだ 眠っている……。\n"
 msgid "{} is asleep.\n"
 msgstr "{}は 眠ってしまった！\n"
 
+#: data/text/dialog_lookup_table.py
 #: src/battle_controller.py
 msgid "{} hath fallen.\n"
 msgstr "{}は 力つきた！\n"
@@ -3903,3 +3904,15 @@ msgstr "P2 右"
 #: data/text/dialog_lookup_table.py
 msgid "Who will it be?"
 msgstr "だれに しますか？"
+
+#: src/options_overlay.py
+msgid "FALLEN HEROES"
+msgstr "たおれた ゆうしゃ"
+
+#: src/options_overlay.py
+msgid "INN"
+msgstr "やどやまで"
+
+#: src/options_overlay.py
+msgid "GET UP"
+msgstr "おきあがる"

@@ -13,7 +13,10 @@ then the enemy acts against one of them, chosen at random. The battle code acts 
 and the enemy's turn against a hero, run with that hero as ``game.player`` (``acting``). A hero brought to 0 HP has
 fallen and sits the fight out; the fight is lost only when both have fallen. Winning gives each hero still standing
 the enemy's experience, and the party its gold, once. A hero who fell gets back up with 1 HP once the fight is won or
-fled. A lost fight takes both back to King Lorik, as on the NES. One successful run gets the party away.
+fled, with FALLEN HEROES on GET UP; on INN, the default, they stay down until the party stays at an inn: greyed on the
+map, taking no swamp or barrier damage, and they can't fight, use ITEM, SPELL or a shop. A fallen first hero still
+leads the party on the map (they're the adventure log's). A lost fight takes both back to King Lorik, as on the NES.
+One successful run gets the party away.
 
 The second hero's turns are player 2's: their command, their SPELL and ITEM windows and their action's messages read
 player 2's joypad (src/controls.py player_input: the numpad, or a second controller, src/gamepad.py), the rest of the
@@ -32,6 +35,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
+from src.game_options import FALLEN_GET_UP, FALLEN_INN
 from src.player.player import Player
 
 if TYPE_CHECKING:
@@ -118,6 +122,17 @@ def acting(game: Any, hero: Player) -> Iterator[None]:
             dialog_lookup.player = previous
         if outermost:
             game.first_hero = None
+
+
+def stays_down(config: dict[str, Any]) -> bool:
+    """Whether a hero who falls in a fight stays down until an inn (FALLEN HEROES on INN, the default), rather than
+    getting back up with 1 HP once the fight is won or fled (GET UP)."""
+    return config.get('FALLEN', FALLEN_INN) != FALLEN_GET_UP
+
+
+def other_hero_standing(game: Any, hero: Any) -> bool:
+    """Whether a party's other hero is standing: the party hasn't fallen, so ``hero`` falling isn't the end."""
+    return any(other is not hero and not other.is_dead and other.current_hp > 0 for other in heroes(game))
 
 
 def someone_chosen(game: Any) -> bool:

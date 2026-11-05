@@ -204,6 +204,11 @@ STATS_PAGE = Option('stats_page', 'STATS_PAGE', ON_OFF, False, (False, True), 'S
 # ACHIEVEMENTS (#425): achievements are unlocked, shown in a banner and on the TROPHIES key's page (T,
 # src/achievements.py). Off, nothing is unlocked.
 ACHIEVEMENTS = Option('achievements', 'ACHIEVEMENTS', ON_OFF, False, (False, True), 'Achievements')
+# FALLEN HEROES (co-op, src/party.py): a party's hero brought to 0 HP in a fight stays down until an inn (INN, the
+# stricter rule and the default, as in the later Dragon Quests) or gets back up with 1 HP once the fight is won or fled
+# (GET UP). The NES has one hero, so no preset changes it.
+FALLEN_INN, FALLEN_GET_UP = 'Inn', 'GetUp'
+FALLEN = Option('fallen', 'FALLEN', (FALLEN_INN, FALLEN_GET_UP), FALLEN_INN, None, 'FallenHeroes')
 # AUTOSAVE: the autosave slot (src/autosave.py); the NES only saves with King Lorik
 AUTOSAVE = AutosaveOption('autosave', 'AUTOSAVE', ON_OFF, None, (False, True), 'Autosave')
 # AUTO-HEAL: when auto-grind's HP is low (GRIND STOP), it casts HEAL or HEALMORE instead of stopping, until HP is out
@@ -225,7 +230,7 @@ RANDOMNESS = Option('randomness', 'RANDOMNESS', (RANDOMNESS_NES, RANDOMNESS_SEED
 PER_LOG_OPTIONS = (MESSAGE_SPEED, DIALOG_STYLE, NPCS_MAKE_WAY, FADE_STYLE, AUTO_STAIRS, AUTO_GRIND_STOP, MENU_SPEED,
                    MUSIC, GAME_SPEED_KEYS, SAVE_STATES, REWIND, AUTO_GRIND, CHEAT_KEYS, QUICK_ACTION, ENCOUNTERS,
                    EXP_GOLD, RUN_BUTTON, STATUS_WINDOW, SHOP_PREVIEW, QUEST_JOURNAL, BAG_SIZE, SMART_A, MESSAGE_LOG,
-                   STATS_PAGE, AUTOSAVE, AUTO_HEAL, AUTO_INN, RANDOMNESS, ACHIEVEMENTS)
+                   STATS_PAGE, AUTOSAVE, AUTO_HEAL, AUTO_INN, RANDOMNESS, ACHIEVEMENTS, FALLEN)
 
 # Global, in the order of Settings' fields
 
@@ -286,6 +291,7 @@ class Options:
     auto_inn: bool = AUTO_INN.default
     randomness: str = RANDOMNESS.default
     achievements: bool = ACHIEVEMENTS.default
+    fallen: str = FALLEN.default
 
 
 # A new quest's settings when none are chosen: the default message speed and the NES preset's values, as base_config

@@ -1554,7 +1554,7 @@ class CommandMenu:
             yield self.player
             return
         hero = self.dialog_lookup.choose_hero()
-        if hero is None:
+        if hero is None or self.dialog_lookup.has_fallen(hero):
             yield None
             return
         with acting(self.game, hero):
