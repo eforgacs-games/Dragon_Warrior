@@ -55,7 +55,7 @@ from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENT
     translated_name_halves
 from src.nes_random import one_in
 from src.follower import IDENTIFIER as FOLLOWER_IDENTIFIER
-from src.party import acting, heroes
+from src.party import acting, first_hero, heroes, in_party_mode
 
 if TYPE_CHECKING:
     from src.battle import Battle  # src.battle imports this module
@@ -87,6 +87,11 @@ BATTLE_LINE: BattleLineOptions = {'add_quotes': False, 'disable_sound': True, 'h
 # "But nothing happened." (spell_fizzle). RADIANT in a dungeon returns at once (LDA83), and OUTSIDE and RETURN change
 # maps (ChangeMaps): no press.
 FIELD_SPELLS_ENDING_WITH_A_PRESS = (Spell.HEAL, Spell.REPEL, Spell.HEALMORE)
+# A party's (src/party.py) spells that act for the whole party on the map, as the first hero's: they move it, or light
+# or guard the way (CommandMenu.field_effect); HEAL and HEALMORE heal whoever casts them
+PARTY_SPELLS = frozenset({Spell.OUTSIDE, Spell.RETURN, Spell.REPEL, Spell.RADIANT})
+# The items that act on whoever uses them; every other works for the party, where the first hero stands
+OWN_ITEMS = frozenset({"Herb", "Dragon's Scale", "Fighter's Ring", "Cursed Belt", "Death Necklace", "Erdrick's Token"})
 
 # NES ShowWindow and RemoveWindow (Bank00, LA7A2) draw or take away one row of a window's blocks a frame
 WINDOW_ROW_FRAMES = 1
@@ -1541,31 +1546,51 @@ class CommandMenu:
 
     def spell(self):
         """
-        Cast a magic spell.
+        Cast a magic spell. In a party (src/party.py), the caster is chosen first.
         """
+        with self.chosen_hero() as hero:
+            if hero is not None:
+                self.cast_a_spell()
+        self.game.unlaunch_menu(self)
+        self.game.game_state.unpause_all_movement()
+
+    @contextmanager
+    def chosen_hero(self) -> Iterator[Any]:
+        """For ITEM and SPELL on the map: in a party (src/party.py), the hero the player chooses ("Who will it be?"),
+        acting for the block; None if B was pressed. The one hero otherwise."""
+        if not in_party_mode(self.game):
+            yield self.player
+            return
+        hero = self.dialog_lookup.choose_hero()
+        if hero is None:
+            yield None
+            return
+        with acting(self.game, hero):
+            yield hero
+
+    def cast_a_spell(self) -> None:
         # the implementation of this will vary upon which spell is being cast.
         if not self.player.spells:
             self.show_text_in_dialog_box(self._("{} cannot yet use the spell.").format(self.player.name),
                                          skip_text=self.skip_text)
         else:
             self.display_item_menu('spells')
-        self.game.unlaunch_menu(self)
-        self.game.game_state.unpause_all_movement()
 
     def item(self):
         """
-        View/use items. (Not yet implemented)
-        :return: To be determined upon implementation
+        Use an item. In a party (src/party.py), the hero is chosen first.
         """
-        # the implementation of this will vary upon which item is being used.
+        with self.chosen_hero() as hero:
+            if hero is not None:
+                self.use_an_item()
+        self.game.unlaunch_menu(self)
+        self.game.game_state.unpause_all_movement()
+
+    def use_an_item(self) -> None:
         if not self.player.inventory:
             self.show_text_in_dialog_box(self._("Nothing of use has yet been given to thee."), skip_text=self.skip_text)
         else:
             self.display_item_menu('inventory')
-
-            # self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
-        self.game.unlaunch_menu(self)
-        self.game.game_state.unpause_all_movement()
 
     def display_item_menu(self, menu_name: str):
         """Display a menu of selectable items.
@@ -1691,15 +1716,36 @@ class CommandMenu:
                     # NES: the MP is spent, but a stopspelled player's spell is blocked
                     self.show_battle_line(self._("But that spell hath been blocked."))
                 else:
-                    spell_function()
+                    self.field_effect(currently_selected_item, spell_function, self.current_battle is None
+                                      and currently_selected_item in PARTY_SPELLS)
                     if self.current_battle is None and currently_selected_item in FIELD_SPELLS_ENDING_WITH_A_PRESS:
                         self.wait_for_button(shows_arrow=False)
         elif menu_name == 'inventory':
             if self.current_battle is not None:
                 self.use_item_in_battle(currently_selected_item)
             else:
-                function_dict[currently_selected_item]()
+                self.field_effect(currently_selected_item, function_dict[currently_selected_item],
+                                  currently_selected_item not in OWN_ITEMS, lend=True)
         return currently_selected_item
+
+    def field_effect(self, name: str, effect: Callable[[], Any], for_the_party: bool, lend: bool = False) -> None:
+        """Run a spell's or an item's effect. In a party (src/party.py), the second hero's spell or item that acts for
+        the party (it moves it, or works where the party stands: PARTY_SPELLS, every item but OWN_ITEMS) works as the
+        first hero's, the one on the map. The cost was the second hero's: their MP, or their item, lent to the first
+        hero for the effect (``lend``) and given back unless the effect used it up."""
+        leader = first_hero(self.game)
+        if not for_the_party or self.player is leader:
+            effect()
+            return
+        user = self.player
+        if lend:
+            user.inventory.remove(name)
+            leader.inventory.append(name)
+        with acting(self.game, leader):
+            effect()
+        if lend and name in leader.inventory:
+            leader.inventory.remove(name)
+            user.inventory.append(name)
 
     def command_window_in_nes_font(self) -> bool:
         """Whether the COMMAND window's title and entries are shown untranslated, in the NES font, so the whole window is
