@@ -25,6 +25,8 @@ hero with room for it, and the first hero may drop something for it if neither h
 shows each hero's status in turn. ITEM and SPELL on the map first ask which hero (CommandMenu.chosen_hero): the cost is
 theirs (their MP, their item), HEAL, HEALMORE and the items of OWN_ITEMS act on them, and the rest act for the party
 as the first hero's, where the party stands (CommandMenu.field_effect), the item lent to the first hero for it.
+Player 2's A on the map opens the second hero's own ITEM, SPELL and STATUS, on player 2's joypad
+(src/player_two_menu.py).
 """
 from collections.abc import Iterator
 from contextlib import contextmanager

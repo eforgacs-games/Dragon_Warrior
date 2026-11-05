@@ -517,7 +517,7 @@ GAME_NOT_KEPT = {
     # Requests for a window or a state: a snapshot is taken with none asked for, and putting one back clears them
     'paused', 'pause_requested', 'cmd_menu_requested', 'options_requested', 'message_log_requested',
     'auto_grind_requested', 'dungeon_map_requested', 'play_stats_requested', 'achievements_requested',
-    'smart_a_pending', 'state_request', 'state_request_due',
+    'player_two_menu_requested', 'smart_a_pending', 'state_request', 'state_request_due',
     # Only set and read during a map change
     'last_map',
     # The snapshots' own machinery, and auto-grind, which drives the game rather than being part of it

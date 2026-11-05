@@ -20,6 +20,8 @@ from pygame.event import Event
 
 from data.text.intro_lookup_table import ControlInfo
 from src.achievements import AchievementsScreen
+from src.party import in_party_mode
+from src.player_two_menu import open_player_two_menu
 from src.controls import LOAD_STATE_ACTIONS, SAVE_STATE_ACTIONS, actions_for_event, pressed
 from src.display_filters import PRESENTER
 from src.dungeon_map import DungeonMapOverlay, dungeon_map_enabled
@@ -44,6 +46,7 @@ class MapRequest:
     True while it waits, ``opener`` the MapHotkeys method resolve_pending_freezes then calls."""
     flag: str
     opener: str
+    play: bool = False  # whether the play time counts while it's open (it's play, not a page about it)
 
 
 # In the order MovementController.resolve_pending_freezes opens them (only one can be waiting at a time: once one is,
@@ -55,6 +58,7 @@ MAP_REQUESTS = (
     MapRequest('play_stats_requested', 'open_play_stats'),  # P
     MapRequest('achievements_requested', 'open_achievements'),  # T
     MapRequest('auto_grind_requested', 'start_auto_grind'),  # G
+    MapRequest('player_two_menu_requested', 'open_player_two_menu', play=True),  # player 2's A (co-op)
 )
 
 # The save state keys: (SAVE or LOAD, slot) for each action
@@ -101,8 +105,11 @@ class MapHotkeys:
         for map_request in MAP_REQUESTS:
             if getattr(self.game, map_request.flag) is True:
                 setattr(self.game, map_request.flag, False)
-                with self.game.play_clock.stopped():
+                if map_request.play:
                     getattr(self, map_request.opener)()
+                else:
+                    with self.game.play_clock.stopped():
+                        getattr(self, map_request.opener)()
                 return True
         return False
 
@@ -158,6 +165,11 @@ class MapHotkeys:
         """P (STATS): the stats page (src/stats_screen.py), when the STATS PAGE option is on."""
         if pressed(keydown_event, 'PLAY_STATS') and self.config.get('STATS_PAGE'):
             self.request('play_stats_requested')
+
+    def press_player_two(self, keydown_event: Event) -> None:
+        """Player 2's A (co-op, src/player_two_menu.py): the second hero's command window, in a party."""
+        if pressed(keydown_event, 'P2_A') and in_party_mode(self.game):
+            self.request('player_two_menu_requested')
 
     def press_trophies(self, keydown_event: Event) -> None:
         """T (TROPHIES): the achievements page (src/achievements.py), when the ACHIEVEMENTS option is on."""
@@ -353,6 +365,9 @@ class MapHotkeys:
     def open_play_stats(self) -> None:
         StatsScreen(self.game).run()
 
+    def open_player_two_menu(self) -> None:
+        open_player_two_menu(self.game)
+
     def open_achievements(self) -> None:
         AchievementsScreen(self.game).run()
 
@@ -369,6 +384,7 @@ KEY_HANDLERS = (
     'press_message_log',
     'press_play_stats',
     'press_trophies',
+    'press_player_two',
     'press_auto_grind',
     'press_dungeon_map',
     'press_help',
