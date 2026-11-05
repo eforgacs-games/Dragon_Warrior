@@ -63,6 +63,7 @@ from src.battle_controller import BattleController
 from src.ending import Ending
 from src.achievements import Achievements
 from src.follower import Follower, greyed
+from src.sessions import HeroSession, add_session_attributes, session_in_use, use_session
 from src.netplay import PORT, run_client, start_host
 from src.party import in_party_mode, new_hero, party_of
 from src.play_stats import PlayClock, PlayStats, subscribe_play_stats
@@ -85,6 +86,7 @@ from src.zoom import handle_zoom_event, remember_default_zoom, set_windowed_zoom
 REWIND_KEYS = KeySet('REWIND')
 
 
+@add_session_attributes
 class Game:
     screen: Surface  # the NES-sized screen everything is drawn on, made by open_window
     game_state: GameState
@@ -92,6 +94,9 @@ class Game:
     player: Player
 
     def __init__(self, config):
+        # Each hero's own part of the game (src/sessions.py SESSION_ATTRIBUTES): the first hero's, unless a task plays
+        # another's (free roam co-op)
+        self.main_session = HeroSession('hero 1')
 
         migrate_legacy_music_config(config)  # a config with the old ORCHESTRA_MUSIC_ENABLED switch (src/soundtrack.py)
         self.config = config
@@ -353,6 +358,63 @@ class Game:
         self.cmd_menu.set_language(language)
         set_caption(self._("Dragon Warrior"))
         self.settings.update(language=language)
+
+    def add_hero_session(self, hero: Player, map_identifier: str, coordinates: tuple[int, int] | None = None,
+                         name: str | None = None) -> HeroSession:
+        """A session for ``hero`` on a map of their own (free roam co-op, src/sessions.py): their own map, camera,
+        windows, fights and steps, set up as Game.__init__ sets up the first hero's, with the hero placed at
+        ``coordinates`` (the map's starting block by default). The world (the story, the chests, the maps' layouts)
+        stays the game's."""
+        session = HeroSession(name or hero.name)
+        config = self.game_state.config
+        with use_session(session):
+            self.movement = MovementController(self)
+            self.drawer = Drawer(self.game_state)
+            self.big_map = None
+            self.last_map = None
+            self.last_zone = None
+            self.last_amount_of_tiles_moved = 0
+            self.tiles_moved_since_spawn = 0
+            self.loop_count = 1
+            self.foreground_rects = []
+            self.repel_timer = 0
+            self.repel_tick_pending = False
+            self.magic_armor_steps = 0
+            self.skip_next_encounter = False
+            self.step_roll = 0
+            self.door_history = OpenDoorHistory()
+            self.last_coordinates = None
+            self.paused = False
+            self.hotkeys = MapHotkeys(self)
+            for flag in ('pause_requested', 'cmd_menu_requested', 'smart_a_pending', 'options_requested',
+                         'dungeon_map_requested', 'message_log_requested', 'play_stats_requested',
+                         'achievements_requested', 'player_two_menu_requested', 'auto_grind_requested'):
+                setattr(self, flag, False)
+            self.state_request = self.state_request_due = None
+            self.player = hero
+            self.current_map = maps.map_lookup[map_identifier](config)
+            self.battle_ctrl = BattleController(self)
+            self.step_triggers = StepTriggers(self)
+            self.hero_damage = HeroDamage(self)
+            self.hero_death = HeroDeath(self)
+            self.field_encounters = FieldEncounters(self)
+            self.map_mgr = MapManager(self)
+            self.set_big_map()
+            self.set_roaming_character_positions()
+            self.current_map.load_map(hero, coordinates, self.tile_size)
+            hero.current_tile = get_tile_id_by_coordinates(hero.rect.x // self.tile_size,
+                                                           hero.rect.y // self.tile_size, self.current_map)
+            self.camera = Camera((int(hero.column), int(hero.row)), self.current_map, self.screen, self.tile_size)
+            self.cmd_menu = CommandMenu(self)
+            self.frame_pacer = FramePacer(max_frames=STEP_SYNC_FRAMES // 2)
+            self.events = []
+            self.load_window_palette()
+        return session
+
+    @property
+    def current_session(self) -> HeroSession:
+        """The session of the hero being played here (src/sessions.py): the task's, or the first hero's."""
+        return session_in_use() or self.main_session
 
     @property
     def party(self) -> list[Player]:
