@@ -438,8 +438,13 @@ class Gamepads:
     """Player 1's controller and player 2's (co-op), read together: polled one after the other, their keys held
     together (what src/waiting.py reads of a gamepad)."""
 
-    def __init__(self, *pads: Gamepad) -> None:
-        self.pads = pads
+    def __init__(self, *pads: Any) -> None:
+        self.pads = list(pads)
+
+    def add(self, pad: Any) -> None:
+        """Read another source of keys with them: anything with ``poll``, ``held`` and ``disconnect`` (network play's
+        player 2, src/netplay.py RemoteJoypad)."""
+        self.pads.append(pad)
 
     @property
     def held(self) -> set[int]:
@@ -459,6 +464,11 @@ class Gamepads:
 
 
 _gamepads: Gamepads | None = None
+
+
+def connected_gamepads() -> Gamepads | None:
+    """The controllers the game reads (connect_gamepad), if it has connected them."""
+    return _gamepads
 
 
 def connect_gamepad() -> Gamepad:

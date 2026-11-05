@@ -66,7 +66,8 @@ is. Please attach it to a [new issue](https://github.com/eforgacs-games/Dragon_W
 4. Start the game with `uv run python -m src.game`. Add `--language English`, `--language Korean`,
    `--language Japanese`, `--language "Traditional Chinese"`, `--language "Simplified Chinese"` or
    `--language English2014` to choose the language. Add `--seed` with a number to play with that seed: the same play
-   gets the same rolls every time (the RANDOMNESS option stays on SEEDED).
+   gets the same rolls every time (the RANDOMNESS option stays on SEEDED). `--host` and `--join` are for network
+   play ([Network play](#network-play)).
 
 For the NES and SFC music, also install libgme (below). [CONTRIBUTING.md](CONTRIBUTING.md) has the rest: running
 without uv, the tests, playtest checkpoints and debug keys.
@@ -285,6 +286,15 @@ With one of these OFF, its key does nothing, as on the NES.
 | ACHIEVEMENTS | OFF (NES), or ON: achievements unlock as you play (story milestones, every monster, a low-level or deathless Dragonlord, and more), with a banner at the top of the map, and T lists them. They're kept for whoever plays on this computer, across every adventure log, in `achievements.json` next to the settings. Nothing unlocks while a cheat is on (CHEATS, `--dev`) | OFF | OFF | ON |
 | HEROES | How many heroes the next new quest starts with: 1 (NES), or 2, a co-op party (in progress: the second hero, in green, has stats, items and spells of their own, is saved with the adventure log and follows one step behind the first hero on the map. In a fight each hero standing chooses a command, then the enemy acts against one of them at random; a hero at 0 HP falls and sits the fight out, and gets back up with 1 HP if the fight is won or fled; the fight is lost when both fall. Both heroes standing get the experience, the party the gold once. The second hero's turns are player 2's: the numpad (8, 2, 4 and 6 the D-pad, 0 A, . B, + START, - SELECT, all rebindable on the CONTROLS screen) or a second controller. Inns charge for each hero and both rest; at a shop the player first chooses who is shopping, and the gold is the party's; a chest's item goes to the first hero with room; STATUS shows each hero in turn; ITEM and SPELL on the map first ask which hero: the cost is theirs, HEAL and Herbs heal them, and what moves or helps the whole party, such as Wings, RETURN, OUTSIDE, REPEL or a Magic Key, works where the party stands). An adventure log keeps the party it started with | 1 | | |
 
+
+## Network play
+
+Player 2 can play the co-op party from another computer. The host plays as usual, started with `--host` (it listens
+on port 52528; `--host 6000` for another). Player 2 starts the game with `--join` and the host's address
+(`--join 192.168.0.5`, or `--join 192.168.0.5:6000`): their window shows the host's game, and their own keys and
+controller are player 2's joypad, so they choose the second hero's commands in a fight. There is one game, the host's,
+and player 2's window has no sound. Play on a local network or over a VPN such as Tailscale rather than opening the
+port to the internet: whoever connects is player 2.
 
 ## Languages
 
