@@ -80,15 +80,20 @@ def decode_random_state(encoded: list) -> tuple:
 class Generator(Protocol):
     """What a roll draws from: a stream's random.Random, or the NES's generator."""
 
-    def randint(self, a: int, b: int) -> int: ...
+    def randint(self, a: int, b: int) -> int:
+        """A number from a to b, both included."""
 
-    def choice(self, sequence: Sequence[T]) -> T: ...
+    def choice(self, sequence: Sequence[T]) -> T:
+        """One of the sequence's items."""
 
-    def sample(self, population: Sequence[T], k: int) -> list[T]: ...
+    def sample(self, population: Sequence[T], k: int) -> list[T]:
+        """k different items of the population."""
 
-    def shuffle(self, x: MutableSequence[Any]) -> None: ...
+    def shuffle(self, x: MutableSequence[Any]) -> None:
+        """Shuffle x in place."""
 
-    def random(self) -> float: ...
+    def random(self) -> float:
+        """A number from 0 up to 1."""
 
 
 def nes_update(state: int) -> int:
