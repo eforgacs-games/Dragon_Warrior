@@ -159,6 +159,55 @@ class TestPlayerTwosMenuInFreeRoam(FreeRoamTestCase):
         party_window.assert_not_called()
 
 
+class TestNetworkPlay(FreeRoamTestCase):
+
+    def test_player_2_sees_the_second_heros_half(self):
+        from src.netplay import NetHost, player_two_view
+        view = player_two_view(self.game)
+        width, height = self.game.screen.get_size()
+        self.assertEqual(pygame.Rect(width, 0, width, height), view)
+        display_surface = pygame.display.get_surface()
+        display_surface.fill((0, 0, 0))
+        display_surface.fill((10, 20, 30), view)
+        host = NetHost(scale=self.game.game_state.config['SCALE'], log=lambda message: None)
+        host.view_of_player_two = lambda: player_two_view(self.game)
+        host.capture(0.0)
+        frame_width, frame_height, rgb = host._frame
+        self.assertEqual((width // 2, height // 2), (frame_width, frame_height))
+        self.assertEqual(bytes((10, 20, 30)), rgb[:3])
+
+    def test_the_whole_game_without_free_roam(self):
+        from src.netplay import player_two_view
+        self.game.config['COOP'] = COOP_PARTY
+        self.game.update_free_roam()
+        self.assertIsNone(player_two_view(self.game))
+
+    def test_player_2_hears_the_second_heros_play(self):
+        from src.netplay import NetHost
+        host = NetHost(scale=2, log=lambda message: None)
+        host.heard_by_player_two = lambda: not self.game.free_roam_active or \
+            self.game.current_session is not self.game.main_session
+        host.client = object()
+        host.audio('sfx', self.game.directories.menu_button_sfx, {})  # Ann's
+        self.assertEqual([], host._audio)
+        with use_session(self.gwens):
+            host.audio('sfx', self.game.directories.menu_button_sfx, {})  # Gwen's
+        self.assertEqual(1, len(host._audio))
+
+
+class TestStatesWhileRoaming(FreeRoamTestCase):
+
+    def test_no_save_states_or_rewind(self):
+        from pygame import K_BACKSPACE, K_F1, KMOD_SHIFT
+        self.game.config['SAVE_STATES'] = True
+        self.game.config['REWIND'] = True
+        with patch.object(self.game.rewind, 'start') as rewind:
+            self.game.handle_keypresses(Event(KEYDOWN, key=K_F1, mod=KMOD_SHIFT))
+            self.game.handle_keypresses(Event(KEYDOWN, key=K_BACKSPACE, mod=0))
+        self.assertIsNone(self.game.state_request)
+        rewind.assert_not_called()
+
+
 class TestTheirLook(FreeRoamTestCase):
 
     def test_green_from_the_start(self):

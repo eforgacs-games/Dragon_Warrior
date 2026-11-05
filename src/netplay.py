@@ -37,6 +37,9 @@ event and its parameters (path None for the events without a file). BUTTON (``B`
 bytes, a picture that decompresses to anything but its width * height * 3 bytes, or a button that isn't an NES button
 closes the connection or is ignored.
 
+In free roam co-op (src/sessions.py) player 2's window shows the second hero's half of the host's window only, and
+plays only the sounds and music of the second hero's play (the host plays the first hero's music).
+
 The host trusts whoever connects with player 2's buttons and nothing else; it listens on every network interface, so
 play on a local network, or over a VPN (Tailscale, WireGuard), rather than opening the port to the internet.
 """
@@ -311,6 +314,10 @@ class NetHost:
         self._last_music: bytes | None = None  # the music playing, for a client that joins
         self._real_flip: Any = None
         self._real_update: Any = None
+        # Free roam co-op (src/sessions.py): where on the display player 2's view is (None: the whole display), and
+        # whether a sound or music event now is player 2's to hear. Set by start_host.
+        self.view_of_player_two: Callable[[], pygame.Rect | None] = lambda: None
+        self.heard_by_player_two: Callable[[], bool] = lambda: True
 
     # Starting and stopping
 
@@ -379,6 +386,9 @@ class NetHost:
         self._last_capture = now
         if surface is None:
             return
+        view = self.view_of_player_two()
+        if view is not None:
+            surface = surface.subsurface(view)  # free roam: player 2's half of the window
         frame = nes_picture(surface, self.scale)
         with self._frame_ready:
             self._frame = frame
@@ -387,7 +397,10 @@ class NetHost:
     # The sound (the game's thread)
 
     def audio(self, what: str, path: str | None, parameters: dict) -> None:
-        """A sound or music event (src/sound.py audio_event), for the client."""
+        """A sound or music event (src/sound.py audio_event), for the client: every one, but while the heroes roam
+        apart only player 2's hero's (heard_by_player_two)."""
+        if not self.heard_by_player_two():
+            return
         relative = relative_data_path(path) if path is not None else None
         if path is not None and relative is None:
             return
@@ -482,11 +495,22 @@ def start_host(game: Any, port: int = PORT) -> NetHost:
     """Host from now on (--host): the game's screen to player 2, player 2's buttons to the game."""
     from src.gamepad import connected_gamepads
     host = NetHost(scale=game.game_state.config['SCALE'], port=port)
+    host.view_of_player_two = lambda: player_two_view(game)
+    host.heard_by_player_two = lambda: not game.free_roam_active or game.current_session is not game.main_session
     gamepads = connected_gamepads()
     if gamepads is not None:
         gamepads.add(host.joypad)
     host.start()
     return host
+
+
+def player_two_view(game: Any) -> pygame.Rect | None:
+    """Where on the display the second hero's view is while the heroes roam apart (their half of the window), else
+    None: player 2 sees the whole game."""
+    if not game.free_roam_active or len(game.sessions) < 2:
+        return None
+    screen = game.sessions[1].screen
+    return pygame.Rect(screen.get_abs_offset(), screen.get_size())
 
 
 # The client
