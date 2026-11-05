@@ -248,3 +248,33 @@ class TestFullscreen(FreeRoamTestCase):
             self.assertIs(display_surface, self.game.screen.get_parent())
             self.assertEqual((width, 0), self.game.screen.get_abs_offset())
             self.assertIs(self.game.screen, self.game.cmd_menu.screen)
+
+
+class TestGwaelin(FreeRoamTestCase):
+
+    def test_carried_by_the_hero_who_took_her(self):
+        from src.party import carries_gwaelin
+        self.game.story_flags.carrying_gwaelin = True
+        self.game.gwaelin_carrier = self.gwen
+        self.assertFalse(carries_gwaelin(self.game))  # Ann
+        with use_session(self.gwens):
+            self.assertTrue(carries_gwaelin(self.game))
+            self.game.set_player_images_by_equipment()
+            carrying = self.gwen.images_map
+        self.game.set_player_images_by_equipment()
+        self.assertIsNot(carrying, self.ann.images_map)
+
+    def test_the_first_hero_by_default(self):
+        from src.party import carries_gwaelin
+        self.game.story_flags.carrying_gwaelin = True
+        self.assertTrue(carries_gwaelin(self.game))
+        with use_session(self.gwens):
+            self.assertFalse(carries_gwaelin(self.game))
+
+    def test_the_other_heros_death_leaves_her_carried(self):
+        self.game.story_flags.carrying_gwaelin = True
+        self.game.gwaelin_carrier = self.ann
+        with use_session(self.gwens), patch.object(self.game, 'change_map'), \
+                patch.object(self.game.cmd_menu, 'show_text_in_dialog_box'):
+            self.game.hero_death.set_post_death_attributes()
+        self.assertTrue(self.game.story_flags.carrying_gwaelin)

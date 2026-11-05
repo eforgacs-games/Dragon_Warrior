@@ -543,6 +543,8 @@ GAME_NOT_KEPT = {
     'main_session', 'sessions',
     # Free roam's tasks (src/sessions.py RoamTask): not kept; a state is put back with the heroes together
     'free_roam_scheduler', 'free_roam_tasks',
+    # Who carries Gwaelin while roaming apart: the story flag is kept; after a state, the first hero carries her
+    'gwaelin_carrier',
 }
 # The MovementController attributes a snapshot deliberately doesn't keep
 MOVEMENT_NOT_KEPT = {

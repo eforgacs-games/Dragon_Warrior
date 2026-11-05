@@ -151,6 +151,19 @@ def input_for(game: Any, hero: Any) -> int:
     return PLAYER_TWO if hero is companion_of(game) else PLAYER_ONE
 
 
+def carries_gwaelin(game: Any, hero: Any = None) -> bool:
+    """Whether ``hero`` (the hero in play by default) carries Gwaelin: the story says she's carried and, while the
+    heroes roam apart, it's the hero who took her (game.gwaelin_carrier; the first hero if no one's known, as after
+    loading a log)."""
+    hero = game.player if hero is None else hero
+    if not game.story_flags.carrying_gwaelin:
+        return False
+    if not free_roaming(game):
+        return True
+    carrier = getattr(game, 'gwaelin_carrier', None)
+    return hero is (carrier if carrier is not None else game.main_session.player)
+
+
 def someone_chosen(game: Any) -> bool:
     """Whether a hero has been chosen to act (``acting`` is under way), so nothing asks again."""
     return isinstance(getattr(game, 'first_hero', None), Player)

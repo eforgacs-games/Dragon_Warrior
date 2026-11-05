@@ -69,7 +69,7 @@ from src.sessions import HeroSession, RoamTask, add_session_attributes, session_
 from src.tasks import Scheduler
 from src.controls import PLAYER_ONE, PLAYER_TWO
 from src.netplay import PORT, run_client, start_host
-from src.party import in_party_mode, new_hero, party_of
+from src.party import carries_gwaelin, in_party_mode, new_hero, party_of
 from src.play_stats import PlayClock, PlayStats, subscribe_play_stats
 from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
@@ -228,6 +228,8 @@ class Game:
                              fighters_ring_attack_bonus=self.game_state.config['FIGHTERS_RING_ATTACK_BONUS'])
         # The party's second hero (src/party.py), with HEROES on 2; None for the NES's one
         self.companion: Player | None = None
+        # Who carries Gwaelin while the heroes roam apart (src/party.py carries_gwaelin); None: the first hero
+        self.gwaelin_carrier: Player | None = None
         self.first_hero: Player | None = None  # the first hero while the second is game.player (src/party.py acting)
         self.follower = Follower(self)  # the second hero on the map, one step behind the first (src/follower.py)
         # A fallen first hero's grey sprite sheets (set_player_images_by_equipment)
@@ -792,7 +794,7 @@ class Game:
 
     def set_player_images_by_equipment(self) -> None:
         """Give the hero the sprite sheet for what he carries: the princess, or his weapon and shield."""
-        if self.story_flags.carrying_gwaelin:
+        if carries_gwaelin(self):
             sprite_sheet_path = self.directories.HERO_CARRYING_PRINCESS_PATH
         elif self.player.weapon:
             if self.player.shield:

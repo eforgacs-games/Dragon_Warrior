@@ -323,6 +323,7 @@ class Ending:
         if gwaelin in current_map.fixed_characters:
             current_map.fixed_characters.remove(gwaelin)
         self.game.story_flags.carrying_gwaelin = True
+        self.game.gwaelin_carrier = self.game.player
         self.game.set_player_images_by_equipment()
         self.redraw()
 

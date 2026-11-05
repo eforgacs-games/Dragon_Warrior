@@ -473,6 +473,7 @@ class DialogLookup:
         """NES DoGwaelinRescue (Bank03, LD072-LD09A): F_GOT_GWAELIN is set and DoSprites draws the hero carrying her,
         and ModMapBlock removes her block, all before "Princess Gwaelin embraces thee" and the music."""
         self.command_menu.game.story_flags.carrying_gwaelin = True
+        self.command_menu.game.gwaelin_carrier = self.player  # free roam: this hero carries her (src/party.py)
         self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
         self.player.set_images(self.player.images)
         self.player.show_facing()
