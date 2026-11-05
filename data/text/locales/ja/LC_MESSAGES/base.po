@@ -3522,3 +3522,23 @@ msgstr "開けた宝箱"
 #: src/stats_screen.py
 msgid "MONSTERS DEFEATED"
 msgstr "やっつけたまもの"
+
+#: src/auto_grind.py
+msgid "Auto-grind: not in this fight"
+msgstr "自動レベル上げ: この 戦いでは 使えない"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: MP too low to heal"
+msgstr "自動レベル上げ 停止: 回復する MPが 足りない"
+
+#: src/options_overlay.py
+msgid "DANGER"
+msgstr "危険"
+
+#: src/options_overlay.py
+msgid "AUTO-HEAL"
+msgstr "自動回復"
+
+#: src/options_overlay.py
+msgid "KEEP 1 HEAL"
+msgstr "ホイミ1回分 残す"

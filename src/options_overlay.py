@@ -37,7 +37,8 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     SAVE STATES    OFF (NES) / ON           (SAVE_STATES: F1-F3, Shift+F1-F3)
     REWIND         OFF (NES) / ON           (REWIND: Backspace)
     AUTO-GRIND     OFF (NES) / ON           (AUTO_GRIND: G, src/auto_grind.py)
-    GRIND STOP     RED HP / HALF HP / 3/4 HP  (AUTO_GRIND_STOP: when auto-grind stops)
+    GRIND STOP     RED HP / HALF HP / 3/4 HP / DANGER  (AUTO_GRIND_STOP: when auto-grind stops; DANGER from what
+                                             the area's monsters can do, src/grind_safety.py)
     MENU SPEED     NORMAL / FOLLOW GAME     (MENU_SPEED: the selection windows at 1x, or at the game speed,
                                              src/waiting.py menu_ticks)
     CHEATS         OFF (NES) / ON           (CHEAT_KEYS: F4 auto-battle, F9 invulnerability)
@@ -48,6 +49,8 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     OTHER
     CONFIRM NAME   OFF (NES) / ON           (NAME_CONFIRM: a full name waits on END, START ends it; global)
     STATS PAGE     OFF (NES) / ON           (STATS_PAGE: the P key shows the play statistics, src/stats_screen.py)
+    AUTO-HEAL      OFF (NES) / ON / KEEP 1 HEAL  (AUTO_HEAL: at the GRIND STOP HP, auto-grind heals instead of
+                                             stopping, src/auto_grind.py)
 
 Above every page's rows are two more:
 
@@ -91,11 +94,11 @@ from src.controls_screen import ControlsScreen
 from src.cursor import BlinkingCursor
 from src.directories import music_name
 from src.display_filters import PRESENTER, SCALING_KEY, SCANLINES_KEY
-from src.game_options import AUTO_GRIND, AUTO_GRIND_STOP, AUTO_STAIRS, AUTOSAVE, BAG_SIZE, CHEAT_KEYS, DIALOG_STYLE, \
-    DUNGEON_MAP, ENCOUNTERS, EXP_GOLD, FADE_STYLE, GAME_SPEED_KEYS, LANGUAGE, MENU_SPEED, MESSAGE_LOG, MESSAGE_SPEED, \
-    MUSIC, NAME_CONFIRM, NPCS_MAKE_WAY, OPTIONS_BY_CONFIG_KEY, QUEST_JOURNAL, QUICK_ACTION, REWIND, RUN_BUTTON, \
-    SAVE_STATES, SCALING, SCANLINES, SHOP_PREVIEW, SMART_A, STATS_PAGE, STATUS_WINDOW, VIEW, Option, Options, \
-    apply_options
+from src.game_options import AUTO_GRIND, AUTO_GRIND_STOP, AUTO_HEAL, AUTO_STAIRS, AUTOSAVE, BAG_SIZE, CHEAT_KEYS, \
+    DIALOG_STYLE, DUNGEON_MAP, ENCOUNTERS, EXP_GOLD, FADE_STYLE, GAME_SPEED_KEYS, LANGUAGE, MENU_SPEED, MESSAGE_LOG, \
+    MESSAGE_SPEED, MUSIC, NAME_CONFIRM, NPCS_MAKE_WAY, OPTIONS_BY_CONFIG_KEY, QUEST_JOURNAL, QUICK_ACTION, REWIND, \
+    RUN_BUTTON, SAVE_STATES, SCALING, SCANLINES, SHOP_PREVIEW, SMART_A, STATS_PAGE, STATUS_WINDOW, VIEW, Option, \
+    Options, apply_options
 from src.languages import LANGUAGES
 from src.options_screen import MESSAGE_SPEED_LABELS
 from src.selection import frame_events, next_frame
@@ -218,7 +221,7 @@ OPTION_PAGES = (
         switch_row("SAVE STATES", SAVE_STATES),
         switch_row("REWIND", REWIND),
         switch_row("AUTO-GRIND", AUTO_GRIND),
-        OptionRow("GRIND STOP", AUTO_GRIND_STOP, ("RED HP", "HALF HP", "3/4 HP")),
+        OptionRow("GRIND STOP", AUTO_GRIND_STOP, ("RED HP", "HALF HP", "3/4 HP", "DANGER")),
         OptionRow("MENU SPEED", MENU_SPEED, ("NORMAL", "FOLLOW GAME")),
         switch_row("CHEATS", CHEAT_KEYS),
         switch_row("DUNGEON MAP", DUNGEON_MAP),
@@ -230,6 +233,8 @@ OPTION_PAGES = (
     OptionPage("OTHER", (
         switch_row("CONFIRM NAME", NAME_CONFIRM),
         switch_row("STATS PAGE", STATS_PAGE),
+        # Auto-grind's: CONTROLS, with AUTO-GRIND and GRIND STOP, is full
+        OptionRow("AUTO-HEAL", AUTO_HEAL, ("OFF (NES)", "ON", "KEEP 1 HEAL")),
     )),
 )
 # The rows with a setting (every row but CONTROLS)

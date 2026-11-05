@@ -128,6 +128,9 @@ class CommandMenu:
         # (src/command_window.py, src/cursor.py); drawn by draw_command_window
         self.menu = CommandWindow()
         self.cursor = self.menu.cursor
+        # While the ITEM or SPELL window is selecting (display_item_menu): its name and the entry under the cursor, for
+        # auto-grind's AUTO-HEAL to steer it (src/auto_grind.py)
+        self.item_menu_selection: tuple[str, int] | None = None
 
     def set_language(self, language: str) -> None:
         """Translate into ``language`` from now on (Game.set_language): a new ``_`` and a new DialogLookup, whose
@@ -1596,6 +1599,7 @@ class CommandMenu:
 
         def draw(index: int, cursor_visible: bool) -> None:
             nonlocal drawn_index, window_rect, first
+            self.item_menu_selection = (menu_name, index)
             if index != drawn_index:
                 # Redraw the window to erase the cursor from the entry it left
                 first = first_shown_entry(index, first, len(entries))
@@ -1611,8 +1615,11 @@ class CommandMenu:
         window = item_menu_window(menu_name, len(entries))
         # In a fight the window covers the battle scene, which remove_window doesn't draw: what it covers is kept
         covered = self.covered_area(window) if self.current_battle is not None else None
-        answer = run_selection(draw, 0, move=stop_at_edges(len(entries)), sound=self.play_menu_button_sound,
-                               sound_buttons=(IN_A,))
+        try:
+            answer = run_selection(draw, 0, move=stop_at_edges(len(entries)), sound=self.play_menu_button_sound,
+                                   sound_buttons=(IN_A,))
+        finally:
+            self.item_menu_selection = None
         # NES WindowSequence: RemoveWindow, chosen or not, before the choice is acted on
         self.remove_window(window, covered)
         if self.current_battle is not None:

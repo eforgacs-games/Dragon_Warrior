@@ -8,16 +8,19 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
-from pygame import K_2, K_DOWN, K_F2, K_LCTRL, K_UP, K_g, K_k, KEYDOWN, KMOD_CTRL, KMOD_LCTRL
+from pygame import K_2, K_DOWN, K_F2, K_LCTRL, K_RIGHT, K_UP, K_g, K_j, K_k, KEYDOWN, KMOD_CTRL, KMOD_LCTRL
 from pygame.event import Event
 
-from src.auto_grind import ALL_DIRECTION_KEYS, GRIND_STOP_HALF_HP, GRIND_STOP_RED_HP, GRIND_STOP_THREE_QUARTERS_HP, \
-    UNSAFE_TILES, AutoGrind, StopReason, at_grind_stop_hp
+from src.auto_grind import ALL_DIRECTION_KEYS, GRIND_STOP_DANGER, GRIND_STOP_HALF_HP, GRIND_STOP_RED_HP, \
+    GRIND_STOP_THREE_QUARTERS_HP, UNSAFE_TILES, AutoGrind, StopReason, at_grind_stop_hp
 from src.battle import Battle
 from src.battle_controller import BattleController, BattleOutcome
 from src.config.test_config import test_config
 from src.controls import Binding, Controls, reset_controls, set_controls
 from src.direction import Direction
+from src.enemy_lookup import enemy_string_lookup
+from src.game_options import AUTO_HEAL_KEEP_ONE, AUTO_HEAL_OFF, AUTO_HEAL_ON
+from src.grind_safety import worst_enemy_damage, worst_group_damage
 from src.maps import map_lookup
 from src.maps_functions import get_center_point
 from src.spells import Spell
@@ -596,8 +599,9 @@ class TestBattleHooks(TestCase):
         cmd_menu.game.auto_grind.level_up.assert_not_called()
 
 
-class TestHeadlessGrind(GrindTestCase):
-    """The real game loop, near Tantegel: G, then nothing until auto-grind hands the game back."""
+class HeadlessTestCase(GrindTestCase):
+    """The real game loop, near Tantegel, with the real messages and windows."""
+    experience = 23  # level 3: several fights before HP is low, and none of them a level up
 
     def setUp(self):
         super().setUp()
@@ -605,12 +609,28 @@ class TestHeadlessGrind(GrindTestCase):
         patch.stopall()
         self.sound = patch.object(self.game.sound, 'play_sound').start()
         player = self.player
-        player.total_experience = 23  # level 3: several fights before HP is low, and none of them a level up
+        player.total_experience = self.experience
         player.level = player.get_level_by_experience()
         player.set_stats_by_level(player.level)
         player.update_attack_power()
         player.update_defense_power()
         player.current_hp = player.max_hp
+        player.current_mp = player.max_mp
+
+    def run_main_loop(self, passes: int) -> None:
+        """Passes of the main loop, one NES frame each on a fake game clock: the same frames, steps and fights on any
+        machine. The map is drawn too (NO_BLIT draws nothing to the screen): the drawer opens the COMMAND window."""
+        clock = helpers.fake_game_clock()
+        game = self.game
+        for _ in range(passes):
+            clock.advance_frames()
+            game.run_due_frames()
+            game.drawer.draw_all(game, game.movement.sprites_animate)
+            game.loop_count += 1
+
+
+class TestHeadlessGrind(HeadlessTestCase):
+    """G, then nothing until auto-grind hands the game back."""
 
     def test_fights_until_hp_is_low_and_hands_over_the_command_window(self):
         random.seed(1)
@@ -654,3 +674,181 @@ class TestHeadlessGrind(GrindTestCase):
         self.assertEqual({GRASS, (51, 44)}, cells)
         self.assertEqual(set(), ALL_DIRECTION_KEYS & self.grind.joypad.held)
         self.assertIsNone(virtual_joypad())
+
+
+class TestHeadlessAutoHeal(HeadlessTestCase):
+    """AUTO-HEAL in the real game loop: HP low, the hero casts HEAL through the windows and grinds on, until there's
+    no MP left for another. Level 3: HEAL, and the MP for one (5)."""
+
+    def new_game(self, **overrides):
+        return super().new_game(AUTO_HEAL=AUTO_HEAL_ON, **overrides)
+
+    def run_until_stopped(self, seed):
+        random.seed(seed)
+        game = self.game
+        heals, stops = [], []
+        real_heal, real_open = game.cmd_menu.heal, game.battle_ctrl.open_command_window
+
+        def heal():
+            heals.append(game.cmd_menu.current_battle is not None)  # whether in a fight
+            real_heal()
+
+        def open_command_window():
+            real_open()
+            if not self.grind.active:
+                stops.append(self.grind.last_stop)
+                raise Done
+
+        pygame.event.post(key(K_g))
+        with patch.object(game.cmd_menu, 'heal', side_effect=heal), \
+                patch.object(game.battle_ctrl, 'open_command_window', side_effect=open_command_window):
+            with self.assertRaises(Done):
+                self.run_main_loop(200_000)
+        return heals, stops
+
+    def test_heals_then_stops_when_the_mp_is_gone(self):
+        heals, stops = self.run_until_stopped(seed=1)
+        self.assertEqual([True], heals)  # one HEAL, at the start of a turn in a fight: SPELL, then HEAL
+        self.assertEqual([StopReason.MP_LOW], stops)
+        self.assertEqual(1, self.player.current_mp)  # 5 - HEAL's 4
+        self.assertLessEqual(self.player.current_hp, self.player.max_hp // 4 + 1)
+        self.assertGreater(self.player.current_hp, 0)
+
+    def test_keep_one_heal_stops_without_casting_it(self):
+        self.game.game_state.config['AUTO_HEAL'] = AUTO_HEAL_KEEP_ONE
+        heals, stops = self.run_until_stopped(seed=1)
+        self.assertEqual([], heals)  # 5 MP - 4 would leave less than one HEAL
+        self.assertEqual([StopReason.MP_LOW], stops)
+        self.assertEqual(5, self.player.current_mp)
+
+
+class TestAutoHealOnTheMap(HeadlessTestCase):
+    """HP low on the map: A, SPELL in the COMMAND window, HEAL in the SPELL window, through the real windows."""
+    experience = 47  # level 4: HEAL and HURT, 16 MP
+
+    def new_game(self, **overrides):
+        return super().new_game(AUTO_HEAL=AUTO_HEAL_ON, **overrides)
+
+    def test_starting_with_hp_low_heals_first_and_grinds_on(self):
+        player = self.player
+        player.current_hp = 3
+        self.assertTrue(self.grind.start())
+        self.assertEqual(Spell.HEAL, self.grind.heal_spell)
+        heals = []
+        real_heal = self.game.cmd_menu.heal
+
+        def heal():
+            heals.append(player.current_hp)
+            real_heal()
+
+        with patch.object(self.game.cmd_menu, 'heal', side_effect=heal), \
+                patch.object(self.game.battle_ctrl, 'fight_enemy', side_effect=Done):
+            with self.assertRaises(Done):  # back to pacing: the first fight
+                self.run_main_loop(20_000)
+        # HEAL until out of the red (31 max HP: 8 and below), each from the map's windows
+        self.assertGreaterEqual(len(heals), 1)
+        self.assertGreater(player.current_hp, player.max_hp // 4 + 1)
+        self.assertEqual(player.max_mp - 4 * len(heals), player.current_mp)
+        self.assertTrue(self.grind.active)
+        self.assertIsNone(self.grind.heal_spell)
+        self.assertFalse(self.game.cmd_menu.menu.is_enabled())
+
+    def test_without_auto_heal_it_does_not_start(self):
+        self.game.game_state.config['AUTO_HEAL'] = AUTO_HEAL_OFF
+        self.player.current_hp = 3
+        with patch.object(self.game, 'draw_temporary_text') as text:
+            self.assertFalse(self.grind.start())
+        text.assert_called_once_with("Auto-grind: HP is already low")
+
+
+class TestDanger(GrindTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.game.game_state.config['AUTO_GRIND_STOP'] = GRIND_STOP_DANGER
+
+    def test_on_the_map_twice_the_worst_hit_of_the_zone(self):
+        player = self.player
+        worst = worst_group_damage(self.grind.enemies_here(), player.defense_power, player.armor)
+        self.assertEqual({'Slime', 'Red Slime'}, self.grind.enemies_here())  # by Tantegel
+        self.assertEqual(2 * worst, self.grind.hp_line(in_fight=False))
+
+    def test_in_a_fight_the_enemy_s_worst_hit(self):
+        battle = MagicMock()
+        battle.enemy = enemy_string_lookup['Magician']()
+        self.game.cmd_menu.current_battle = battle
+        player = self.player
+        self.assertEqual(worst_enemy_damage(battle.enemy, player.defense_power, player.armor),
+                         self.grind.hp_line(in_fight=True))
+
+
+class TestGInAFight(GrindTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.game.cmd_menu.current_battle = MagicMock()
+
+    def test_g_at_the_command_window_starts_it(self):
+        self.assertTrue(self.game.battle_ctrl.press_auto_grind(key(K_g)))
+        self.assertTrue(self.grind.active)
+        self.assertEqual((GRASS, (51, 44)), (self.grind.origin, self.grind.partner))
+
+    def test_not_in_a_scripted_fight(self):
+        self.game.battle_ctrl.special_fight = True
+        with patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as line:
+            self.assertTrue(self.game.battle_ctrl.press_auto_grind(key(K_g)))
+        self.assertFalse(self.grind.active)
+        line.assert_called_once()
+
+    def test_other_keys_and_the_option_off(self):
+        self.assertFalse(self.game.battle_ctrl.press_auto_grind(key(K_k)))
+        self.game.game_state.config['AUTO_GRIND'] = False
+        self.assertFalse(self.game.battle_ctrl.press_auto_grind(key(K_g)))
+        self.assertFalse(self.grind.active)
+
+
+class TestHealSteering(GrindTestCase):
+    """heal_key: the key that takes each window one step closer to the healing spell."""
+
+    def setUp(self):
+        super().setUp()
+        self.player.spells = [Spell.HEAL, Spell.HURT, Spell.SLEEP, Spell.RADIANT, Spell.STOPSPELL, Spell.OUTSIDE,
+                              Spell.RETURN, Spell.REPEL, Spell.HEALMORE]
+        self.grind.heal_spell = Spell.HEALMORE
+
+    def test_the_spell_window(self):
+        cmd_menu = self.game.cmd_menu
+        cmd_menu.item_menu_selection = ('spells', 0)
+        self.assertEqual(K_DOWN, self.grind.heal_key())
+        cmd_menu.item_menu_selection = ('spells', 9)  # past it (a bigger list): back up
+        self.assertEqual(K_UP, self.grind.heal_key())
+        cmd_menu.item_menu_selection = ('spells', 8)
+        self.assertEqual(K_k, self.grind.heal_key())
+        self.assertIsNone(self.grind.heal_spell)  # chosen
+
+    def test_the_item_window_is_backed_out_of(self):
+        self.game.cmd_menu.item_menu_selection = ('inventory', 0)
+        self.assertEqual(K_j, self.grind.heal_key())
+        self.assertEqual(Spell.HEALMORE, self.grind.heal_spell)
+
+    def test_the_battle_command_window(self):
+        battle_ctrl = self.game.battle_ctrl
+        self.game.cmd_menu.current_battle = MagicMock()
+        battle_ctrl.command_window_open = False
+        self.assertEqual(K_k, self.grind.heal_key())  # a battle line waiting for a press
+        battle_ctrl.command_window_open = True
+        for cell, expected in (((0, 0), K_RIGHT), ((1, 0), K_UP), ((1, 1), K_UP), ((0, 1), K_k)):
+            battle_ctrl.battle_menu_row, battle_ctrl.battle_menu_column = cell
+            with self.subTest(cell=cell):
+                self.assertEqual(expected, self.grind.heal_key())
+
+    def test_the_command_window_on_the_map(self):
+        cmd_menu = self.game.cmd_menu
+        self.assertEqual(K_k, self.grind.heal_key())  # opens it
+        cmd_menu.launch_signaled = True
+        self.assertIsNone(self.grind.heal_key())  # on its way
+        cmd_menu.menu.enable()
+        for selected, expected in ((0, K_RIGHT), (5, K_UP), (4, K_k)):  # TALK, ITEM, SPELL
+            cmd_menu.menu.selected = selected
+            with self.subTest(selected=selected):
+                self.assertEqual(expected, self.grind.heal_key())

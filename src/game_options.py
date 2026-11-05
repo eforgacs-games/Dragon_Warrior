@@ -36,7 +36,8 @@ MESSAGE_SPEED_NAMES = ('Fast', 'Normal', 'Slow')
 CLASSIC = 'Classic'  # the NES dialog window (src/dialog_box.py), the default
 MODERN = 'Modern'  # each message replaces the last one, as this game drew dialog before it matched the NES
 DIALOG_STYLES = (CLASSIC, MODERN)
-AUTO_GRIND_STOP_VALUES = ('RedHP', 'HalfHP', 'ThreeQuartersHP')
+AUTO_GRIND_STOP_VALUES = ('RedHP', 'HalfHP', 'ThreeQuartersHP', 'Danger')
+AUTO_HEAL_OFF, AUTO_HEAL_ON, AUTO_HEAL_KEEP_ONE = AUTO_HEAL_SETTINGS = ('Off', 'On', 'KeepOneHeal')
 ENCOUNTERS_NES, ENCOUNTERS_HALF, ENCOUNTERS_OFF = ENCOUNTER_SETTINGS = ('NES', 'Half', 'Off')
 EXP_GOLD_MULTIPLIERS = (1, 2, 4)
 STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS = STATUS_WINDOW_SETTINGS = ('NES', 'Always')
@@ -189,11 +190,15 @@ MESSAGE_LOG = Option('message_log', 'MESSAGE_LOG', ON_OFF, False, (False, True),
 STATS_PAGE = Option('stats_page', 'STATS_PAGE', ON_OFF, False, (False, True), 'StatsPage')
 # AUTOSAVE: the autosave slot (src/autosave.py); the NES only saves with King Lorik
 AUTOSAVE = AutosaveOption('autosave', 'AUTOSAVE', ON_OFF, None, (False, True), 'Autosave')
+# AUTO-HEAL: when auto-grind's HP is low (GRIND STOP), it casts HEAL or HEALMORE instead of stopping, until HP is out
+# of danger, with all the MP or keeping enough for one HEAL (src/auto_grind.py). Off, it stops.
+AUTO_HEAL = Option('auto_heal', 'AUTO_HEAL', AUTO_HEAL_SETTINGS, AUTO_HEAL_OFF, (AUTO_HEAL_OFF, AUTO_HEAL_KEEP_ONE),
+                   'AutoHeal')
 
 PER_LOG_OPTIONS = (MESSAGE_SPEED, DIALOG_STYLE, NPCS_MAKE_WAY, FADE_STYLE, AUTO_STAIRS, AUTO_GRIND_STOP, MENU_SPEED,
                    MUSIC, GAME_SPEED_KEYS, SAVE_STATES, REWIND, AUTO_GRIND, CHEAT_KEYS, QUICK_ACTION, ENCOUNTERS,
                    EXP_GOLD, RUN_BUTTON, STATUS_WINDOW, SHOP_PREVIEW, QUEST_JOURNAL, BAG_SIZE, SMART_A, MESSAGE_LOG,
-                   STATS_PAGE, AUTOSAVE)
+                   STATS_PAGE, AUTOSAVE, AUTO_HEAL)
 
 # Global, in the order of Settings' fields
 
@@ -245,6 +250,7 @@ class Options:
     message_log: bool = MESSAGE_LOG.default
     stats_page: bool = STATS_PAGE.default
     autosave: bool | None = AUTOSAVE.default  # None: the config's AUTOSAVE is kept
+    auto_heal: str = AUTO_HEAL.default
 
 
 # A new quest's settings when none are chosen: the default message speed and the NES preset's values, as base_config

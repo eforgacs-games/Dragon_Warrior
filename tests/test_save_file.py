@@ -79,6 +79,7 @@ CURRENT_FORMAT_SAVE = '''{
     "MessageLog": false,
     "StatsPage": true,
     "Autosave": false,
+    "AutoHeal": "KeepOneHeal",
     "PlayStats": {
         "play_time_ms": 3723000,
         "steps": 1234,
@@ -126,7 +127,7 @@ class TestSaveFileRoundTrip(TestCase):
                                  auto_grind=False, cheat_keys=True, quick_action=True, encounters='Half',
                                  exp_gold=4, run_button=True, status_window='Always', shop_preview=False,
                                  quest_journal='Hints', autosave=False, bag_size=16, smart_a=True,
-                                 message_log=False, stats_page=True),
+                                 message_log=False, stats_page=True, auto_heal='KeepOneHeal'),
                          save.options)
 
     def test_every_checkpoint_round_trips(self):

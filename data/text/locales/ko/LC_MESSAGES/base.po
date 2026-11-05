@@ -3319,3 +3319,23 @@ msgstr "연 보물 상자"
 #: src/stats_screen.py
 msgid "MONSTERS DEFEATED"
 msgstr "물리친 마물"
+
+#: src/auto_grind.py
+msgid "Auto-grind: not in this fight"
+msgstr "자동 사냥: 이 싸움에서는 안 된다"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: MP too low to heal"
+msgstr "자동 사냥 멈춤: 회복할 MP 부족"
+
+#: src/options_overlay.py
+msgid "DANGER"
+msgstr "위험"
+
+#: src/options_overlay.py
+msgid "AUTO-HEAL"
+msgstr "자동 회복"
+
+#: src/options_overlay.py
+msgid "KEEP 1 HEAL"
+msgstr "호이미 1번 남김"
