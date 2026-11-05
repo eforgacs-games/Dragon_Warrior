@@ -37,6 +37,7 @@ from src.save_file import ADVENTURE_LOGS, SaveFile, is_from_a_newer_build, log_b
     save_path, write_save
 from src.message_log import speaker_of
 from src.quest_journal import hear
+from src.records import TABLET, TABLET_HEADING, read as read_record, tablet_lines
 from src.selection import YES, frame_events, next_game_frame, run_selection, stop_at_edges
 from src.sound import SPELL_SFX_FRAMES, Sound
 from src.visual_effects import bw_screen_flash, rainbow_bridge_flash
@@ -326,8 +327,8 @@ class CommandMenu:
             if character.get('dialog'):
                 self.dialog_lookup.camera_position = self.camera_position
                 self.show_text_in_dialog_box(character['dialog'], add_quotes=True, skip_text=self.skip_text)
-                # The quest journal remembers the goals the NPC spoke of
-                hear(self.game.story_flags, character.get('dialog_byte'))
+                # The quest journal remembers the goals the NPC spoke of, and where
+                hear(self.game.story_flags, character.get('dialog_byte'), current_map.identifier)
             else:
                 print(f"Character has no dialog: {dialog_character}")
                 self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True,
@@ -839,20 +840,14 @@ class CommandMenu:
             self.take_gold({'item': GOLD, 'gold': DEATH_NECKLACE_GOLD})
 
     def tablet(self, found_item_text):
-        self.show_text_in_dialog_box((
-            found_item_text,
-            self._("The tablet reads as follows:"),
-            self._("I am Erdrick and thou art my descendant."),
-            self._("Three items were needed to reach the Isle of Dragons, which is south of Brecconary."),
-            self._("I gathered these items, reached the island, and there defeated a creature of great evil."),
-            self._("Now I have entrusted the three items to three worthy keepers."),
-            self._("Their descendants will protect the items until thy quest leads thee to seek them out."),
-            self._("When a new evil arises, find the three items, then fight!")), drop_down=False)
+        self.show_text_in_dialog_box((found_item_text, self._(TABLET_HEADING)) + tablet_lines(self._),
+                                     drop_down=False)
 
     def take_tablet(self) -> None:
-        # NES ChkTrsrErdTablet: the tablet is read, not kept
+        # NES ChkTrsrErdTablet: the tablet is read, not kept. The quest journal keeps what it says (src/records.py).
         self.open_chest()
         self.tablet(self.found_item_text('Tablet'))
+        read_record(self.game.story_flags, TABLET)
 
     def take_gold(self, treasure_info: dict):
         """NES GetTrsrGold: the amount is rolled when the chest is opened, and gold stops at 65535."""

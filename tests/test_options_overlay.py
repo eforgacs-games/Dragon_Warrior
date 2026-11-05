@@ -458,7 +458,7 @@ class TestPreset(OverlayTestCase):
                           'CHEAT_KEYS': False, 'RUN_BUTTON': True, 'SHOP_PREVIEW': True,
                           'QUEST_JOURNAL': JOURNAL_HINTS, 'AUTOSAVE': True, 'BAG_SIZE': 16,
                           'VIEW': 'NES', 'DUNGEON_MAP': True, 'SMART_A': True,
-                          'MESSAGE_LOG': True, 'NAME_CONFIRM': True, 'STATS_PAGE': True, 'AUTO_HEAL': 'KeepOneHeal',
+                          'MESSAGE_LOG': False, 'NAME_CONFIRM': True, 'STATS_PAGE': True, 'AUTO_HEAL': 'KeepOneHeal',
                           'AUTO_INN': True},
                          preset_values(PRESET_MODERN))
         # the message speed is the NES's own setting, and the language the player's: no preset changes them

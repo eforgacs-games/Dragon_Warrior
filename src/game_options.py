@@ -183,8 +183,9 @@ BAG_SIZE = Option('bag_size', 'BAG_SIZE', BAG_SIZES, INVENTORY_SLOTS, (INVENTORY
 # SMART A (#404): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, instead of opening COMMAND
 # (MapHotkeys.smart_command)
 SMART_A = Option('smart_a', 'SMART_A', ON_OFF, False, (False, True), 'SmartA')
-# MESSAGE LOG (#405): the MESSAGE LOG key (L) shows the last messages on the map (src/message_log.py)
-MESSAGE_LOG = Option('message_log', 'MESSAGE_LOG', ON_OFF, False, (False, True), 'MessageLog')
+# MESSAGE LOG (#405): the MESSAGE LOG key (L) shows the last messages on the map (src/message_log.py). Off in MODERN
+# too: the quest journal (Q) keeps what matters (the hints with who said them, and the records: src/records.py)
+MESSAGE_LOG = Option('message_log', 'MESSAGE_LOG', ON_OFF, False, (False, False), 'MessageLog')
 # STATS PAGE (#414): the STATS key (P) shows the adventure's play statistics on the map (src/stats_screen.py). They're
 # counted whatever it says (src/play_stats.py). Information only: on in MODERN.
 STATS_PAGE = Option('stats_page', 'STATS_PAGE', ON_OFF, False, (False, True), 'StatsPage')

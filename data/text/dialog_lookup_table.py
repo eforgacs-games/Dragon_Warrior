@@ -19,6 +19,7 @@ from src.maps import DragonWarriorMap
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE
 from src.play_stats import PlayStats
+from src.records import king_lorik_charge
 from src.window_renderer import draw_window as generated_window
 from src.windows import BUY_SELL_LAYOUT, WindowLayout, shop_inventory_layout
 from src.menu_functions import draw_player_sprites, draw_character_sprites
@@ -357,17 +358,7 @@ class DialogLookup:
             # The throne room: King Lorik (DoKingDialog). 'dialog' starts as the opening speech (MainGameEngine,
             # TextBlock17 entry 2) and CommandMenu.set_king_lorik_dialog switches it as the story goes on.
             0x6E: {
-                'dialog': (
-                    _("Descendant of Erdrick, listen now to my words."),
-                    _("It is told that in ages past Erdrick fought demons with a Ball of Light."),
-                    _("Then came the Dragonlord who stole the precious globe and hid it in the darkness."),
-                    _("Now, {}, thou must help us recover the Ball of Light and restore peace to our land.").format(
-                        self.player.name),
-                    _("The Dragonlord must be defeated."),
-                    _("Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."),
-                    _("Then speak with the guards, for they have much knowledge that may aid thee."),
-                    _("May the light shine upon thee, {}.").format(self.player.name)
-                ),
+                'dialog': king_lorik_charge(self.player.name, _),
                 'post_initial_dialog': _(
                     "When thou art finished preparing for thy departure, please see me.\nI shall wait."),
                 # NES DoKingDialog, KingDialog2/LeftThRoom: TextBlock13 entry 0, then TextBlock1 entry 2 at

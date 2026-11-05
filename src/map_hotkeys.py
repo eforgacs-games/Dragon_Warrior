@@ -28,6 +28,8 @@ from src.options_overlay import OPTIONS_KEYS, OptionsOverlay
 from src.save_state import LOAD, SAVE
 from src.stats_screen import StatsScreen
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_OFF, game_progress, journal_pages
+from src.records import GOALS_ENTRY, Record, choose_journal_page, known_records
+from src.languages import language_named
 from src.waiting import requested_speed, set_game_speed, speed_keys_enabled
 from src.zoom import remember_windowed_size, restore_windowed_size
 
@@ -193,17 +195,27 @@ class MapHotkeys:
 
     def press_quest_journal(self, keydown_event: Event) -> None:
         """Q (the JOURNAL key): the quest journal (src/quest_journal.py): one dialog box page per goal the hero has
-        learned of, with what was said of it if QUEST JOURNAL is set to HINTS. With it OFF (the NES), Q does
-        nothing."""
+        learned of, with what was said of it and who said it if QUEST JOURNAL is set to HINTS. Once the hero has a
+        record to read again (src/records.py: Erdrick's Tablet, King Lorik's charge), the JOURNAL window first asks
+        for the goals or a record. With it OFF (the NES), Q does nothing."""
         if not pressed(keydown_event, 'QUEST_JOURNAL'):
             return
         setting = self.game.config.get('QUEST_JOURNAL', JOURNAL_OFF)
         if setting == JOURNAL_OFF:
             return
-        pages = journal_pages(game_progress(self.game), hints=setting == JOURNAL_HINTS, _=self.game._)
+        game = self.game
         # the message log is for what the NPCs said, and the play time for what is played
-        with self.game.cmd_menu.not_logged(), self.game.play_clock.stopped():
-            self.game.cmd_menu.show_text_in_dialog_box(pages)
+        with game.cmd_menu.not_logged(), game.play_clock.stopped():
+            records = known_records(game.story_flags, game.dungeon_map)
+            chosen = choose_journal_page(game, records) if records else GOALS_ENTRY
+            if chosen is None:
+                return
+            if isinstance(chosen, Record):
+                pages = list(chosen.pages(game.player.name, game._))
+            else:
+                quote = language_named(game.config.get('LANGUAGE')).quote
+                pages = journal_pages(game_progress(game), hints=setting == JOURNAL_HINTS, _=game._, quote=quote)
+            game.cmd_menu.show_text_in_dialog_box(pages)
 
     def press_smart_a_key(self, keydown_event: Event) -> None:
         """QUICK ACTION: the SMART A key (Enter, src/controls.py) on the map runs TALK, TAKE, DOOR or STAIRS when one

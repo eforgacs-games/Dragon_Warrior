@@ -107,41 +107,41 @@ msgstr ""
 "有什麼需要嗎？"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Descendant of Erdrick, listen now to my words."
 msgstr "繼承了勇者洛特之血的人啊！我正在等你。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
 msgstr "很久以前，傳說中的勇者洛特被神賜予了光之石，將世界上肆虐的魔物們都給封印了起來。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
 msgstr "但是不知從何處而來的惡魔的化身——龍王卻將光之石封在了黑暗之中！"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Now, {}, thou must help us recover the Ball of Light and restore peace to our land."
 msgstr "勇者{}！去打倒龍王，把光之石取回來吧！"
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "The Dragonlord must be defeated."
 msgstr "必須打倒龍王。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."
 msgstr "我給你準備了一些東西！去打開那邊的寶箱吧。都是一些應該能幫得上你的東西。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then speak with the guards, for they have much knowledge that may aid thee."
 msgstr "還有，這個房間裏的人們會告訴你一些旅行心得。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "May the light shine upon thee, {}."
 msgstr "那就再見了！勇者{}！"
 
@@ -881,39 +881,39 @@ msgid "Tablet"
 msgstr "石板"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "The tablet reads as follows:"
 msgstr "石板上寫著這樣的內容。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "I am Erdrick and thou art my descendant."
 msgstr ""
 "我的名字是洛特。\n"
 "繼承了我的血脈的人啊。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
 msgstr "如果想要登上拉達托姆南方的魔島，需要3件東西。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
 msgstr "我集齊了這3樣東西登上了魔島，並打倒了魔王。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Now I have entrusted the three items to three worthy keepers."
 msgstr "然後，我將這3樣神秘的東西託付給了3位賢者。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
 msgstr "他們的子孫應該會守護著這些東西，直到你前去尋找。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "When a new evil arises, find the three items, then fight!"
 msgstr "如果魔島上的邪惡再次復蘇，就找齊這些東西去戰鬥吧！"
 
@@ -3386,6 +3386,7 @@ msgid "{} (hold): Rewind"
 msgstr "{} (按住): 倒帶"
 
 #: src/controls_screen.py
+#: src/records.py
 msgid "JOURNAL"
 msgstr "旅行筆記"
 
@@ -3419,6 +3420,7 @@ msgid "NO MESSAGES YET"
 msgstr "還沒有對話"
 
 #: src/message_log.py
+#: src/records.py
 msgid "KING LORIK"
 msgstr "國王"
 
@@ -3562,3 +3564,79 @@ msgstr "自動升級: 回到練級地點"
 #: src/options_overlay.py
 msgid "AUTO-INN"
 msgstr "自動旅館"
+
+#: src/quest_journal.py
+msgid "{} said:"
+msgstr "{}說："
+
+#: src/quest_journal.py
+msgid "{} in {}"
+msgstr "{1}的{0}"
+
+#: src/quest_journal.py
+msgid "An old man"
+msgstr "老人"
+
+#: src/quest_journal.py
+msgid "King Lorik"
+msgstr "拉魯斯十六世"
+
+#: src/quest_journal.py
+msgid "A guard"
+msgstr "士兵"
+
+#: src/quest_journal.py
+msgid "A soldier"
+msgstr "戰士"
+
+#: src/quest_journal.py
+msgid "A wizard"
+msgstr "魔法師"
+
+#: src/quest_journal.py
+msgid "A merchant"
+msgstr "商人"
+
+#: src/quest_journal.py
+msgid "A man"
+msgstr "男子"
+
+#: src/quest_journal.py
+msgid "A woman"
+msgstr "女子"
+
+#: src/quest_journal.py
+msgid "Tantegel Castle"
+msgstr "拉達托姆城"
+
+#: src/quest_journal.py
+msgid "Brecconary"
+msgstr "拉達托姆鎮"
+
+#: src/quest_journal.py
+msgid "Garinham"
+msgstr "加雷鎮"
+
+#: src/quest_journal.py
+msgid "Kol"
+msgstr "麥拉村"
+
+#: src/quest_journal.py
+msgid "Rimuldar"
+msgstr "利姆爾達鎮"
+
+#: src/quest_journal.py
+msgid "Cantlin"
+msgstr "麥爾基德"
+
+#: src/quest_journal.py
+msgid "a shrine"
+msgstr "祠堂"
+
+#: src/records.py
+msgid "GOALS"
+msgstr "目標"
+
+#: src/records.py
+msgid "ERDRICK'S TABLET"
+msgstr "洛特的石板"
