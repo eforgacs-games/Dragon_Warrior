@@ -1,6 +1,6 @@
 import functools
-import random
 
+from src.random_streams import hero_random
 from src.spells import Spell
 from typing import TYPE_CHECKING, Any, TypedDict
 from collections.abc import Callable, Collection, Iterable, Iterator
@@ -991,7 +991,7 @@ class CommandMenu:
         self.game.music_player.play_until_end(self.directories.harp_music, self.game.game_state.config)
         self.game.game_state.unpause_all_movement()
         if self.current_map.identifier == 'Alefgard':
-            self.game.battle_ctrl.queue_scripted_battle(random.choice(SILVER_HARP_ENEMIES))
+            self.game.battle_ctrl.queue_scripted_battle(hero_random.choice(SILVER_HARP_ENEMIES))
             return
         self.resume_music()  # HarpFail: ResumeMusicTbl
         self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
@@ -1161,7 +1161,7 @@ class CommandMenu:
         self.recover_health(10, 17)
 
     def recover_health(self, lowest: int, highest: int):
-        health_addition = random.randint(lowest, highest)
+        health_addition = hero_random.randint(lowest, highest)
         if self.player.current_hp + health_addition > self.player.max_hp:
             health_addition = self.player.max_hp - self.player.current_hp
         self.player.current_hp += health_addition
@@ -1176,7 +1176,7 @@ class CommandMenu:
 
     def battle_spell_resisted(self, resistance: float) -> bool:
         """NES ChkSpellFail: the spell fails if a 0-15 roll is below the enemy's resistance (n/16)."""
-        if random.randint(0, 15) < round(resistance * 16):
+        if hero_random.randint(0, 15) < round(resistance * 16):
             self.show_battle_line(self._("The spell will not work."))
             return True
         return False
@@ -1194,7 +1194,7 @@ class CommandMenu:
         if self.battle_spell_resisted(enemy.hurt_resist):
             return
         # Spell damage can't be dodged
-        damage = random.randint(lowest, highest)
+        damage = hero_random.randint(lowest, highest)
         self.sound.play_sound(self.directories.hit_sfx)
         # NES SetSpellDmg falls through to PlyrHitEn, so a damage spell flashes the enemy red too
         self.game.drawer.flash_enemy(self.screen, enemy.name)

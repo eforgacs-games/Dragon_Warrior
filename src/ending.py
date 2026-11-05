@@ -13,7 +13,6 @@ Ending — everything that happens after the Dragonlord's final form is defeated
 The story flags themselves live in src/story_flags.py.
 """
 
-import random
 from typing import TYPE_CHECKING
 
 from pygame import QUIT, display, event, time
@@ -27,6 +26,7 @@ from src.languages import language_named
 from src.maps import map_lookup
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE, SEARCHED_FOR_GWAELIN
+from src.random_streams import world_random
 from src.text import draw_text
 from src.visual_effects import screen_fade
 from src.waiting import NES_FPS, POLL_INTERVAL_MS, game_ticks, quit_game, wait_frames
@@ -218,7 +218,7 @@ class Ending:
             # NES TantEndDialog: the guard in Brecconary who searched for Gwaelin has nothing more to say
             return "...."
         # NES RandEndDialog: the low bit of a random number picks one of two lines
-        if random.randint(0, 1):
+        if world_random.randint(0, 1):
             return _("Hurrah!\nHurrah!\nLong live {}!").format(self.player.name)
         return _("Thou hast brought us peace, again.")
 

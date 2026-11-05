@@ -8,7 +8,6 @@
 Each test compares the picture with the one drawn the old way, byte for byte.
 """
 import hashlib
-import random
 from collections import defaultdict
 from contextlib import nullcontext
 from unittest import TestCase
@@ -20,6 +19,7 @@ from pygame import K_LEFT, K_RIGHT, Surface
 from src.color import LOW_HP_RED, WHITE
 from src.drawer import Drawer, SpareMapSurface, map_surface
 from src.maps import map_lookup
+from src.random_streams import seed_all
 from tests.test_character_redraw import draw_frame, make_game
 
 
@@ -101,7 +101,7 @@ class TestLoadMap(DisplayTestCase):
 def entering_frames(full_redraw: bool, between=None, map_name='Alefgard', coordinates=(50, 47)) -> list[bytes]:
     """The screens and backgrounds of a change_map from the Swamp Cave and the 40 main loop frames after it, the hero
     walking left then right. With full_redraw, the main loop's first frame draws every tile again, as it used to."""
-    random.seed(431)
+    seed_all(431)
     game = make_game('SwampCave')
     frames = []
 

@@ -127,9 +127,9 @@ class TestEnding(TestCase):
     def test_npc_dialog_elsewhere_after_the_dragonlord(self):
         brecconary = map_lookup['Brecconary'](self.game.config)
         self.assertEqual(self.game.ending.npc_dialog('GUARD', brecconary), '....')
-        with patch('src.ending.random.randint', return_value=1):
+        with patch('src.ending.world_random.randint', return_value=1):
             self.assertEqual(self.game.ending.npc_dialog('MAN', brecconary), 'Hurrah!\nHurrah!\nLong live Edward!')
-        with patch('src.ending.random.randint', return_value=0):
+        with patch('src.ending.world_random.randint', return_value=0):
             self.assertEqual(self.game.ending.npc_dialog('MAN', brecconary), 'Thou hast brought us peace, again.')
 
     def talk_after_the_dragonlord(self, map_name, character):
@@ -137,7 +137,7 @@ class TestEnding(TestCase):
         new_map = map_lookup[map_name](self.game.config)
         self.game.change_map(new_map, destination_coordinates=next(iter(new_map.staircases)))
         self.lines.clear()
-        with patch('src.ending.random.randint', return_value=0):
+        with patch('src.ending.world_random.randint', return_value=0):
             self.game.cmd_menu.launch_dialog(character, self.game.current_map)
 
     def test_npcs_with_their_own_dialog_only_cheer_after_the_dragonlord(self):

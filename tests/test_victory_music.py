@@ -24,10 +24,12 @@ import pygame
 from src.battle_controller import BattleOutcome
 from src.chiptune_soundtracks import MSC_LEVEL_UP, MSC_VICTORY, nes_track
 from src.config.test_config import test_config
+from src.enemy_lookup import enemy_string_lookup
 from src.maps import map_lookup
 from src.menu import CommandMenu
 from src.music_player import MusicPlayer
 from src.player.player_stats import levels_list
+from src.random_streams import seed_all
 from src.sound import SFX_CHANNEL, Sound, sfx_channel
 from tests.helpers import new_game, skip_window_frame_waits
 
@@ -106,7 +108,7 @@ class ChiptuneStreamStandIn:
 class TestVictoryMusic(TestCase):
 
     def setUp(self):
-        random.seed(1985)
+        seed_all(1985)
         skip_window_frame_waits()
         self.addCleanup(patch.stopall)
         config = {**test_config, 'NO_WAIT': True, 'RENDER_TEXT': False, 'NO_BLIT': True, 'SOUND_ENABLED': True,
@@ -238,10 +240,15 @@ class TestVictoryMusic(TestCase):
         self.game.change_map(map_lookup['Alefgard'](self.game.config), destination_coordinates=(50, 50))
         wins = 0
         for battle_number in range(40):
-            enemy_name = random.choice(['Slime', 'Red Slime', 'Drakee', 'Ghost', 'Magician', 'Scorpion', 'Druin',
-                                        'Golem', 'Skeleton', 'Wolf'])
-            how = random.choice(['attack', 'attack', 'hurt', 'hurtmore'])
             level_up = battle_number % 3 == 0 and self.player.level < 29
+            enemy_names = ['Slime', 'Red Slime', 'Drakee', 'Ghost', 'Magician', 'Scorpion', 'Druin', 'Golem',
+                           'Skeleton', 'Wolf']
+            if not level_up:  # an enemy that can't level the hero up from the start of his level
+                exp_to_next = (levels_list[self.player.level + 1]['total_exp'] - levels_list[self.player.level]['total_exp']
+                               if self.player.level < 30 else 65536)
+                enemy_names = [name for name in enemy_names if enemy_string_lookup[name]().xp < exp_to_next]
+            enemy_name = random.choice(enemy_names)
+            how = random.choice(['attack', 'attack', 'hurt', 'hurtmore'])
             with self.subTest(battle=battle_number, enemy=enemy_name, how=how, level_up=level_up):
                 level = self.player.level
                 outcome, events = self.fight(enemy_name, how, level_up)

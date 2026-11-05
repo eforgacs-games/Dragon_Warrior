@@ -167,7 +167,7 @@ class TestEnemyStatTable(unittest.TestCase):
             for roll in range(256):
                 # ModEnHitPoints: upper byte of HP * rand, divided by 4, subtracted from HP
                 expected = hp if name == 'Dragonlord 2' else hp - (((hp * roll) >> 8) >> 2)
-                with patch('src.battle.random.randint', return_value=roll):
+                with patch('src.battle.hero_random.randint', return_value=roll):
                     self.assertEqual(randomize_enemy_hp(enemy), expected, (name, roll))
 
     def test_gold_randomization_matches_calc_plyr_gold(self):
@@ -175,7 +175,7 @@ class TestEnemyStatTable(unittest.TestCase):
             for roll in range(64):
                 # CalcPlyrGold: upper byte of EnBaseGld * (rand & $3F + $C0)
                 expected = (gold * (roll + 0xC0)) >> 8
-                with patch('src.battle.random.randint', return_value=roll):
+                with patch('src.battle.hero_random.randint', return_value=roll):
                     self.assertEqual(randomize_enemy_gold(gold), expected, (name, roll))
 
     def test_repel_values_match_repel_tbl(self):

@@ -1,6 +1,5 @@
 """The game speed (keys 1 to 4, src/waiting.py): every timed wait and timer runs N times as fast at speed N, the keys
 work in battles and dialogs too, and the speed never changes what happens."""
-import random
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -15,6 +14,7 @@ from src.battle_controller import BattleController
 from src.color import WHITE
 from src.config.test_config import test_config
 from src.menu import CommandMenu
+from src.random_streams import hero_random, seed_all
 from src.visual_effects import fade, player_hit_shake
 from src.waiting import game_speed, game_ticks, get_events, reset_game_speed, set_game_speed, wait, wait_frames
 from tests.mock_map import MockMap
@@ -184,7 +184,7 @@ class TestBattleTiming(GameSpeedTestCase):
     def battle_turn(self, speed):
         """Run one turn at speed; return (real time it took, what happened)."""
         set_game_speed(speed)
-        random.seed(1234)
+        seed_all(1234)
         player = self.game.player
         player.current_hp = player.max_hp = 50
         battle = Battle(self.game.config, 'Slime', self.game.current_map)
@@ -201,7 +201,7 @@ class TestBattleTiming(GameSpeedTestCase):
             controller.enemy_move(battle)
             player_hit_shake(self.game.screen, self.game.game_state.config)
             fade(fade_out=True, screen=self.game.screen, config=self.game.game_state.config)
-        outcome = (battle.enemy.hp, player.current_hp, random.random())
+        outcome = (battle.enemy.hp, player.current_hp, hero_random.random())
         self.game.cmd_menu.dialog_buffer.clear()
         return self.clock.now - start, outcome
 

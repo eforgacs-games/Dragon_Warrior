@@ -1,8 +1,8 @@
-import random
 from collections.abc import Iterable
 from typing import Any, SupportsIndex, override
 
 from src.coordinates import Cell
+from src.random_streams import hero_random
 
 
 # Equipment and tool prices are the NES ItemCostTbl (Bank00); the towns are from ShopItemsTbl.
@@ -311,7 +311,7 @@ THRONE_ROOM_CHEST_SLOTS = {5: (7, 16), 6: (10, 15), 7: (10, 14)}
 def roll_treasure_gold(gold: tuple[int, int]) -> int:
     """NES GetTrsrGold: base gold plus a random byte masked with the chest's random bits."""
     base, random_bits = gold
-    return base + (random.randint(0, 255) & random_bits)
+    return base + (hero_random.randint(0, 255) & random_bits)
 
 
 class TreasureChestHistory:
