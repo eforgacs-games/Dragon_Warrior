@@ -36,7 +36,7 @@ from src.dungeon_map import DungeonMap
 from src.field_encounters import FieldEncounters
 from src.game_functions import set_character_position, GameFunctions
 from src.game_events import EventBus
-from src.game_options import RANDOMNESS
+from src.game_options import COOP_FREE_ROAM, RANDOMNESS
 from src.game_state import GameState
 from src.gamepad import connect_gamepad
 from src.hero_damage import HeroDamage
@@ -65,7 +65,9 @@ from src.ending import Ending
 from src.achievements import Achievements
 from src.follower import Follower, greyed
 from src.follower import IDENTIFIER as FOLLOWER_IDENTIFIER
-from src.sessions import HeroSession, add_session_attributes, session_in_use, use_session
+from src.sessions import HeroSession, RoamTask, add_session_attributes, session_in_use, use_session
+from src.tasks import Scheduler
+from src.controls import PLAYER_ONE, PLAYER_TWO
 from src.netplay import PORT, run_client, start_host
 from src.party import in_party_mode, new_hero, party_of
 from src.play_stats import PlayClock, PlayStats, subscribe_play_stats
@@ -100,6 +102,9 @@ class Game:
         # another's (free roam co-op)
         self.main_session = HeroSession('hero 1')
         self.sessions: list[HeroSession] = [self.main_session]  # every hero's, the first first
+        # Free roam (Game.start_free_roam): each hero's play, a task of its own, run a frame each by the main loop
+        self.free_roam_scheduler: Scheduler | None = None
+        self.free_roam_tasks: list[RoamTask] = []
 
         migrate_legacy_music_config(config)  # a config with the old ORCHESTRA_MUSIC_ENABLED switch (src/soundtrack.py)
         self.config = config
@@ -363,15 +368,19 @@ class Game:
         self.settings.update(language=language)
 
     def add_hero_session(self, hero: Player, map_identifier: str, coordinates: tuple[int, int] | None = None,
-                         name: str | None = None) -> HeroSession:
+                         name: str | None = None, screen: Surface | None = None) -> HeroSession:
         """A session for ``hero`` on a map of their own (free roam co-op, src/sessions.py): their own map, camera,
         windows, fights and steps, set up as Game.__init__ sets up the first hero's, with the hero placed at
         ``coordinates`` (the map's starting block by default). The world (the story, the chests, the maps' layouts)
         stays the game's."""
         session = HeroSession(name or hero.name, hero_key=FOLLOWER_IDENTIFIER)
         config = self.game_state.config
+        main_screen = self.screen
         self.sessions.append(session)
         with use_session(session):
+            self.screen = screen if screen is not None else main_screen
+            # The music is the first hero's: the second's plays nothing (their sound effects play)
+            self.music_player = MusicPlayer({**config, 'MUSIC_ENABLED': False})
             self.game_state = GameState(config=config)
             self.game_state.is_initial_dialog = False
             self.movement = MovementController(self)
@@ -423,7 +432,84 @@ class Game:
             self.frame_pacer = FramePacer(max_frames=STEP_SYNC_FRAMES // 2)
             self.events = []
             self.load_window_palette()
+            self.set_player_images_by_equipment()  # in their own colors from the start, before any frame of theirs
+            hero.show_facing()
         return session
+
+    # Free roam (the CO-OP option on FREE ROAM, src/sessions.py)
+
+    @property
+    def free_roam_active(self) -> bool:
+        return self.free_roam_scheduler is not None
+
+    def free_roam_wanted(self) -> bool:
+        """Whether the heroes should be roaming apart: CO-OP on FREE ROAM, with a second hero."""
+        return self.config.get('COOP') == COOP_FREE_ROAM and self.companion is not None
+
+    def update_free_roam(self) -> None:
+        """Between two frames of the main loop: start free roam, or stop it, if the CO-OP option (or the party) says
+        so. It only stops while both heroes are on the map between frames, not inside a fight or a window."""
+        wanted = self.free_roam_wanted()
+        if wanted and not self.free_roam_active:
+            self.start_free_roam()
+        elif not wanted and self.free_roam_active and all(task.idle for task in self.free_roam_tasks):
+            self.stop_free_roam()
+
+    def start_free_roam(self) -> None:
+        """The second hero roams apart, from where they are: the window is two screens wide, the first hero's view on
+        the left, the second's on the right, each hero's play a task of its own (src/tasks.py)."""
+        companion = self.companion
+        assert companion is not None
+        width, height = self.screen.get_size()
+        display_surface = set_mode((width * 2, height), self.flags)
+        reset_view()
+        self.screen = display_surface.subsurface((0, 0, width, height))
+        self.cmd_menu.screen = self.screen
+        self.camera.screen = self.screen
+        companion.purse = self.player.purse  # the gold is the heroes' together
+        session = self.add_hero_session(companion, self.current_map.identifier,
+                                        (self.player.row, self.player.column),
+                                        screen=display_surface.subsurface((width, 0, width, height)))
+        self.free_roam_scheduler = Scheduler()
+        self.free_roam_tasks = [RoamTask(self, self.main_session, PLAYER_ONE), RoamTask(self, session, PLAYER_TWO)]
+        for task in self.free_roam_tasks:
+            self.free_roam_scheduler.add(task)
+
+    def stop_free_roam(self) -> None:
+        """The heroes travel together again: the second hero back behind the first, one screen."""
+        for session in list(self.sessions[1:]):
+            self.remove_hero_session(session)
+        if self.free_roam_scheduler is not None:
+            self.free_roam_scheduler.close()
+        self.free_roam_scheduler = None
+        self.free_roam_tasks = []
+        self.screen = self.set_screen(self.screen.get_height(), self.screen.get_width())
+        self.cmd_menu.screen = self.screen
+        self.camera.screen = self.screen
+        self.loop_count = 1  # the map drawn again in full
+
+    def free_roam_frame(self) -> None:
+        """One frame of the main loop while the heroes roam apart: the window's events to both heroes' tasks (each
+        reads its own player's keys), a frame of each, then both halves of the window shown."""
+        events = [current_event for current_event in get() if not handle_zoom_event(current_event)]
+        for current_event in events:
+            quit_if_requested(current_event)
+        assert self.free_roam_scheduler is not None
+        for task in self.free_roam_tasks:
+            task.events.extend(events)
+        self.free_roam_scheduler.run_frame()
+        display.flip()
+
+    def roam_frame(self, events: list) -> None:
+        """One frame of a hero's play while the heroes roam apart (src/sessions.py RoamTask), in their session: their
+        keys, a map frame, their view drawn on their half of the window."""
+        self.events = events
+        self._handle_pygame_events(self.events)
+        self.map_frame()
+        self.drawer.draw_all(self, self.movement.sprites_animate)
+        if self.current_session is self.main_session:
+            self.achievements.banner.draw(self.screen, self.color, self.config, self._)
+        self.loop_count += 1
 
     def remove_hero_session(self, session: HeroSession) -> None:
         """A hero no longer roaming on their own: taken off the map they're on, and their session let go."""
@@ -485,6 +571,10 @@ class Game:
         while True:
             self.frame_clock.tick()  # NES_FPS x the game speed (src/waiting.py)
             self.clock.tick()  # only measures, for SHOW_FPS
+            self.update_free_roam()
+            if self.free_roam_active:
+                self.free_roam_frame()
+                continue
             self.run_due_frames()
             self.drawer.draw_all(self, self.movement.sprites_animate)
             self.achievements.banner.draw(self.screen, self.color, self.config, self._)
@@ -697,6 +787,10 @@ class Game:
             sprite_sheet_path = self.directories.UNARMED_HERO_WITH_SHIELD_PATH
         else:
             sprite_sheet_path = self.directories.UNARMED_HERO_PATH
+        if self.current_session.hero_key != 'HERO':
+            # The second hero roaming on their own (src/sessions.py): in their own colors, as when they follow
+            self.player.set_images(self.follower.sheet_for(sprite_sheet_path, self.player.is_dead))
+            return
         if self.player.is_dead and in_party_mode(self):
             # A party's first hero who has fallen (src/party.py): grey, leading the party until an inn
             if sprite_sheet_path not in self.fallen_sheets:

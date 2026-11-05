@@ -4094,3 +4094,15 @@ msgstr "INN"
 #: src/options_overlay.py
 msgid "GET UP"
 msgstr "GET UP"
+
+#: src/options_overlay.py
+msgid "CO-OP"
+msgstr "CO-OP"
+
+#: src/options_overlay.py
+msgid "PARTY"
+msgstr "PARTY"
+
+#: src/options_overlay.py
+msgid "FREE ROAM"
+msgstr "FREE ROAM"
