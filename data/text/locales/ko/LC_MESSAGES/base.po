@@ -3653,6 +3653,7 @@ msgstr "{}은/는 아직 잠들어 있다.\n"
 msgid "{} is asleep.\n"
 msgstr "{}은/는 잠들어 버렸다!\n"
 
+#: data/text/dialog_lookup_table.py
 #: src/battle_controller.py
 msgid "{} hath fallen.\n"
 msgstr "{}은/는 쓰러졌다!\n"
@@ -3700,3 +3701,15 @@ msgstr "P2 오른쪽"
 #: data/text/dialog_lookup_table.py
 msgid "Who will it be?"
 msgstr "누가 할까?"
+
+#: src/options_overlay.py
+msgid "FALLEN HEROES"
+msgstr "쓰러진 용사"
+
+#: src/options_overlay.py
+msgid "INN"
+msgstr "여관까지"
+
+#: src/options_overlay.py
+msgid "GET UP"
+msgstr "일어선다"

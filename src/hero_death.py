@@ -12,7 +12,7 @@ from src.common import A_OR_START_KEYS
 from src.direction import Direction
 from src.game_events import HeroDied
 from src.maps import map_lookup
-from src.party import heroes
+from src.party import heroes, other_hero_standing
 from src.waiting import clear_events_keeping_quit
 
 if TYPE_CHECKING:
@@ -28,6 +28,12 @@ class HeroDeath:
     def handle_death(self) -> None:
         game = self.game
         player = game.player
+        if player.current_hp <= 0 and other_hero_standing(game, player):
+            # A party's first hero who has fallen (src/party.py): the other is standing, so it isn't the end. They stay
+            # down, leading the party on the map, until an inn.
+            player.current_hp = 0
+            player.is_dead = True
+            return
         if player.current_hp <= 0:
             player.current_hp = 0
             player.is_dead = True

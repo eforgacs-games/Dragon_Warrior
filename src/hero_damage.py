@@ -60,8 +60,9 @@ class HeroDamage:
         per step. handle_battles calls it with the block just stepped onto, before the fight roll."""
         game = self.game
         player = game.player
-        # NES ChkOtherBlocks: once the Dragonlord is dead, swamps and barriers no longer hurt
-        if game.story_flags.dragonlord_defeated:
+        # NES ChkOtherBlocks: once the Dragonlord is dead, swamps and barriers no longer hurt; nor do they a party's first
+        # hero who has fallen (src/party.py)
+        if game.story_flags.dragonlord_defeated or player.is_dead:
             return
         if tile is None:
             tile = player.current_tile

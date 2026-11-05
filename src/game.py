@@ -62,9 +62,9 @@ from src.sound import Sound
 from src.battle_controller import BattleController
 from src.ending import Ending
 from src.achievements import Achievements
-from src.follower import Follower
+from src.follower import Follower, greyed
 from src.netplay import PORT, run_client, start_host
-from src.party import new_hero, party_of
+from src.party import in_party_mode, new_hero, party_of
 from src.play_stats import PlayClock, PlayStats, subscribe_play_stats
 from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
@@ -217,6 +217,8 @@ class Game:
         self.companion: Player | None = None
         self.first_hero: Player | None = None  # the first hero while the second is game.player (src/party.py acting)
         self.follower = Follower(self)  # the second hero on the map, one step behind the first (src/follower.py)
+        # A fallen first hero's grey sprite sheets (set_player_images_by_equipment)
+        self.fallen_sheets: dict[str, tuple[list[Surface], ...]] = {}
         self.last_coordinates = None
         self.player.restore_hp()
         self.tile_size = self.game_state.config["TILE_SIZE"]
@@ -587,6 +589,12 @@ class Game:
             sprite_sheet_path = self.directories.UNARMED_HERO_WITH_SHIELD_PATH
         else:
             sprite_sheet_path = self.directories.UNARMED_HERO_PATH
+        if self.player.is_dead and in_party_mode(self):
+            # A party's first hero who has fallen (src/party.py): grey, leading the party until an inn
+            if sprite_sheet_path not in self.fallen_sheets:
+                self.fallen_sheets[sprite_sheet_path] = greyed(self.current_map.scale_sprite_sheet(sprite_sheet_path))
+            self.player.set_images(self.fallen_sheets[sprite_sheet_path])
+            return
         self.player.set_images(self.current_map.scale_sprite_sheet(sprite_sheet_path))
 
     def handle_warps(self):

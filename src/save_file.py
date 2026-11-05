@@ -162,6 +162,8 @@ class HeroSave:
         player.update_stats_to_current_level()
         player.current_hp = player.max_hp if self.current_hp is None else self.current_hp
         player.current_mp = player.max_mp if self.current_mp is None else self.current_mp
+        # A party's hero saved fallen (0 HP, src/party.py) is still down; anyone else is up
+        player.is_dead = player.current_hp <= 0
         player.weapon = self.weapon
         player.armor = self.armor
         player.shield = self.shield
