@@ -54,6 +54,8 @@ from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENT
     YES_NO_WINDOW, item_menu_entry_tile_row, item_count_tile_row, item_menu_layout, item_menu_window, Window, \
     translated_name_halves
 from src.nes_random import one_in
+from src.follower import IDENTIFIER as FOLLOWER_IDENTIFIER
+from src.party import acting, heroes
 
 if TYPE_CHECKING:
     from src.battle import Battle  # src.battle imports this module
@@ -751,22 +753,30 @@ class CommandMenu:
         self.show_text_in_dialog_box(self._("Unfortunately, it is empty."), skip_text=self.skip_text)
 
     def take_counted_item(self, item_name: str, maximum: int) -> None:
-        """NES ChkTrsrKey/ChkTrsrHerb: Herbs and Magic Keys stop at 6. With 6 already, the chest is empty."""
-        if self.player.inventory.count(item_name) >= maximum:
+        """NES ChkTrsrKey/ChkTrsrHerb: Herbs and Magic Keys stop at 6. With 6 already, the chest is empty. In a party
+        (src/party.py) the first hero with fewer than 6 takes it."""
+        taker = next((hero for hero in heroes(self.game) if hero.inventory.count(item_name) < maximum), None)
+        if taker is None:
             self.take_empty_chest()
             return
-        self.player.inventory.append(item_name)
+        taker.inventory.append(item_name)
         self.open_chest()
-        self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
+        with acting(self.game, taker):
+            self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
 
     def take_item(self, item_name: str):
-        """NES SetTrsrDescByte: tell the player what was found, then add it to the inventory."""
+        """NES SetTrsrDescByte: tell the player what was found, then add it to the inventory. In a party (src/party.py)
+        the first hero with room takes it; with no room in either bag, the first hero may drop something for it."""
         self.open_chest()
-        self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
-        if item_name in UNSLOTTED_ITEMS or not bag_is_full(self.player.inventory, self.game.game_state.config):
-            self.player.inventory.append(item_name)  # NES AddInvItem: the first empty slot
-        else:
-            self.discard_for_item(item_name)
+        config = self.game.game_state.config
+        taker = next((hero for hero in heroes(self.game)
+                      if item_name in UNSLOTTED_ITEMS or not bag_is_full(hero.inventory, config)), None)
+        with acting(self.game, taker or self.player):
+            self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
+            if taker is not None:
+                self.player.inventory.append(item_name)  # NES AddInvItem: the first empty slot
+            else:
+                self.discard_for_item(item_name)
 
     def discard_for_item(self, item_name: str) -> None:
         """NES DiscardItem: with a full inventory, the player may drop something to make room, for a chest's item or
@@ -1303,6 +1313,8 @@ class CommandMenu:
         across_from_npc = self.check_across_from_npc()
         if across_from_npc:
             for character_identifier, character_dict in self.characters.items():
+                if character_identifier == FOLLOWER_IDENTIFIER:
+                    continue  # the party's second hero (src/follower.py) isn't someone to talk to
                 if (character_dict['character'].row,
                     character_dict['character'].column) == self.player.next_coordinates or self.npc_is_across_counter(
                     character_dict):
@@ -1370,19 +1382,22 @@ class CommandMenu:
 
     def status(self) -> None:
         """
-        Display the current player's status.
+        Display the current player's status (each hero's in turn, in a party).
         :return: None
         """
-        show_status = True
         x, y, width, height = STATUS_WINDOW
         self.window_drop_down_effect(x, y, width, height)
-        window_rect = self.draw_status_window()
-        display.update(window_rect)
-        while show_status:
-            next_game_frame()  # one pass per NES frame of game time (src/selection.py)
-            # NES LCFA4: the status window waits in WaitForBtnRelease, so any button closes it
-            show_status = not any(current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS
-                                  for current_event in frame_events())
+        # A party (src/party.py): each hero's status in turn, the next on a button
+        for hero in heroes(self.game):
+            with acting(self.game, hero):
+                window_rect = self.draw_status_window()
+            display.update(window_rect)
+            show_status = True
+            while show_status:
+                next_game_frame()  # one pass per NES frame of game time (src/selection.py)
+                # NES LCFA4: the status window waits in WaitForBtnRelease, so any button closes it
+                show_status = not any(current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS
+                                      for current_event in frame_events())
         self.window_drop_up_effect(x, y, width, height)
         # print(f"""
         # NAME: {self.player.name}

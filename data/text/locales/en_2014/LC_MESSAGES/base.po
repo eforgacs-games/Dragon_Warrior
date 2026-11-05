@@ -4077,3 +4077,7 @@ msgstr "P2 LEFT"
 #: src/controls_screen.py
 msgid "P2 RIGHT"
 msgstr "P2 RIGHT"
+
+#: data/text/dialog_lookup_table.py
+msgid "Who will it be?"
+msgstr "Who will it be?"
