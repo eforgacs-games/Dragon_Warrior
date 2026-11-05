@@ -178,6 +178,7 @@ class Game:
         self.message_log_requested = False
         self.play_stats_requested = False
         self.achievements_requested = False
+        self.player_two_menu_requested = False  # player 2's A on the map (src/player_two_menu.py)
         self.auto_grind_requested = False
         # ('save' or 'load', slot), until everyone is on a tile; then it's due, and the end of that frame carries it out
         # (src/save_state.py run_due_state_request)

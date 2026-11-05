@@ -1390,10 +1390,16 @@ class CommandMenu:
         Display the current player's status (each hero's in turn, in a party).
         :return: None
         """
+        # A party (src/party.py): each hero's status in turn, the next on a button
+        self.show_status_of(heroes(self.game))
+        self.game.unlaunch_menu(self)
+        self.game.game_state.unpause_all_movement()
+
+    def show_status_of(self, shown: list[Any]) -> None:
+        """The status window, for each of these heroes in turn: any button shows the next, or closes it."""
         x, y, width, height = STATUS_WINDOW
         self.window_drop_down_effect(x, y, width, height)
-        # A party (src/party.py): each hero's status in turn, the next on a button
-        for hero in heroes(self.game):
+        for hero in shown:
             with acting(self.game, hero):
                 window_rect = self.draw_status_window()
             display.update(window_rect)
@@ -1404,20 +1410,6 @@ class CommandMenu:
                 show_status = not any(current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS
                                       for current_event in frame_events())
         self.window_drop_up_effect(x, y, width, height)
-        # print(f"""
-        # NAME: {self.player.name}
-        # STRENGTH: {self.player.strength}
-        # AGILITY: {self.player.agility}
-        # MAXIMUM HP: {self.player.max_hp}
-        # MAXIMUM MP: {self.player.max_mp}
-        # ATTACK POWER: {self.player.attack_power}
-        # DEFENSE POWER: {self.player.defense_power}
-        # WEAPON: {self.player.weapon}
-        # ARMOR: {self.player.armor}
-        # SHIELD: {self.player.shield}
-        # """)
-        self.game.unlaunch_menu(self)
-        self.game.game_state.unpause_all_movement()
 
     def draw_status_window(self) -> Rect:
         """

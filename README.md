@@ -111,7 +111,7 @@ them bound.
 | Q | The quest journal: the goals you've learned of (QUEST JOURNAL option) |
 | L | The message log: the last 50 messages, to read a hint again (MESSAGE LOG option) |
 | T | The achievements: which you've unlocked, and when (ACHIEVEMENTS option) |
-| Numpad | Player 2's joypad in co-op (HEROES on 2): 8, 2, 4, 6 the D-pad, 0 A, . B, + START, - SELECT. A second controller plugged in is player 2's too |
+| Numpad | Player 2's joypad in co-op (HEROES on 2): 8, 2, 4, 6 the D-pad, 0 A, . B, + START, - SELECT. A second controller plugged in is player 2's too. On the map, player 2's A opens the second hero's own ITEM, SPELL and STATUS |
 | M | The dungeon map, on a dark floor: the blocks you've seen there (DUNGEON MAP option) |
 | 1 to 5 | Game speed: 1x, 2x, 4x, 8x or 16x (GAME SPEED option) |
 | Shift+F1 / F2 / F3 | Save state 1, 2 or 3 (SAVE STATES option) |
@@ -292,7 +292,8 @@ With one of these OFF, its key does nothing, as on the NES.
 Player 2 can play the co-op party from another computer. The host plays as usual, started with `--host` (it listens
 on port 52528; `--host 6000` for another). Player 2 starts the game with `--join` and the host's address
 (`--join 192.168.0.5`, or `--join 192.168.0.5:6000`): their window shows the host's game, and their own keys and
-controller are player 2's joypad, so they choose the second hero's commands in a fight. There is one game, the host's,
+controller are player 2's joypad, so they choose the second hero's commands in a fight, and their A opens the second hero's ITEM, SPELL and STATUS
+on the map. There is one game, the host's,
 and player 2's window has no sound. Play on a local network or over a VPN such as Tailscale rather than opening the
 port to the internet: whoever connects is player 2.
 
