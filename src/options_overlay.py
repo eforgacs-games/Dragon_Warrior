@@ -59,6 +59,8 @@ values (#409). The rows are grouped in pages, one page at a time in the window, 
     ACHIEVEMENTS   OFF (NES) / ON           (ACHIEVEMENTS: achievements are unlocked, and the T key shows them,
                                              src/achievements.py)
     HEROES         1 (NES) / 2              (PARTY: the heroes the next new quest starts with, src/party.py; global)
+    CO-OP          PARTY / FREE ROAM        (COOP: the two heroes travel together, or roam apart on split screen,
+                                             src/sessions.py)
     FALLEN HEROES  INN / GET UP             (FALLEN: a party's fallen hero stays down until an inn, or gets up with
                                              1 HP after the fight, src/party.py)
 
@@ -108,8 +110,8 @@ from src.cursor import BlinkingCursor
 from src.directories import music_name
 from src.display_filters import PRESENTER, SCALING_KEY, SCANLINES_KEY
 from src.game_options import ACHIEVEMENTS, AUTO_GRIND, AUTO_GRIND_STOP, AUTO_HEAL, AUTO_INN, AUTO_STAIRS, AUTOSAVE, \
-    BAG_SIZE, CHEAT_KEYS, DIALOG_STYLE, DUNGEON_MAP, ENCOUNTERS, EXP_GOLD, FADE_STYLE, FALLEN, GAME_SPEED_KEYS, LANGUAGE, \
-    MENU_SPEED, MESSAGE_LOG, MESSAGE_SPEED, MUSIC, NAME_CONFIRM, NPCS_MAKE_WAY, OPTIONS_BY_CONFIG_KEY, PARTY, \
+    BAG_SIZE, CHEAT_KEYS, COOP, DIALOG_STYLE, DUNGEON_MAP, ENCOUNTERS, EXP_GOLD, FADE_STYLE, FALLEN, GAME_SPEED_KEYS, \
+    LANGUAGE, MENU_SPEED, MESSAGE_LOG, MESSAGE_SPEED, MUSIC, NAME_CONFIRM, NPCS_MAKE_WAY, OPTIONS_BY_CONFIG_KEY, PARTY, \
     QUEST_JOURNAL, QUICK_ACTION, REWIND, RUN_BUTTON, SAVE_STATES, SCALING, SCANLINES, SHOP_PREVIEW, SMART_A, STATS_PAGE, \
     RANDOMNESS, STATUS_WINDOW, VIEW, Option, Options, apply_options
 from src.languages import LANGUAGES
@@ -268,6 +270,7 @@ OPTION_PAGES = (
         switch_row("ACHIEVEMENTS", ACHIEVEMENTS),
         OptionRow("HEROES", PARTY, ("1 (NES)", "2")),
         OptionRow("FALLEN HEROES", FALLEN, ("INN", "GET UP")),
+        OptionRow("CO-OP", COOP, ("PARTY", "FREE ROAM")),
     )),
 )
 # The rows with a setting (every row but CONTROLS)

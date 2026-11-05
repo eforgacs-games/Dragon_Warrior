@@ -636,8 +636,15 @@ def actions_for_event(current_event: Any) -> list[str]:
 
 
 def pressed(current_event: Any, name: str) -> bool:
-    """Whether this event is a press of one of the action's keys (with its modifiers)."""
-    return getattr(current_event, 'type', None) == pygame.KEYDOWN and name in actions_for_event(current_event)
+    """Whether this event is a press of one of the action's keys (with its modifiers). While player 2's input is in
+    use (player_input), an NES button is player 2's (PLAYER_TWO_ACTIONS), and this game's own actions aren't theirs."""
+    if getattr(current_event, 'type', None) != pygame.KEYDOWN:
+        return False
+    if _input_player.get() == PLAYER_TWO and not name.startswith('P2_'):
+        if name not in PLAYER_TWO_ACTIONS:
+            return False
+        name = PLAYER_TWO_ACTIONS[name]
+    return name in actions_for_event(current_event)
 
 
 def first_binding(name: str) -> Binding | None:

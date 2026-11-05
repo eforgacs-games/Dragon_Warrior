@@ -3713,3 +3713,15 @@ msgstr "여관까지"
 #: src/options_overlay.py
 msgid "GET UP"
 msgstr "일어선다"
+
+#: src/options_overlay.py
+msgid "CO-OP"
+msgstr "협력"
+
+#: src/options_overlay.py
+msgid "PARTY"
+msgstr "파티"
+
+#: src/options_overlay.py
+msgid "FREE ROAM"
+msgstr "자유 행동"

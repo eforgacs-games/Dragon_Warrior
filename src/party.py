@@ -35,6 +35,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
+from src.controls import PLAYER_ONE, PLAYER_TWO, input_player
 from src.game_options import FALLEN_GET_UP, FALLEN_INN
 from src.player.player import Player
 
@@ -66,10 +67,17 @@ def starts_as_party(config: dict[str, Any]) -> bool:
     return config.get('PARTY') == PAIR
 
 
+def free_roaming(game: Any) -> bool:
+    """Whether the heroes roam apart (free roam co-op, src/sessions.py): each session then plays as one hero, so the
+    party's rules (the second hero beside the first) don't apply."""
+    sessions = getattr(game, 'sessions', ())
+    return isinstance(sessions, list) and len(sessions) > 1
+
+
 def companion_of(game: Any) -> Player | None:
-    """The game's second hero, if it has one."""
+    """The game's second hero, if it has one beside the first (not while the heroes roam apart: free_roaming)."""
     companion = getattr(game, 'companion', None)
-    return companion if isinstance(companion, Player) else None
+    return companion if isinstance(companion, Player) and not free_roaming(game) else None
 
 
 def in_party_mode(game: Any) -> bool:
@@ -133,6 +141,14 @@ def stays_down(config: dict[str, Any]) -> bool:
 def other_hero_standing(game: Any, hero: Any) -> bool:
     """Whether a party's other hero is standing: the party hasn't fallen, so ``hero`` falling isn't the end."""
     return any(other is not hero and not other.is_dead and other.current_hp > 0 for other in heroes(game))
+
+
+def input_for(game: Any, hero: Any) -> int:
+    """Whose joypad a hero's turn in a fight reads: player 2's for the party's second hero, player 1's for the first;
+    roaming apart, the player whose task it is (src/tasks.py)."""
+    if free_roaming(game):
+        return input_player()
+    return PLAYER_TWO if hero is companion_of(game) else PLAYER_ONE
 
 
 def someone_chosen(game: Any) -> bool:

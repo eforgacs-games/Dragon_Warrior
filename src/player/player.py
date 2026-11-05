@@ -12,12 +12,20 @@ from src.player.player_stats import get_level_by_experience, get_stats_for_level
 from src.sprites.animated_sprite import AnimatedSprite
 
 
+class Purse:
+    """The gold: a hero's own, or one two heroes roaming apart share (free roam co-op, src/sessions.py)."""
+
+    def __init__(self, gold: int = 0) -> None:
+        self.gold = gold
+
+
 class Player(AnimatedSprite):
 
     def __init__(self, center_point, images: tuple[Surface, Surface, Surface, Surface], current_map: DragonWarriorMap,
                  direction_value=Direction.DOWN.value,
                  god_mode=False, fighters_ring_attack_bonus=0):
         AnimatedSprite.__init__(self, center_point, direction_value, images, identifier='HERO')
+        self.purse = Purse()
 
         # map/collision-related attributes
 
@@ -93,6 +101,14 @@ class Player(AnimatedSprite):
             self.current_mp = self.max_mp
 
             self.gold = 99_999
+
+    @property
+    def gold(self) -> int:
+        return self.purse.gold
+
+    @gold.setter
+    def gold(self, gold: int) -> None:
+        self.purse.gold = gold
 
     def update_attack_power(self):
         if self.weapon and not weapons.get(self.weapon):
