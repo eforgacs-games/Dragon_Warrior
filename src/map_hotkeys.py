@@ -20,7 +20,7 @@ from pygame.event import Event
 
 from data.text.intro_lookup_table import ControlInfo
 from src.achievements import AchievementsScreen
-from src.party import in_party_mode
+from src.party import free_roaming, in_party_mode
 from src.player_two_menu import open_player_two_menu
 from src.controls import LOAD_STATE_ACTIONS, SAVE_STATE_ACTIONS, actions_for_event, pressed
 from src.display_filters import PRESENTER
@@ -193,14 +193,15 @@ class MapHotkeys:
         names = actions_for_event(keydown_event)
         state_request = next(((kind, slots[name]) for name in names for kind, slots in STATE_ACTIONS if name in slots),
                              None)
-        if state_request is not None and self.config.get('SAVE_STATES'):
+        if state_request is not None and self.config.get('SAVE_STATES') and not free_roaming(self.game):
+            # Not while the heroes roam apart (src/sessions.py): a state is one hero's play
             self.request('state_request', state_request)
 
     def press_rewind(self, keydown_event: Event) -> None:
         """Backspace: start rewinding (src/rewind.py), when the REWIND option is on and the map isn't held. It goes on
         until Backspace is let go (Game._handle_pygame_events)."""
-        if pressed(keydown_event, 'REWIND'):
-            self.game.rewind.start()
+        if pressed(keydown_event, 'REWIND') and not free_roaming(self.game):
+            self.game.rewind.start()  # not while the heroes roam apart: the rewind is one hero's play
 
     def press_help(self, keydown_event: Event) -> None:
         """H: the controls, one dialog box page per group of keys, with the keys as they are bound
