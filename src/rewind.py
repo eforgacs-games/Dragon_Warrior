@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING, Any
 
 from pygame import time
 
+from src.party import free_roaming
 from src.direction import Direction
 from src.save_state import restore_snapshot, take_snapshot
 
@@ -54,8 +55,9 @@ class Rewind:
 
     @property
     def enabled(self) -> bool:
-        """The REWIND switch (src/options_overlay.py)."""
-        return bool(self.game.game_state.config.get('REWIND'))
+        """The REWIND switch (src/options_overlay.py), and the heroes not roaming apart (free roam co-op: a snapshot is
+        one hero's play, src/sessions.py)."""
+        return bool(self.game.game_state.config.get('REWIND')) and not free_roaming(self.game)
 
     def on_the_map(self) -> bool:
         """Whether the map is being played: nothing open, asked for or waiting, as when START would be accepted."""

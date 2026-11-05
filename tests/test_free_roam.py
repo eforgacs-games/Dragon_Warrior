@@ -198,3 +198,36 @@ class TestTheirLook(FreeRoamTestCase):
         image = self.gwen.image
         colors = {tuple(image.get_at((x, y)))[:3] for x in range(image.get_width()) for y in range(image.get_height())}
         self.assertIn(COMPANION_GREEN, colors)
+
+
+class TestSavingWhileRoaming(FreeRoamTestCase):
+
+    def test_the_log_is_the_first_heros_whoever_is_at_the_king(self):
+        import json
+        import os
+        import tempfile
+        from src.maps import map_lookup
+        with use_session(self.gwens), patch('src.map_manager.screen_fade'):
+            self.game.map_mgr.change_map(map_lookup['Brecconary'](self.game.config), destination_coordinates=(23, 10))
+        with tempfile.TemporaryDirectory() as save_dir, use_session(self.gwens):
+            self.game.cmd_menu.directories.save_dir = save_dir
+            self.ann.adventure_log = 2
+            self.assertTrue(self.game.cmd_menu.save())
+            with open(os.path.join(save_dir, 'save_slot_2.json')) as save_file:
+                save = json.load(save_file)
+        self.assertEqual('Ann', save['Name'])
+        self.assertEqual('TantegelThroneRoom', save['CurrentMap'])  # where Ann is, not Gwen in Brecconary
+        self.assertEqual('Gwen', save['Companion']['Name'])
+
+    def test_the_autosave_is_the_first_heros(self):
+        from src.autosave import Autosave
+        autosave = self.game.autosave
+        autosave.last_frame_at = 12345
+        with use_session(self.gwens), patch.object(Autosave, 'write') as write:
+            Autosave.frame(autosave)  # the real one (setUp patched the instance's)
+        write.assert_not_called()
+        self.assertEqual(12345, autosave.last_frame_at)  # not even counted: Gwen's frames aren't the autosave's
+
+    def test_no_rewind_snapshots_while_roaming(self):
+        self.game.config['REWIND'] = True
+        self.assertFalse(self.game.rewind.enabled)

@@ -56,6 +56,7 @@ from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENT
 from src.nes_random import one_in
 from src.follower import IDENTIFIER as FOLLOWER_IDENTIFIER
 from src.party import acting, first_hero, heroes, in_party_mode
+from src.sessions import HeroSession
 
 if TYPE_CHECKING:
     from src.battle import Battle  # src.battle imports this module
@@ -283,8 +284,13 @@ class CommandMenu:
         Nor is a log saved by a newer build written over, or the save made when the file can't be written. Returns
         whether the deeds were recorded."""
         save_dir = self.directories.save_dir
-        name = self.player.name
-        log: int | None = self.player.adventure_log
+        # The adventure's first hero and where they are, whoever is at the king (free roam co-op, src/sessions.py)
+        hero, hero_map = self.player, self.game.current_map
+        main = getattr(self.game, 'main_session', None)
+        if isinstance(main, HeroSession) and main is not self.game.current_session:
+            hero, hero_map = getattr(main, 'player'), getattr(main, 'current_map')
+        name = hero.name
+        log: int | None = hero.adventure_log
         if log in ADVENTURE_LOGS and not log_belongs_to(save_dir, log, name):
             print(f"Adventure log {log} holds another hero now; {name} is saved where a new log would go.")
             log = None
@@ -296,7 +302,7 @@ class CommandMenu:
             print(f"Not saved: adventure log {log} was saved by a newer version of the game, which this one "
                   f"would downgrade.")
             return False
-        save = SaveFile.from_game(self.player, self.game.current_map.identifier, self.game.story_flags,
+        save = SaveFile.from_game(hero, hero_map.identifier, self.game.story_flags,
                                   options_from_config(self.game.game_state.config),
                                   self.game.dungeon_map.to_save(), self.game.play_stats.to_save(),
                                   companion=self.game.companion)
