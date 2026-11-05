@@ -22,7 +22,9 @@ fight player 1's.
 In the world: an inn charges each hero its price and both rest (data/text/dialog_lookup_table.py); a shop first asks
 who is shopping and runs for that hero (``for_a_chosen_hero``), with the party's gold; a chest's item goes to the first
 hero with room for it, and the first hero may drop something for it if neither has (CommandMenu.take_item); STATUS
-shows each hero's status in turn. The second hero's own ITEM and SPELL on the map come next.
+shows each hero's status in turn. ITEM and SPELL on the map first ask which hero (CommandMenu.chosen_hero): the cost is
+theirs (their MP, their item), HEAL, HEALMORE and the items of OWN_ITEMS act on them, and the rest act for the party
+as the first hero's, where the party stands (CommandMenu.field_effect), the item lent to the first hero for it.
 """
 from collections.abc import Iterator
 from contextlib import contextmanager
