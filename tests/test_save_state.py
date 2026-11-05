@@ -539,6 +539,8 @@ GAME_NOT_KEPT = {
     # The party's second hero is kept in its own entry (src/party.py), and put back on the map under the first
     # (src/follower.py)
     'companion', 'follower', 'first_hero', 'fallen_sheets',
+    # The hero sessions themselves (src/sessions.py): their attributes are the Game's, accounted for above
+    'main_session',
 }
 # The MovementController attributes a snapshot deliberately doesn't keep
 MOVEMENT_NOT_KEPT = {
@@ -555,7 +557,8 @@ class TestEverythingIsKept(SaveStateTestCase):
     repel_tick_pending once were)."""
 
     def test_every_game_attribute_is_kept_or_left_out_on_purpose(self):
-        attributes = set(vars(self.game)) - {'draw_temporary_text'}  # patched in by setUp
+        # The game's own and its hero session's (src/sessions.py: the per-hero ones, kept on the session)
+        attributes = (set(vars(self.game)) | set(vars(self.game.main_session)) - {'name'}) - {'draw_temporary_text'}
         accounted_for = set(GAME_VALUES) | GAME_KEPT_IN_THEIR_OWN_ENTRIES | GAME_NOT_KEPT
         self.assertEqual(set(), attributes - accounted_for)
         self.assertEqual(set(), accounted_for - attributes, "listed above, but no longer in the Game")
