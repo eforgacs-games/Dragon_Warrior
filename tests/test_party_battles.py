@@ -42,8 +42,10 @@ class TestActing(PartyTestCase):
         self.assertIs(self.hero, cmd_menu.dialog_lookup.player)
 
     def test_put_back_after_an_exception(self):
-        with self.assertRaises(ValueError), acting(self.game, self.companion):
-            raise ValueError
+        def fail_while_acting():
+            with acting(self.game, self.companion):
+                raise ValueError
+        self.assertRaises(ValueError, fail_while_acting)
         self.assertIs(self.hero, self.game.player)
 
     def test_nested(self):
