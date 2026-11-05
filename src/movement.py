@@ -475,9 +475,14 @@ class MovementController:
     def character_in_path(self, character: Player | RoamingCharacter | FixedCharacter) -> bool:
         """Whether the tile in front of a character is taken by someone else: where they stand, or the origin and
         destination of a step they're taking (NES: an NPC can't move onto the player's position or next position, or
-        onto another NPC's)."""
+        onto another NPC's). The party's second hero is someone else to an NPC, not to the first hero."""
         next_coordinates = step(character.row, character.column, character.direction_value)
         others = [*self.current_map.fixed_characters, *self.current_map.roaming_characters, self.player]
+        follower = getattr(self.game, 'follower', None)
+        companion = follower.on_map() if follower is not None else None
+        if companion is not None and character is not self.player:
+            # The party's second hero (src/follower.py) blocks the NPCs, not the first hero, who may step onto them
+            others.append(companion)
         for other in others:
             if other is character:
                 continue

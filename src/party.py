@@ -7,7 +7,7 @@ MP, equipment, items and spells of their own, worked out from their own name as 
 the party's, kept with the first hero. A log keeps the party it was started with, whatever HEROES says later: the
 second hero is saved with it (src/save_file.py COMPANION_KEY), and with the save states, the rewind and the autosave.
 
-This is the party's first part: the second hero is kept and saved. Following the first on the map, fighting beside
+The second hero is kept and saved, and follows the first one step behind on the map (src/follower.py). Fighting beside
 them (each choosing a command, the enemy choosing whom it attacks), player 2's controls and the inns, shops and
 chests that ask which hero come next.
 """
