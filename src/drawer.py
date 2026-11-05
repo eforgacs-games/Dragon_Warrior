@@ -107,6 +107,12 @@ class Drawer:
         map or background, a tile added or replaced, the palette (low HP, the bad ending) or the roofs."""
         return self.background is big_map and self._drawn_in_full == drawn_tiles_state(current_map, self.background)
 
+    def forget_drawn_in_full(self) -> None:
+        """Have the next first frame (loop_count 1) draw every tile again, even on the same map and tiles: a snapshot
+        put back on the map on screen (the rewind, src/save_state.py) moves the hero and the NPCs anywhere at once, so
+        the frames they were last drawn in stay on the background where only the tiles under them now are redrawn."""
+        self._drawn_in_full = None
+
     def get_enemy_image(self, enemy_name):
         """The enemy's scaled image and its top-left position on the screen."""
         enemy_path = f'{self.directories.IMAGES_ENEMIES_DIR}/{enemy_name.replace(" ", "")}.png'
