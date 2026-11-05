@@ -83,11 +83,17 @@ class Follower:
         entry = self.game.current_map.characters.get(IDENTIFIER)
         return entry['character'] if entry is not None else None
 
+    def roaming_apart(self) -> bool:
+        """Whether the second hero has a session of their own (free roam co-op), so doesn't follow."""
+        return len(getattr(self.game, 'sessions', ())) > 1
+
     def sync(self) -> None:
         """Put the second hero on the map, on the first hero's block, if they aren't on it yet (a new map, a new
         party, a loaded game or state); take them off if the party has no second hero."""
         characters = self.game.current_map.characters
         companion = self.companion
+        if self.roaming_apart():
+            return  # free roam: the second hero walks on their own (src/sessions.py)
         if companion is None:
             characters.pop(IDENTIFIER, None)
             self.step = None
@@ -122,6 +128,8 @@ class Follower:
 
     def frame(self) -> None:
         """One map frame, after the first hero's: follow their step (see the module docstring)."""
+        if self.roaming_apart():
+            return
         self.sync()
         companion = self.companion
         if companion is None:
@@ -165,7 +173,7 @@ class Follower:
         """Show the sprite sheet for the second hero's weapon and shield (each frame, as the first hero's:
         Game.set_player_images_by_equipment)."""
         companion = self.on_map()
-        if companion is not None:
+        if companion is not None and not self.roaming_apart():
             sheet = self.sheet()
             if companion.images_map.get(Direction.DOWN.value) is not sheet[0]:
                 companion.set_images(sheet)

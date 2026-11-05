@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+from typing import Any
 
 from pygame import FULLSCREEN, RESIZABLE, Surface, display, event, image, init, KEYDOWN, KEYUP, SCALED, VIDEORESIZE
 from pygame.display import set_mode, set_caption
@@ -63,6 +64,7 @@ from src.battle_controller import BattleController
 from src.ending import Ending
 from src.achievements import Achievements
 from src.follower import Follower, greyed
+from src.follower import IDENTIFIER as FOLLOWER_IDENTIFIER
 from src.sessions import HeroSession, add_session_attributes, session_in_use, use_session
 from src.netplay import PORT, run_client, start_host
 from src.party import in_party_mode, new_hero, party_of
@@ -97,6 +99,7 @@ class Game:
         # Each hero's own part of the game (src/sessions.py SESSION_ATTRIBUTES): the first hero's, unless a task plays
         # another's (free roam co-op)
         self.main_session = HeroSession('hero 1')
+        self.sessions: list[HeroSession] = [self.main_session]  # every hero's, the first first
 
         migrate_legacy_music_config(config)  # a config with the old ORCHESTRA_MUSIC_ENABLED switch (src/soundtrack.py)
         self.config = config
@@ -365,9 +368,12 @@ class Game:
         windows, fights and steps, set up as Game.__init__ sets up the first hero's, with the hero placed at
         ``coordinates`` (the map's starting block by default). The world (the story, the chests, the maps' layouts)
         stays the game's."""
-        session = HeroSession(name or hero.name)
+        session = HeroSession(name or hero.name, hero_key=FOLLOWER_IDENTIFIER)
         config = self.game_state.config
+        self.sessions.append(session)
         with use_session(session):
+            self.game_state = GameState(config=config)
+            self.game_state.is_initial_dialog = False
             self.movement = MovementController(self)
             self.drawer = Drawer(self.game_state)
             self.big_map = None
@@ -399,9 +405,17 @@ class Game:
             self.hero_death = HeroDeath(self)
             self.field_encounters = FieldEncounters(self)
             self.map_mgr = MapManager(self)
-            self.set_big_map()
-            self.set_roaming_character_positions()
-            self.current_map.load_map(hero, coordinates, self.tile_size)
+            shared = self.map_shared_with(map_identifier)
+            if shared is not None:
+                # Where the other hero is: their map, with this hero among its characters (src/sessions.py)
+                self.current_map = shared
+                self.set_big_map()
+                self.current_map.join_map(hero, coordinates or shared.initial_coordinates, self.tile_size,
+                                          session.hero_key)
+            else:
+                self.set_big_map()
+                self.set_roaming_character_positions()
+                self.current_map.load_map(hero, coordinates, self.tile_size, session.hero_key)
             hero.current_tile = get_tile_id_by_coordinates(hero.rect.x // self.tile_size,
                                                            hero.rect.y // self.tile_size, self.current_map)
             self.camera = Camera((int(hero.column), int(hero.row)), self.current_map, self.screen, self.tile_size)
@@ -410,6 +424,38 @@ class Game:
             self.events = []
             self.load_window_palette()
         return session
+
+    def remove_hero_session(self, session: HeroSession) -> None:
+        """A hero no longer roaming on their own: taken off the map they're on, and their session let go."""
+        if session in self.sessions and session is not self.main_session:
+            session_map = getattr(session, 'current_map', None)
+            if session_map is not None and session_map.characters.get(session.hero_key, {}).get('character') is \
+                    getattr(session, 'player', None):
+                session_map.characters.pop(session.hero_key, None)
+            self.sessions.remove(session)
+
+    def map_shared_with(self, map_identifier: str) -> Any:
+        """The map called ``map_identifier`` if another hero's session is on it (free roam co-op: two heroes on one map
+        share it), else None."""
+        current = self.current_session
+        for session in self.sessions:
+            session_map = getattr(session, 'current_map', None)
+            if session is not current and session_map is not None and session_map.identifier == map_identifier:
+                return session_map
+        return None
+
+    def moves_npcs(self, current_map: Any) -> bool:
+        """Whether the session in use moves this map's NPCs: the first of the sessions on it, so on a map two heroes
+        share they move once a frame."""
+        for session in self.sessions:
+            if getattr(session, 'current_map', None) is current_map:
+                return session is self.current_session
+        return True
+
+    def heroes_on(self, current_map: Any) -> list[Player]:
+        """The heroes of every session on this map (each one's own, and the other's where they share it)."""
+        return [session.player for session in self.sessions
+                if getattr(session, 'current_map', None) is current_map and hasattr(session, 'player')]
 
     @property
     def current_session(self) -> HeroSession:
