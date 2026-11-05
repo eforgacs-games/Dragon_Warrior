@@ -230,3 +230,93 @@ class TestTheCommandLine(TestCase):
             run()
         start_host.assert_called_once_with(game.return_value, netplay.PORT)
         game.return_value.main.assert_called_once()
+
+
+class TestSound(TestCase):
+
+    def setUp(self):
+        from src.directories import Directories
+        from src.config.test_config import test_config
+        self.directories = Directories(test_config)
+
+    def test_the_events_of_sound_and_music(self):
+        from src.music_player import MusicPlayer
+        from src.sound import Sound, set_audio_listener
+        heard = []
+        set_audio_listener(lambda what, path, parameters: heard.append((what, path, parameters)))
+        self.addCleanup(set_audio_listener, None)
+        silent = {'MUSIC_ENABLED': False, 'SOUND_ENABLED': False}
+        Sound(silent).play_sound(self.directories.menu_button_sfx)
+        player = MusicPlayer(silent)
+        player.load_and_play_music(self.directories.village_music)
+        player.fadeout_music(500)
+        self.assertEqual(('sfx', self.directories.menu_button_sfx, {}), heard[0])
+        self.assertEqual(('music', self.directories.village_music, {'loop': -1, 'then_loop': None}), heard[1])
+        self.assertEqual(('fadeout_music', None, {'milliseconds': 500}), heard[-1])
+
+    def test_paths_under_data(self):
+        relative = netplay.relative_data_path(self.directories.menu_button_sfx)
+        self.assertTrue(relative.startswith('sound/'))
+        self.assertEqual(os.path.realpath(self.directories.menu_button_sfx), netplay.client_data_file(relative))
+        self.assertIsNone(netplay.relative_data_path('/etc/passwd'))
+
+    def test_the_client_plays_only_its_own_game_files(self):
+        self.assertIsNone(netplay.client_data_file('../src/game.py'))
+        self.assertIsNone(netplay.client_data_file('sound/no_such_file.wav'))
+
+    def test_only_events_the_client_plays(self):
+        self.assertEqual('sfx', netplay.decode_audio(netplay.encode_audio('sfx', 'sound/x', {}))['do'])
+        for payload in (b'{"do": "delete"}', b'{"do": "sfx", "path": 3}', b'nope', b'[]'):
+            with self.subTest(payload=payload):
+                self.assertIsNone(netplay.decode_audio(payload))
+
+    def test_the_client_plays_them(self):
+        with patch('src.sound.Sound') as sound_class, patch('src.music_player.MusicPlayer') as music_class:
+            player = netplay.AudioPlayer({})
+            sfx = netplay.relative_data_path(self.directories.menu_button_sfx)
+            music = netplay.relative_data_path(self.directories.village_music)
+            player.play({'do': 'sfx', 'path': sfx})
+            player.play({'do': 'music', 'path': music, 'loop': 0, 'then_loop': None})
+            player.play({'do': 'stop_music', 'path': None})
+            player.play({'do': 'sfx', 'path': '../../etc/passwd'})
+        sound_class.return_value.play_sound.assert_called_once()
+        music_class.return_value.load_and_play_music.assert_called_once_with(
+            os.path.realpath(self.directories.village_music), 0, None)
+        music_class.return_value.stop_music.assert_called_once()
+
+
+class TestSoundOverLoopback(TestOverLoopback):
+
+    def setUp(self):
+        from src.directories import Directories
+        from src.config.test_config import test_config
+        self.directories = Directories(test_config)
+        pygame.init()
+        self.screen = pygame.display.set_mode((NES_WIDTH * 2, NES_HEIGHT * 2))
+        self.host = NetHost(scale=2, port=0, address='127.0.0.1', log=lambda message: None)
+        self.host.start()
+        self.addCleanup(self.host.stop)
+        # the music before player 2 joins
+        self.host.audio('music', self.directories.village_music, {'loop': -1, 'then_loop': None})
+        self.client = socket.create_connection(('127.0.0.1', self.host.port), timeout=5)
+        self.addCleanup(self.client.close)
+        receive_message(self.client)
+        send_message(self.client, HELLO, hello())
+
+    def test_the_music_playing_then_each_sound(self):
+        kind, payload = receive_message(self.client)
+        self.assertEqual(netplay.AUDIO, kind)
+        self.assertEqual(('music', netplay.relative_data_path(self.directories.village_music)),
+                         (json.loads(payload)['do'], json.loads(payload)['path']))
+        self.host.audio('sfx', self.directories.menu_button_sfx, {})
+        kind, payload = receive_message(self.client)
+        self.assertEqual((netplay.AUDIO, 'sfx'), (kind, json.loads(payload)['do']))
+
+    # The picture and button tests, with the music first
+    def test_the_picture_reaches_the_client(self):
+        receive_message(self.client)
+        super().test_the_picture_reaches_the_client()
+
+    test_the_buttons_reach_the_host = None
+    test_leaving_lets_go = None
+    test_the_display_is_put_back = None

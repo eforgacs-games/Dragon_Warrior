@@ -18,23 +18,33 @@ The host (NetHost):
   does (src/gamepad.py), through the same hook (RemoteJoypad). So the client is player 2 wherever player 2's joypad is
   read: the second hero's turns in a fight (src/battle_controller.py). Its keys are let go when it leaves.
 
+- sends the sound: every sound effect and music event the game plays (src/sound.py audio_event: a sound effect, the
+  music or a clip starting, the music stopping, pausing, going on or fading out), whether the host's own sound is on
+  or not, with the file's path under data/; a client that joins first gets the music already playing.
+
 The client (run_client) opens a window, shows each picture, scaled by whole multiples, and sends a press or a release
 whenever one of player 2's NES buttons goes down or up: the keys and the controller are the client player's own
-controls (their player 1 keys, from their own settings file). It has no sound: the music and the sounds play on the
-host.
+controls (their player 1 keys, from their own settings file). It plays each sound and music event with its own Sound
+and MusicPlayer, from its own copy of the game's files (only files under its data/ folder: a path that leads anywhere
+else is ignored). The chiptune soundtracks need libgme on the client too (README: Installing libgme).
 
 The messages, both ways: a 4-byte big-endian length, then a type byte and the payload. HELLO (``H``, JSON
 ``{"game": GAME, "version": VERSION}``) from each side first: a peer that isn't this game at this protocol version is
 closed. FRAME (``F``, host to client): width and height, two big-endian 16-bit numbers, then the RGB picture,
-zlib-compressed. BUTTON (``B``, client to host): JSON ``{"button": "A", "down": true}``. A message over MAX_MESSAGE
+zlib-compressed. AUDIO (``A``, host to client): JSON ``{"do": "music", "path": "sound/...", "loop": -1, ...}``, the
+event and its parameters (path None for the events without a file). BUTTON (``B``, client to host): JSON
+``{"button": "A", "down": true}``. A message over MAX_MESSAGE
 bytes, a picture that decompresses to anything but its width * height * 3 bytes, or a button that isn't an NES button
 closes the connection or is ignored.
 
 The host trusts whoever connects with player 2's buttons and nothing else; it listens on every network interface, so
 play on a local network, or over a VPN (Tailscale, WireGuard), rather than opening the port to the internet.
 """
+import contextlib
 import json
+import os
 import queue
+import re
 import socket
 import struct
 import threading
@@ -47,19 +57,24 @@ import pygame
 from pygame import KEYDOWN, KEYUP, display
 
 from src import controls
+from src.paths import data_path
+from src.sound import set_audio_listener
 from src.waiting import set_frame_listener
 
 GAME = 'dragon-warrior'
-VERSION = 1
+VERSION = 2  # 2: AUDIO
 PORT = 52528
 MAX_FPS = 60
 MAX_MESSAGE = 8 * 1024 * 1024
 NES_WIDTH, NES_HEIGHT = 256, 240
 CLIENT_ZOOM = 3
 
-HELLO, FRAME, BUTTON = b'H', b'F', b'B'
+HELLO, FRAME, BUTTON, AUDIO = b'H', b'F', b'B', b'A'
+# What the client plays of an AUDIO message (src/sound.py audio_event): the sound effects and music events
+AUDIO_EVENTS = ('sfx', 'stop_sfx', 'music', 'clip', 'stop_music', 'pause_music', 'unpause_music', 'fadeout_music')
 NES_BUTTONS = tuple(controls.PLAYER_TWO_ACTIONS)  # A, B, START, SELECT, UP, DOWN, LEFT, RIGHT
 NET = 'net'  # set on the key events the remote player's buttons post
+TRACK = re.compile(r'[A-Za-z0-9_.-]{1,32}')  # a chiptune ref's track, after the '#'
 
 
 class ProtocolError(Exception):
@@ -143,6 +158,86 @@ def decode_button(payload: bytes) -> tuple[str, bool] | None:
     return data['button'], data['down']
 
 
+def relative_data_path(path: str) -> str | None:
+    """A file's path under data/, with forward slashes, or None if it isn't under data/. A chiptune track's
+    ``#track`` (src/chiptune.py) is kept."""
+    path, hash_sign, track = path.rpartition('#') if '#' in path else (path, '', '')
+    try:
+        relative = os.path.relpath(os.path.abspath(path), data_path())
+    except ValueError:  # another drive (Windows)
+        return None
+    if relative.startswith('..') or os.path.isabs(relative):
+        return None
+    return relative.replace(os.sep, '/') + hash_sign + track
+
+
+def client_data_file(relative: str) -> str | None:
+    """The client's own file for a path under data/ (with a chiptune ``#track``), or None if the path leads out of
+    data/ or there is no such file."""
+    relative, hash_sign, track = relative.rpartition('#') if '#' in relative else (relative, '', '')
+    if hash_sign and not TRACK.fullmatch(track):
+        return None
+    root = os.path.realpath(data_path())
+    full = os.path.realpath(os.path.join(root, *relative.split('/')))
+    if os.path.commonpath([root, full]) != root or not os.path.isfile(full):
+        return None
+    return full + hash_sign + track
+
+
+def encode_audio(what: str, path: str | None, parameters: dict) -> bytes:
+    return json.dumps({'do': what, 'path': path, **parameters}).encode()
+
+
+def decode_audio(payload: bytes) -> dict | None:
+    """An AUDIO message's event, or None for anything this client doesn't play."""
+    try:
+        event = json.loads(payload)
+    except ValueError:
+        return None
+    if not isinstance(event, dict) or event.get('do') not in AUDIO_EVENTS:
+        return None
+    path = event.get('path')
+    if path is not None and not isinstance(path, str):
+        return None
+    return event
+
+
+class AudioPlayer:
+    """The client's sound: plays the host's sound and music events (see the module docstring)."""
+
+    def __init__(self, config: dict) -> None:
+        from src.music_player import MusicPlayer
+        from src.sound import Sound
+        self.sound = Sound(config)
+        self.music = MusicPlayer(config)
+
+    def play(self, event: dict) -> None:
+        what, relative = event['do'], event.get('path')
+        path = client_data_file(relative) if relative is not None else None
+        if relative is not None and path is None:
+            return  # not a file of this game: nothing plays
+        if what == 'sfx':
+            self.sound.play_sound(path)
+        elif what == 'stop_sfx':
+            self.sound.stop_sfx()
+        elif what == 'music':
+            loop = event.get('loop', -1)
+            then_loop = event.get('then_loop')
+            then_loop_path = client_data_file(then_loop) if isinstance(then_loop, str) else None
+            self.music.load_and_play_music(path, loop if isinstance(loop, int) else -1, then_loop_path)
+        elif what == 'clip':
+            self.music.play_clip(path)  # type: ignore[arg-type]
+        elif what == 'stop_music':
+            self.music.stop_music()
+        elif what == 'pause_music':
+            self.music.pause_music()
+        elif what == 'unpause_music':
+            self.music.unpause_music()
+        elif what == 'fadeout_music':
+            milliseconds = event.get('milliseconds')
+            self.music.fadeout_music(milliseconds if isinstance(milliseconds, int) else 0)
+
+
 # The host
 
 def nes_picture(surface: pygame.Surface, scale: int) -> tuple[int, int, bytes]:
@@ -212,6 +307,8 @@ class NetHost:
         self._last_capture = 0.0
         self._pending = False
         self._sent_crc: int | None = None
+        self._audio: list[bytes] = []  # AUDIO messages to send, in order
+        self._last_music: bytes | None = None  # the music playing, for a client that joins
         self._real_flip: Any = None
         self._real_update: Any = None
 
@@ -224,6 +321,7 @@ class NetHost:
         self.running = True
         self.install()
         set_frame_listener(self.frame_passed, 'netplay')
+        set_audio_listener(self.audio)
         threading.Thread(target=self.accept_loop, name='netplay-accept', daemon=True).start()
         threading.Thread(target=self.send_loop, name='netplay-send', daemon=True).start()
         self.log(f"Hosting on port {self.port}: player 2 joins with --join <this computer's address>")
@@ -231,6 +329,7 @@ class NetHost:
     def stop(self) -> None:
         self.running = False
         set_frame_listener(None, 'netplay')
+        set_audio_listener(None)
         self.uninstall()
         for sock in (self.client, self.server):
             if sock is not None:
@@ -285,6 +384,23 @@ class NetHost:
             self._frame = frame
             self._frame_ready.notify()
 
+    # The sound (the game's thread)
+
+    def audio(self, what: str, path: str | None, parameters: dict) -> None:
+        """A sound or music event (src/sound.py audio_event), for the client."""
+        relative = relative_data_path(path) if path is not None else None
+        if path is not None and relative is None:
+            return
+        message = encode_audio(what, relative, parameters)
+        with self._frame_ready:
+            if what in ('music', 'clip'):
+                self._last_music = message
+            elif what == 'stop_music':
+                self._last_music = None
+            if self.client is not None:
+                self._audio.append(message)
+                self._frame_ready.notify()
+
     # The threads
 
     def accept_loop(self) -> None:
@@ -307,7 +423,10 @@ class NetHost:
                 continue
             self.log(f"Player 2 joined from {address[0]}")
             self._sent_crc = None
-            self.client = client
+            with self._frame_ready:
+                self._audio = [self._last_music] if self._last_music is not None else []
+                self.client = client
+                self._frame_ready.notify()
             self._pending = True  # the picture now on the screen, at the next frame
             threading.Thread(target=self.receive_loop, args=(client,), name='netplay-receive', daemon=True).start()
 
@@ -317,18 +436,27 @@ class NetHost:
                 kind, payload = receive_message(client)
                 if kind == BUTTON and (button := decode_button(payload)) is not None:
                     self.joypad.received.put(button)
-        except (OSError, ConnectionError, ProtocolError):
-            pass
+        except (OSError, ConnectionError, ProtocolError) as error:
+            self.log(f"Player 2's connection ended: {error}")
         self.drop(client)
 
     def send_loop(self) -> None:
         while self.running:
             with self._frame_ready:
-                while self.running and self._frame is None:
+                while self.running and self._frame is None and not self._audio:
                     self._frame_ready.wait()
                 frame, self._frame = self._frame, None
+                audio, self._audio = self._audio, []
             client = self.client
-            if frame is None or client is None:
+            if client is None:
+                continue
+            try:
+                for message in audio:
+                    send_message(client, AUDIO, message)
+            except OSError:
+                self.drop(client)
+                continue
+            if frame is None:
                 continue
             width, height, rgb = frame
             crc = zlib.crc32(rgb, width * 65536 + height)
@@ -346,10 +474,8 @@ class NetHost:
             self.client = None
             self.joypad.received.put(None)
             self.log("Player 2 left")
-        try:
+        with contextlib.suppress(OSError):
             client.close()
-        except OSError:
-            pass
 
 
 def start_host(game: Any, port: int = PORT) -> NetHost:
@@ -391,7 +517,7 @@ def client_button_keys() -> dict[str, Any]:
             'UP': UP_KEYS, 'DOWN': DOWN_KEYS, 'LEFT': LEFT_KEYS, 'RIGHT': RIGHT_KEYS}
 
 
-def run_client(address: str, settings_controls: Any = None) -> int:
+def run_client(address: str, settings_controls: Any = None, client_config: dict | None = None) -> int:
     """--join: player 2's window (see the module docstring). Returns the exit status."""
     from src.gamepad import connect_gamepad
     from src.waiting import poll_virtual_joypad
@@ -411,19 +537,22 @@ def run_client(address: str, settings_controls: Any = None) -> int:
     screen = display.set_mode((NES_WIDTH * CLIENT_ZOOM, NES_HEIGHT * CLIENT_ZOOM), pygame.RESIZABLE)
     display.set_caption(f"Dragon Warrior - player 2 ({host})")
     frames: queue.Queue[tuple[int, int, bytes] | None] = queue.Queue(maxsize=2)
+    sounds: queue.Queue[dict] = queue.Queue()
+    audio = AudioPlayer(client_config or {'MUSIC_ENABLED': True, 'SOUND_ENABLED': True})
 
     def receive() -> None:
         try:
             while True:
                 kind, payload = receive_message(sock)
-                if kind == FRAME:
+                if kind == AUDIO:
+                    event = decode_audio(payload)
+                    if event is not None:
+                        sounds.put(event)
+                elif kind == FRAME:
                     frame = decode_frame(payload)
                     if frames.full():
-                        try:
+                        with contextlib.suppress(queue.Empty):  # the window may have taken it meanwhile
                             frames.get_nowait()  # the newest picture only
-                        except queue.Empty:
-                            # Queue state may change between full() and get_nowait(); safe to ignore.
-                            pass
                     frames.put(frame)
         except (OSError, ConnectionError, ProtocolError) as error:
             print(f"Disconnected: {error}")
@@ -435,6 +564,8 @@ def run_client(address: str, settings_controls: Any = None) -> int:
     clock = pygame.time.Clock()
     while True:
         poll_virtual_joypad()
+        while not sounds.empty():
+            audio.play(sounds.get_nowait())  # the mixer is used from this thread only
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sock.close()
