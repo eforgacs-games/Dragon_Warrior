@@ -33,6 +33,7 @@ from src.drawer import Drawer
 from src.dungeon_map import DungeonMap
 from src.field_encounters import FieldEncounters
 from src.game_functions import set_character_position, GameFunctions
+from src.game_events import EventBus
 from src.game_state import GameState
 from src.gamepad import connect_gamepad
 from src.hero_damage import HeroDamage
@@ -58,7 +59,7 @@ from src.player.player import Player
 from src.sound import Sound
 from src.battle_controller import BattleController
 from src.ending import Ending
-from src.play_stats import PlayClock, PlayStats
+from src.play_stats import PlayClock, PlayStats, subscribe_play_stats
 from src.step_triggers import StepTriggers
 from src.story_flags import StoryFlags
 from src.title_menu import TitleMenu
@@ -136,6 +137,8 @@ class Game:
         self.door_history = OpenDoorHistory()  # which locked doors have been opened since the last overworld visit
         self.story_flags = StoryFlags()  # all story progress; saved and loaded as one
         self.play_stats = PlayStats()  # the stats page's counts (src/play_stats.py), kept with the adventure log
+        self.event_bus = EventBus()  # what happens in the game, for whatever wants to know (src/game_events.py)
+        subscribe_play_stats(self.event_bus, lambda: self.play_stats)  # whichever stats a load or rewind has put in
         self.play_clock = PlayClock(self)  # ticks the play time on every loop's frames, once play has started
 
         self.auto_battle = self.game_state.config["AUTO_BATTLE"]

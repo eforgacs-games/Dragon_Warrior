@@ -27,6 +27,7 @@ from src.constants import (
 from src.encounters import pick_enemy
 from src.enemy_lookup import enemy_repel_lookup
 from src.enemy_spells import enemy_spell_lookup
+from src.game_events import FightLost, FightWon, RanAway
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
 from src.selection import frame_events, next_frame
@@ -268,15 +269,15 @@ class BattleController:
                 return self.fight_enemy('Dragonlord 2')
             # NES EnemyDefeated: the Green Dragon and Golem guardians' story flags
             record_victory(current_battle.enemy.name, self.current_map.identifier, self.game.story_flags)
-            self.game.play_stats.won_fight(current_battle.enemy.name)
+            self.game.event_bus.emit(FightWon(current_battle.enemy.name))
             current_battle.enemy_defeated(self.cmd_menu, self.screen, self.player, current_battle.enemy)
             outcome = BattleOutcome.VICTORY
         elif self.player.is_dead:
-            self.game.play_stats.lost_fight()
+            self.game.event_bus.emit(FightLost())
             outcome = BattleOutcome.DEFEAT
         else:
             if self.player_ran_away:
-                self.game.play_stats.ran_away()
+                self.game.event_bus.emit(RanAway())
             outcome = BattleOutcome.ESCAPED
         self.cmd_menu.current_battle = None
         if outcome == BattleOutcome.ESCAPED and not current_battle.enemy_fled:

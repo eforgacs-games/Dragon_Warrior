@@ -19,13 +19,15 @@ from src.battle_controller import BattleController
 from src.common import set_gettext_language
 from src.config.test_config import test_config
 from src.controls import reset_controls
+from src.game_events import EventBus
 from src.game_options import DEFAULT_OPTIONS, STATS_PAGE, options_from_save, options_to_save
 from src.catalog import po_path, read_po
 from src.languages import ENGLISH, LANGUAGES
 from src.message_log import LINE_WIDTH, VISIBLE_LINES, log_layout, text_width
 from src.options_overlay import OPTION_ROWS, PRESET_MODERN, PRESET_NES, preset_values
 from src.quest_journal import JOURNAL_LEARNED
-from src.play_stats import MAX_COUNTED_FRAME_MS, SAVE_KEY, PlayStats, count_or_zero, play_time_text
+from src.play_stats import MAX_COUNTED_FRAME_MS, SAVE_KEY, PlayStats, count_or_zero, play_time_text, \
+    subscribe_play_stats
 from src.save_file import SaveFile
 from src.save_state import decode_snapshot, take_snapshot
 from src.stats_screen import STATS_TITLE, StatsScreen, aligned, monsters_in_order, screen_texts, stat_lines
@@ -336,6 +338,8 @@ class TestFights(unittest.TestCase):
     def setUp(self):
         self.game = make_game()
         self.game.play_stats = PlayStats()
+        self.game.event_bus = EventBus()
+        subscribe_play_stats(self.game.event_bus, lambda: self.game.play_stats)
         self.controller = BattleController(self.game)
         patch.object(self.controller, 'start_fight', return_value=False).start()
         patch.object(self.controller, 'step_back_after_running', return_value=False).start()

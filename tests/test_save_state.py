@@ -522,6 +522,9 @@ GAME_NOT_KEPT = {
     'autosave', 'rewind', 'auto_grind', 'play_clock',
     # The map's key handlers (src/map_hotkeys.py), which hold no state: their requests are listed above
     'hotkeys',
+    # Who is told of the game's events (src/game_events.py): set up once with the game, and the stats it counts in
+    # are always game.play_stats, whichever a state has put back
+    'event_bus',
     # The step, damage, fight and death logic moved out of Game, which keeps its state on the game (GAME_VALUES)
     'step_triggers', 'hero_damage', 'field_encounters', 'hero_death',
     # Drawing, timing and the game's other parts, which hold no state of the game
