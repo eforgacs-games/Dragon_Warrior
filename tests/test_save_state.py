@@ -408,12 +408,12 @@ class TestKeys(SaveStateTestCase):
 
     def test_waits_for_the_step_to_finish(self):
         game = self.game
-        self.run_frames(game, 20)  # partway through the second step down
+        self.run_frames(game, 8)  # partway through the first step down
         self.assertTrue(game.player.is_moving)
         self.press(K_F1, KMOD_SHIFT)
         self.assertFalse(os.path.exists(state_path(self.save_dir, 1)))
         for _ in range(40):
-            self.run_frames(game, 1, first_frame=20)
+            self.run_frames(game, 1, first_frame=8)
             if os.path.exists(state_path(self.save_dir, 1)):
                 break
         self.assertTrue(os.path.exists(state_path(self.save_dir, 1)))

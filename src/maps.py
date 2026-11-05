@@ -300,6 +300,9 @@ class DragonWarriorMap:
         hero_coords = destination_coordinates or self.initial_coordinates
         if hero_coords:
             hero_row, hero_col = hero_coords
+            # The hero is on this block now: anything that reads row and column before the map's next frame (the
+            # autosave written on arriving in a town, src/autosave.py) mustn't see the last map's block
+            player.row, player.column = hero_row, hero_col
             self.center_pt = get_center_point(hero_col, hero_row, tile_size=tile_size)
             AnimatedSprite.__init__(player, self.center_pt, player.direction_value,
                                     images=self.scale_sprite_sheet(self.directories.UNARMED_HERO_PATH),
