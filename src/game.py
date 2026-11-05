@@ -432,6 +432,8 @@ class Game:
             self.frame_pacer = FramePacer(max_frames=STEP_SYNC_FRAMES // 2)
             self.events = []
             self.load_window_palette()
+            self.set_player_images_by_equipment()  # in their own colors from the start, before any frame of theirs
+            hero.show_facing()
         return session
 
     # Free roam (the CO-OP option on FREE ROAM, src/sessions.py)

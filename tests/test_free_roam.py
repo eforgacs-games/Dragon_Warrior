@@ -191,3 +191,10 @@ class TestStatesWhileRoaming(FreeRoamTestCase):
             self.game.handle_keypresses(Event(KEYDOWN, key=K_BACKSPACE, mod=0))
         self.assertIsNone(self.game.state_request)
         rewind.assert_not_called()
+class TestTheirLook(FreeRoamTestCase):
+
+    def test_green_from_the_start(self):
+        from src.follower import COMPANION_GREEN
+        image = self.gwen.image
+        colors = {tuple(image.get_at((x, y)))[:3] for x in range(image.get_width()) for y in range(image.get_height())}
+        self.assertIn(COMPANION_GREEN, colors)
