@@ -3916,3 +3916,15 @@ msgstr "到旅馆"
 #: src/options_overlay.py
 msgid "GET UP"
 msgstr "站起来"
+
+#: src/options_overlay.py
+msgid "CO-OP"
+msgstr "合作"
+
+#: src/options_overlay.py
+msgid "PARTY"
+msgstr "队伍"
+
+#: src/options_overlay.py
+msgid "FREE ROAM"
+msgstr "自由行动"
