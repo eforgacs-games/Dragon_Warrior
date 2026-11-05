@@ -15,7 +15,9 @@ fallen and sits the fight out; the fight is lost only when both have fallen. Win
 the enemy's experience, and the party its gold, once. A hero who fell gets back up with 1 HP once the fight is won or
 fled. A lost fight takes both back to King Lorik, as on the NES. One successful run gets the party away.
 
-Player 2's controls and the inns, shops and chests that ask which hero come next.
+The second hero's turns are player 2's: their command, their SPELL and ITEM windows and their action's messages read
+player 2's joypad (src/controls.py player_input: the numpad, or a second controller, src/gamepad.py), the rest of the
+fight player 1's. The inns, shops and chests that ask which hero come next.
 """
 from collections.abc import Iterator
 from contextlib import contextmanager

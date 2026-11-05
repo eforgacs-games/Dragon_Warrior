@@ -15,7 +15,7 @@ from pygame import KEYDOWN, Surface, display, event, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
-from src.controls import pressed
+from src.controls import PLAYER_ONE, PLAYER_TWO, player_input, pressed
 from src.common import A_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, reject_keys, singular_or_plural
 from src.menu import BATTLE_LINE
 from src.cursor import BlinkingCursor
@@ -29,7 +29,7 @@ from src.enemy_spells import enemy_spell_lookup
 from src.game_events import FightLost, FightWon, RanAway
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
-from src.party import acting, heroes, in_party_mode, living
+from src.party import acting, companion_of, heroes, in_party_mode, living
 from src.random_streams import hero_random
 from src.selection import frame_events, next_frame
 from src.sound import SPELL_SFX_FRAMES
@@ -283,8 +283,9 @@ class BattleController:
         self.command_window_covered = None
         run_away = self.start_fight(current_battle)
         while current_battle.enemy.hp > 0 and not run_away and not self.party_fallen():
-            # Each hero's turn is played with them as game.player (src/party.py acting)
-            with acting(self.game, self.hero_to_act()):
+            # Each hero's turn is played with them as game.player (src/party.py acting), on their player's joypad
+            hero = self.hero_to_act()
+            with acting(self.game, hero), player_input(PLAYER_TWO if hero is companion_of(self.game) else PLAYER_ONE):
                 run_away = self.handle_battle_prompts(run_away, current_battle)
         if current_battle.enemy.hp <= 0:
             if current_battle.enemy.name == 'Dragonlord':
@@ -361,7 +362,8 @@ class BattleController:
         """The enemy's turn, against one of the heroes (enemy_target), ending the round: the next one starts from the
         first hero standing. A hero it brings to 0 HP has fallen. Returns True if the enemy ran away."""
         self.turn_hero = None
-        with acting(self.game, self.enemy_target()):
+        # The enemy's turn is on player 1's joypad, whoever acted last
+        with acting(self.game, self.enemy_target()), player_input(PLAYER_ONE):
             if self.enemy_move(current_battle):
                 return True
             if self.player.current_hp <= 0:
