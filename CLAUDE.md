@@ -75,7 +75,7 @@ The main `Game` class in `src/game.py` orchestrates:
 - `game_options.py`: every option of the options overlay, declared once (per adventure log or global settings)
 - `story_flags.py`: story progress (`StoryFlags`), saved with the game
 - `save_state.py`: full snapshots of the game on the map (not an NES feature)
-- `random_streams.py`: every roll's generator: the hero's stream (encounters, fights, spells, chests) and the world's (NPCs, flavor lines), seeded by `--seed`
+- `random_streams.py`: every roll's generator: the NES's own random number (RANDOMNESS NES, the default: NES UpdateRandNum, stepped every frame and every roll), or the hero's and the world's streams (SEEDED, which `--seed` and multiplayer lock it on)
 - `window_renderer.py`: draws NES windows tile by tile
 - `npc_movement.py`: where roaming NPCs may step
 - `checkpoints.py`: named playtest checkpoints in `data/checkpoints/`

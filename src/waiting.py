@@ -24,7 +24,8 @@ gamepad (src/gamepad.py) plugs in at the same two places, polled just before the
 the game, and auto-grind, as the player's own key presses.
 
 Every loop passes through here each frame (the map's FrameClock.tick, the other loops' get_events, and every wait), so
-it's also where the play time (src/play_stats.py PlayClock) is told that time has gone by: the frame listener
+it's also where the play time (src/play_stats.py PlayClock) and the NES's random number (src/random_streams.py, which
+steps every frame as the NES's GetJoypadStatus steps it) are told that time has gone by: the frame listeners
 (set_frame_listener).
 
 This module imports nothing from ``src`` but src/controls.py and src/zoom.py (which import nothing from ``src`` but
@@ -105,7 +106,7 @@ _rounding_carry = 0.0  # real milliseconds that rounding waits to whole millisec
 # settings (src/settings.py)
 _speed_listener: Callable[[int], None] | None = None
 # Called whenever a loop passes a frame or a wait polls (frame_passed): the play time's clock (src/play_stats.py)
-_frame_listener: Callable[[], None] | None = None
+_frame_listeners: dict[str, Callable[[], None]] = {}
 # The options overlay's GAME SPEED switch (GAME_SPEED_KEYS, src/game_options.py): off, keys 1 to 5 do nothing
 # (they are still taken out of the event loops, so they never count as "any key"). options_overlay.apply_option sets it.
 _speed_keys_enabled = True
@@ -241,16 +242,19 @@ def set_speed_listener(listener: Callable[[int], None] | None) -> None:
     _speed_listener = listener
 
 
-def set_frame_listener(listener: Callable[[], None] | None) -> None:
-    """Have listener called whenever a loop passes a frame or a wait polls (None for nothing)."""
-    global _frame_listener
-    _frame_listener = listener
+def set_frame_listener(listener: Callable[[], None] | None, name: str = 'play time') -> None:
+    """Have listener called whenever a loop passes a frame or a wait polls, in place of the last one set under this
+    name (None for none)."""
+    if listener is None:
+        _frame_listeners.pop(name, None)
+    else:
+        _frame_listeners[name] = listener
 
 
 def frame_passed() -> None:
-    """Tell the frame listener that time has gone by in one of the game's loops."""
-    if _frame_listener is not None:
-        _frame_listener()
+    """Tell the frame listeners that time has gone by in one of the game's loops."""
+    for listener in tuple(_frame_listeners.values()):
+        listener()
 
 
 def set_speed_keys_enabled(enabled: bool) -> None:

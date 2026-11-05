@@ -614,7 +614,7 @@ class TestCommandPrompt(BattlePromptFrames):
         self.battle.enemy = enemies.Slime()
         self.controller.command_window_open = False
         with patch.object(self.controller, 'enemy_move', side_effect=lambda _: order.append('enemy turn')), \
-                patch('src.battle_controller.hero_random.randint', side_effect=[1, 63, 18]):
+                patch('src.battle_controller.hero_random.randint', side_effect=[63, 18]):
             self.assertFalse(self.controller.start_fight(self.battle))
         self.frame()
         self.assertEqual(['The Slime attacked before Erdrick was ready.', 'enemy turn', 'Command?\n'], order)
@@ -1010,8 +1010,13 @@ class TestEnemyMove(unittest.TestCase):
         self.addCleanup(patch.stopall)
 
     def move(self, enemy, roll=0, effect=None):
+        """The enemy's turn with every byte rolled ((0, 255): the spell rolls, and STOPSPELL's coin flip) holding
+        ``roll`` in both spell chance fields (bits 4-5 for the upper spell, 0-1 for the lower: a 2-bit roll of 0-3, so
+        a spell with a chance of n quarters casts on rolls below n), and each spell's HP roll giving ``effect`` (or
+        its least)."""
         battle = make_battle(enemy)
-        randint = Mock(side_effect=lambda a, b: roll if (a, b) == (0, 99) else (effect if effect is not None else a))
+        randint = Mock(side_effect=lambda a, b: roll << 4 | roll if (a, b) == (0, 255) else
+                       (effect if effect is not None else a))
         with patch('src.battle_controller.hero_random.randint', randint), \
                 patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
             self.controller.enemy_move(battle)
@@ -1039,7 +1044,7 @@ class TestEnemyMove(unittest.TestCase):
         self.game.sound.play_sound.assert_any_call(self.game.directories.spell_sfx)
 
     def test_failed_spell_roll_falls_through_to_attack(self, mock_time):
-        self.move(enemies.Magician(), roll=99)
+        self.move(enemies.Magician(), roll=2)  # HURT 50%: 2 quarters, cast on 0 and 1
         self.game.hero_damage.receive_damage.assert_called_once_with(2)
         self.assertEqual(self.last_message(), 'The Magician attacks!\n')
 
@@ -1069,12 +1074,12 @@ class TestEnemyMove(unittest.TestCase):
         self.game.hero_damage.receive_damage.assert_called_once_with(2)
 
     def test_stopspell(self, mock_time):
-        self.move(patterned_enemy([(100, Spell.STOPSPELL, True), Spell.ATTACK]), effect=1)
+        self.move(patterned_enemy([(100, Spell.STOPSPELL, True), Spell.ATTACK]), roll=1)  # its coin flip: bit 0 set
         self.assertTrue(self.game.player.is_stopspelled)
 
     def test_erdricks_armor_blocks_stopspell(self, mock_time):
         self.game.player.armor = "Erdrick's Armor"
-        self.move(patterned_enemy([(100, Spell.STOPSPELL, True), Spell.ATTACK]), effect=1)
+        self.move(patterned_enemy([(100, Spell.STOPSPELL, True), Spell.ATTACK]), roll=1)
         self.assertFalse(self.game.player.is_stopspelled)
 
     def test_firebreath(self, mock_time):
@@ -1154,13 +1159,39 @@ class TestEnemyMove(unittest.TestCase):
         self.move(drakeema, roll=0, effect=5)
         self.assertEqual(drakeema.hp, 6)
 
-    def test_spell_chance_is_exact_percentage(self, mock_time):
-        # A 75% spell casts on rolls 0-74 of 0-99.
-        self.move(patterned_enemy([(75, Spell.HURT, True), Spell.ATTACK]), roll=74, effect=7)
+    def test_spell_chance_is_in_quarters(self, mock_time):
+        # NES DoEnemyAttack: a 75% spell (3 in EnSpell's 2 bits) casts on 2-bit rolls 0-2 of 0-3
+        self.move(patterned_enemy([(75, Spell.HURT, True), Spell.ATTACK]), roll=2, effect=7)
         self.game.hero_damage.receive_damage.assert_called_once_with(7)
         self.game.reset_mock()
-        self.move(patterned_enemy([(75, Spell.HURT, True), Spell.ATTACK]), roll=75, effect=7)
+        self.move(patterned_enemy([(75, Spell.HURT, True), Spell.ATTACK]), roll=3, effect=7)
         self.game.hero_damage.receive_damage.assert_called_once_with(2)
+
+    def test_the_upper_spell_reads_bits_4_and_5_and_the_lower_bits_0_and_1(self, mock_time):
+        # Starwyvern: HEALMORE 75% (upper), FIREBREATH 25% (lower). Its HP is low, so HEALMORE would work.
+        starwyvern = enemies.Starwyvern()
+        starwyvern.hp = 1
+        starwyvern.refresh_pattern()
+        for upper_bits, lower_bits, cast in ((3, 0, Spell.FIREBREATH), (2, 3, Spell.HEALMORE), (3, 1, None)):
+            with self.subTest(upper=upper_bits, lower=lower_bits), \
+                    patch('src.battle_controller.hero_random.randint',
+                          side_effect=[upper_bits << 4 | 0x03, lower_bits | 0x30]):
+                self.assertEqual(cast, self.controller.choose_enemy_spell(starwyvern))
+
+    def test_an_enemy_with_no_spells_still_makes_both_rolls(self, mock_time):
+        # NES DoEnemyAttack rolls for the upper and the lower spell whatever the enemy knows
+        with patch('src.battle_controller.hero_random.randint', return_value=0) as randint:
+            self.assertIsNone(self.controller.choose_enemy_spell(enemies.Slime()))
+        self.assertEqual([((0, 255),)] * 2, [(c.args,) for c in randint.call_args_list])
+
+    def test_sleep_and_stopspell_roll_no_hp(self, mock_time):
+        # NES EnCastSleep and EnCastStopspell make no HP roll (STOPSPELL makes its coin flip)
+        for spell, rolls in ((Spell.SLEEP, []), (Spell.STOPSPELL, [(0, 255)])):
+            self.game.player.is_asleep = self.game.player.is_stopspelled = False
+            with self.subTest(spell), patch('src.battle_controller.hero_random.randint', return_value=1) as randint:
+                self.controller.cast_enemy_spell(make_battle(patterned_enemy([(100, spell, True), Spell.ATTACK])),
+                                                 spell)
+            self.assertEqual(rolls, [c.args for c in randint.call_args_list])
 
     def test_stopspell_skipped_when_already_stopspelled(self, mock_time):
         self.game.player.is_stopspelled = True
@@ -1192,12 +1223,14 @@ class TestEnemyMove(unittest.TestCase):
         self.game.hero_damage.receive_damage.assert_called_once_with(2)
 
     def test_sleeping_enemy_wakes_one_time_in_three(self, mock_time):
+        # NES StartEnemyTurn: 2 bits of RandNumUB, rolled again while they're 0; 1 wakes it (1 of 1-3)
         slime = enemies.Slime()
         slime.is_asleep = True
-        with patch('src.battle_controller.hero_random.randint', return_value=1) as randint, \
+        with patch('src.battle_controller.hero_random.randint', side_effect=[0x00, 0x84, 0x05, 0, 0]) as randint, \
                 patch('src.battle_controller.calculate_enemy_attack_damage', return_value=2):
             self.controller.enemy_move(make_battle(slime))
-        self.assertEqual(randint.call_args_list[0].args, (1, 3))
+        self.assertFalse(slime.is_asleep)
+        self.assertEqual([(0, 255)] * 5, [c.args for c in randint.call_args_list])  # 3 wake rolls, 2 spell rolls
 
     def test_sleeping_enemy_does_not_flee(self, mock_time):
         self.game.player.strength = 10
@@ -1298,10 +1331,19 @@ class TestStartFight(unittest.TestCase):
         run_away.assert_called_once_with(self.battle, self.battle.enemy)
         enemy_move.assert_not_called()
 
+    def test_no_flee_roll_against_an_enemy_the_hero_is_not_twice_as_strong_as(self):
+        # NES CheckEnRun: BCC EnRunExit before UpdateRandNum. Strength 9 // 2 = 4 < the Slime's attack 5.
+        self.game.player.strength = 9
+        with patch.object(self.controller, 'enemy_move'), \
+                patch('src.battle_controller.hero_random.randint', return_value=0) as randint:
+            self.controller.start_fight(self.battle)
+        self.assertEqual(2, randint.call_count)  # CalcWhoIsNext's two rolls only
+
     def test_hero_acts_first_when_agility_roll_wins(self):
-        # flee roll 1 (no flee), enemy roll 63 * defense 3 = 189 vs. hero roll 19 * agility 10 = 190
+        # No flee roll (CheckEnRun only rolls for a hero with twice the enemy's attack in strength), then enemy roll
+        # 63 * defense 3 = 189 vs. hero roll 19 * agility 10 = 190
         with patch.object(self.controller, 'enemy_move') as enemy_move:
-            self.assertFalse(self.start([1, 63, 19]))
+            self.assertFalse(self.start([63, 19]))
         enemy_move.assert_not_called()
         self.game.cmd_menu.show_line_in_dialog_box.assert_not_called()
 
@@ -1309,13 +1351,13 @@ class TestStartFight(unittest.TestCase):
         # 63 * 3 == 63 * 3: CalcWhoIsNext's subtraction doesn't borrow, so the carry is set
         self.game.player.agility = 3
         with patch.object(self.controller, 'enemy_move') as enemy_move:
-            self.start([1, 63, 63])
+            self.start([63, 63])
         enemy_move.assert_not_called()
 
     def test_enemy_attacks_before_the_hero_is_ready(self):
         # 63 * 3 = 189 vs. 18 * 10 = 180
         with patch.object(self.controller, 'enemy_move', return_value=False) as enemy_move:
-            self.assertFalse(self.start([1, 63, 18]))
+            self.assertFalse(self.start([63, 18]))
         enemy_move.assert_called_once_with(self.battle)
         self.assertEqual(self.game.cmd_menu.show_line_in_dialog_box.call_args.args[0],
                          'The Slime attacked before Erdrick was ready.')
@@ -1323,7 +1365,7 @@ class TestStartFight(unittest.TestCase):
     def test_enemy_roll_uses_only_six_bits(self):
         # rand 255 & 0x3F = 63
         with patch.object(self.controller, 'enemy_move') as enemy_move:
-            self.start([1, 255, 19])
+            self.start([255, 19])
         enemy_move.assert_not_called()
 
     def test_ambush_can_kill_the_hero(self):
@@ -1331,12 +1373,12 @@ class TestStartFight(unittest.TestCase):
             self.game.player.current_hp = 0
             return False
         with patch.object(self.controller, 'enemy_move', side_effect=lethal):
-            self.assertFalse(self.start([1, 63, 0]))
+            self.assertFalse(self.start([63, 0]))
         self.assertTrue(self.game.player.is_dead)
 
     def test_enemy_can_flee_during_its_ambush_turn(self):
         with patch.object(self.controller, 'enemy_move', return_value=True):
-            self.assertTrue(self.start([1, 63, 0]))
+            self.assertTrue(self.start([63, 0]))
 
 
 @patch('src.battle_controller.time')

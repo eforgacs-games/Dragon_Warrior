@@ -617,9 +617,10 @@ class DialogLookup:
                                 is_roaming=False)
 
     def princess_gwaelin_throne_room(self):
-        """NES PrincessDialog: two random bits pick what Gwaelin says when spoken to in the throne room."""
+        """NES PrincessDialog: bits 5-6 of RandNumUB (AND #$60) pick what Gwaelin says when spoken to in the throne
+        room: none set, both set, or one."""
         _ = self._
-        random_bits = world_random.randint(0, 3)
+        random_bits = (world_random.randint(0, 255) & 0x60) >> 5
         if random_bits == 0:
             self.even_when_we_two_are_parted()
         elif random_bits == 3:

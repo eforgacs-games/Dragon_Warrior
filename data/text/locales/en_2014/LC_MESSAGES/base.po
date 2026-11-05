@@ -3818,3 +3818,11 @@ msgstr "GOALS"
 #: src/records.py
 msgid "ERDRICK'S TABLET"
 msgstr "ERDRICK'S TABLET"
+
+#: src/options_overlay.py
+msgid "RANDOMNESS"
+msgstr "RANDOMNESS"
+
+#: src/options_overlay.py
+msgid "SEEDED"
+msgstr "SEEDED"

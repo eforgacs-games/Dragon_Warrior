@@ -65,7 +65,8 @@ is. Please attach it to a [new issue](https://github.com/eforgacs-games/Dragon_W
    dependencies, in a `.venv` folder inside the project.
 4. Start the game with `uv run python -m src.game`. Add `--language English`, `--language Korean`,
    `--language Japanese`, `--language "Traditional Chinese"`, `--language "Simplified Chinese"` or
-   `--language English2014` to choose the language.
+   `--language English2014` to choose the language. Add `--seed` with a number to play with that seed: the same play
+   gets the same rolls every time (the RANDOMNESS option stays on SEEDED).
 
 For the NES and SFC music, also install libgme (below). [CONTRIBUTING.md](CONTRIBUTING.md) has the rest: running
 without uv, the tests, playtest checkpoints and debug keys.
@@ -278,6 +279,7 @@ With one of these OFF, its key does nothing, as on the NES.
 | CONFIRM NAME | OFF (NES): the 8th letter ends the name; ON: a full name waits on END so you can still change it, and START ends the name from anywhere | OFF | OFF | ON |
 | AUTO-HEAL | What auto-grind does at the GRIND STOP HP: OFF (NES): stops; ON: heals with all the MP; KEEP 1 HEAL: heals but keeps the MP for one HEAL | OFF | OFF | KEEP 1 HEAL |
 | AUTO-INN | When auto-grind can't go on (HP low with no heal, or no MP left for one): OFF (NES): it stops; ON: it goes to the nearest inn it can pay for and back | OFF | OFF | ON |
+| RANDOMNESS | NES: every roll comes from the NES's own random number, which moves on every frame as well as every roll, so when you press a button changes what happens, as on the NES; SEEDED: the hero's rolls and the world's (the townspeople's wandering) come from two separate generators, so the same play with the same `--seed` gets the same rolls. A seed keeps it on SEEDED (grayed out) | NES | NES | NES |
 
 
 ## Languages

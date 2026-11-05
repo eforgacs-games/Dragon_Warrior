@@ -562,7 +562,7 @@ class TestBattleHooks(TestCase):
                 enemy.name = 'Magician'
                 with patch('src.battle_controller.coin_flip', return_value=works), \
                         patch('src.battle_controller.hero_random.randint', return_value=0):
-                    controller.execute_enemy_pattern(Mock(), (100, Spell.STOPSPELL, True), 0, enemy)
+                    controller.cast_enemy_spell(Mock(enemy=enemy), Spell.STOPSPELL)
                 self.assertEqual(works, game.auto_grind.stopspell_hit.called)
 
     @patch('src.battle_controller.display')
@@ -866,7 +866,7 @@ class TestHeadlessInnTrip(HeadlessTestCase):
         return super().new_game(AUTO_INN=True, AUTO_GRIND_STOP=GRIND_STOP_DANGER, **overrides)
 
     def test_to_the_inn_and_back(self):
-        seed_all(2)
+        seed_all(3)
         game, player, grind = self.game, self.player, self.grind
         player.gold = 100
         maps, nights = [], []

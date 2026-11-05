@@ -13,7 +13,7 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.common import B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, is_facing_down, \
     is_facing_laterally, is_facing_left, is_facing_medially, is_facing_right, is_facing_up
-from src.direction import Direction
+from src.direction import Direction, nes_direction
 from src.directories import Directories
 from src.game_functions import set_character_position
 from src.game_state import GameState
@@ -616,9 +616,9 @@ class MovementController:
                 self.continue_npc_step(roaming_character)
 
     def start_npc_step(self, roaming_character: RoamingCharacter) -> None:
-        """NES SetNPCDir and the checks after it: turn to a random direction, and take the first pixel of a step that
-        way if nothing is in the way (move checks it)."""
-        roaming_character.direction_value = world_random.choice(list(map(int, Direction)))
+        """NES SetNPCDir and the checks after it: turn to the direction in bits 5-6 of RandNumUB (AND #$60), and take
+        the first pixel of a step that way if nothing is in the way (move checks it)."""
+        roaming_character.direction_value = nes_direction((world_random.randint(0, 255) & 0x60) >> 5)
         self.begin_npc_step(roaming_character)
 
     def begin_npc_step(self, roaming_character: RoamingCharacter) -> bool:

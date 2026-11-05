@@ -33,7 +33,7 @@ from src.sprites.roaming_character import RoamingCharacter
 from src.waiting import NES_FPS, game_speed, reset_game_speed, set_speed_keys_enabled
 from src.windows import COMMAND_WINDOW, DIALOG_WINDOW, POPUP_WINDOW
 from tests.mock_map import MockMap
-from tests.helpers import new_game
+from tests.helpers import new_game, npc_direction_roll
 
 
 def pressed_keys(pressed_key):
@@ -954,7 +954,7 @@ class TestGame(TestCase):
         # The first frame on a map is the first pair's decision frame (NES InitMapData: NPCUpdateCntr = 0)
         guard = self.game.current_map.roaming_characters[0]
         start = guard.rect.topleft
-        with patch('src.movement.world_random.choice', return_value=Direction.DOWN.value):
+        with patch('src.movement.world_random.randint', return_value=npc_direction_roll(Direction.DOWN.value)):
             self.game.movement.sprites_frame()
         self.assertTrue(guard.is_moving)
         self.assertEqual(Direction.DOWN.value, guard.direction_value)

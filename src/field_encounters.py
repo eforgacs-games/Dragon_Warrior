@@ -15,6 +15,7 @@ from src.calculation import get_tile_id_by_coordinates
 from src.encounters import ENEMY_GROUPS, encounter_group, roll_encounter
 from src.game_options import ENCOUNTERS_HALF, ENCOUNTERS_OFF
 from src.movement import HILL_PAUSE_FRAMES
+from src.random_streams import hero_random
 
 if TYPE_CHECKING:
     from src.game import Game  # src.game imports this module
@@ -35,13 +36,16 @@ class FieldEncounters:
             # NES: InitFight takes the place of CheckBlockDmg, so this step can't also bring a random fight
             game.last_amount_of_tiles_moved = game.tiles_moved_since_spawn
             return
-        # NES ChkOtherBlocks: once the Dragonlord is dead, no more random fights
-        if game.story_flags.dragonlord_defeated:
-            return
         if game.tiles_moved_since_spawn > 0 and game.tiles_moved_since_spawn != game.last_amount_of_tiles_moved:
             game.last_amount_of_tiles_moved = game.tiles_moved_since_spawn
             if game.step_triggers.stepped_off_the_map():
                 return  # NES ChkSpecialLoc -> CheckMapExit: handle_warps leaves the map, with no damage or fight
+            # NES CheckBlockDmg starts with UpdateRandNum on every step, whatever the block; its fight roll reads this
+            # RandNumUB (ChkFight2), after the swamp's damage or the hill's pause
+            game.step_roll = hero_random.randint(0, 255)
+            # NES ChkOtherBlocks: once the Dragonlord is dead, no more damage from the blocks and no more random fights
+            if game.story_flags.dragonlord_defeated:
+                return
             # NES CheckBlockDmg runs once per step, on the block the player has just stepped onto. The player's
             # column/row and current_tile aren't updated until later in the frame, so read them from the sprite.
             column, row = game.player.rect.x // game.tile_size, game.player.rect.y // game.tile_size
@@ -65,7 +69,7 @@ class FieldEncounters:
             return
         game.last_zone = group
         enemies_in_current_zone = ENEMY_GROUPS[group] if game.game_state.config["FORCE_BATTLE"] else \
-            self.thin_encounters(roll_encounter(game.current_map.identifier, tile, column, row))
+            self.thin_encounters(roll_encounter(game.current_map.identifier, tile, column, row, game.step_roll))
         if enemies_in_current_zone is not None and not game.game_state.config["NO_BATTLES"]:
             if game.battle_ctrl.run_battle(enemies_in_current_zone) != BattleOutcome.REPELLED:
                 # NES: after the fight the hero is still on this block; stairs wait for STAIRS (or a step off them)

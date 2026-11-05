@@ -69,6 +69,9 @@ base_config = {
     "AUTO_HEAL": "Off",
     # AUTO-INN (not NES): when auto-grind can't go on, it goes to the nearest inn and back (src/inn_trip.py)
     "AUTO_INN": False,
+    # RANDOMNESS: "NES" (the NES's own random number, stepped every frame) or "Seeded" (not NES: the hero's and the
+    # world's streams, src/random_streams.py). SEED and MULTIPLAYER lock it on "Seeded".
+    "RANDOMNESS": "NES",
     # MENU SPEED (not NES, #440): "Normal" keeps the selection windows (their cursor's blink and held button repeat) at
     # 1x whatever the game speed (keys 1 to 5); "FollowGameSpeed" speeds them up with the game (src/waiting.py)
     "MENU_SPEED": "Normal",
@@ -114,6 +117,7 @@ base_config = {
     "NO_BLIT": False,
     "DEBUG_KEYS": False,  # F5-F7 warp, give and checkpoint menus (src/debug_tools.py); dev_config turns them on
     "CHECKPOINT": None,  # e.g. "rainbow_bridge": start from data/checkpoints/<name>.json (also --checkpoint)
+    "MULTIPLAYER": False,  # a multiplayer game (#438; not yet): locks RANDOMNESS on "Seeded"
     "SEED": None,  # an int: the seed of the random numbers (also --seed; src/random_streams.py), or None for a new one
     "SAVE_DIR": None,  # None saves to src/saves
     # The global settings file (zoom, fullscreen, game speed, language; src/settings.py): USER_SETTINGS is the user's
