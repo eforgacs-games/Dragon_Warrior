@@ -236,8 +236,8 @@ class NetHost:
             if sock is not None:
                 try:
                     sock.close()
-                except OSError:
-                    pass
+                except OSError as exc:
+                    self.log(f'Failed to close socket during stop: {exc}')
         with self._frame_ready:
             self._frame_ready.notify_all()
 
