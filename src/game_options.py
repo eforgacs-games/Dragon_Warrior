@@ -194,11 +194,14 @@ AUTOSAVE = AutosaveOption('autosave', 'AUTOSAVE', ON_OFF, None, (False, True), '
 # of danger, with all the MP or keeping enough for one HEAL (src/auto_grind.py). Off, it stops.
 AUTO_HEAL = Option('auto_heal', 'AUTO_HEAL', AUTO_HEAL_SETTINGS, AUTO_HEAL_OFF, (AUTO_HEAL_OFF, AUTO_HEAL_KEEP_ONE),
                    'AutoHeal')
+# AUTO-INN: when auto-grind can't go on (HP low with no heal, or no MP left for one), it walks to the nearest inn it can
+# pay for, stays the night and walks back (src/inn_trip.py). Off, it stops.
+AUTO_INN = Option('auto_inn', 'AUTO_INN', ON_OFF, False, (False, True), 'AutoInn')
 
 PER_LOG_OPTIONS = (MESSAGE_SPEED, DIALOG_STYLE, NPCS_MAKE_WAY, FADE_STYLE, AUTO_STAIRS, AUTO_GRIND_STOP, MENU_SPEED,
                    MUSIC, GAME_SPEED_KEYS, SAVE_STATES, REWIND, AUTO_GRIND, CHEAT_KEYS, QUICK_ACTION, ENCOUNTERS,
                    EXP_GOLD, RUN_BUTTON, STATUS_WINDOW, SHOP_PREVIEW, QUEST_JOURNAL, BAG_SIZE, SMART_A, MESSAGE_LOG,
-                   STATS_PAGE, AUTOSAVE, AUTO_HEAL)
+                   STATS_PAGE, AUTOSAVE, AUTO_HEAL, AUTO_INN)
 
 # Global, in the order of Settings' fields
 
@@ -251,6 +254,7 @@ class Options:
     stats_page: bool = STATS_PAGE.default
     autosave: bool | None = AUTOSAVE.default  # None: the config's AUTOSAVE is kept
     auto_heal: str = AUTO_HEAL.default
+    auto_inn: bool = AUTO_INN.default
 
 
 # A new quest's settings when none are chosen: the default message speed and the NES preset's values, as base_config

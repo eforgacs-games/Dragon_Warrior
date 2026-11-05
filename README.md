@@ -175,6 +175,9 @@ on).
   With AUTO-HEAL on, low HP doesn't stop it while there's MP to heal: it casts HEAL or HEALMORE (whichever gives more
   HP for the MP) through the menus, in a fight at the start of a turn or on the map after it, until HP is out of
   danger, and stops when the MP runs out (KEEP 1 HEAL stops while there's still enough for one HEAL, for the way back).
+  With AUTO-INN on, instead of stopping on the map it walks to the nearest inn it can pay for (through towns, caves
+  and stairs as needed), stays the night, walks back to where it started and grinds on. Fights on the way are fought
+  as usual; HP low with no heal on the way stops it.
 
 The game speed, the window zoom and fullscreen are remembered for the next time you play.
 
@@ -274,6 +277,7 @@ With one of these OFF, its key does nothing, as on the NES.
 | --- | --- | --- | --- | --- |
 | CONFIRM NAME | OFF (NES): the 8th letter ends the name; ON: a full name waits on END so you can still change it, and START ends the name from anywhere | OFF | OFF | ON |
 | AUTO-HEAL | What auto-grind does at the GRIND STOP HP: OFF (NES): stops; ON: heals with all the MP; KEEP 1 HEAL: heals but keeps the MP for one HEAL | OFF | OFF | KEEP 1 HEAL |
+| AUTO-INN | When auto-grind can't go on (HP low with no heal, or no MP left for one): OFF (NES): it stops; ON: it goes to the nearest inn it can pay for and back | OFF | OFF | ON |
 
 
 ## Languages

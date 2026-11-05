@@ -3720,3 +3720,23 @@ msgstr "AUTO-HEAL"
 #: src/options_overlay.py
 msgid "KEEP 1 HEAL"
 msgstr "KEEP 1 HEAL"
+
+#: src/auto_grind.py
+msgid "Auto-grind: off to the inn"
+msgstr "Auto-grind: off to the inn"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: no inn to go to"
+msgstr "Auto-grind stopped: no inn to go to"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: lost the way"
+msgstr "Auto-grind stopped: lost the way"
+
+#: src/inn_trip.py
+msgid "Auto-grind: back to grinding"
+msgstr "Auto-grind: back to grinding"
+
+#: src/options_overlay.py
+msgid "AUTO-INN"
+msgstr "AUTO-INN"

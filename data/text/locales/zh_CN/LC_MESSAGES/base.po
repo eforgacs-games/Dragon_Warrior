@@ -3542,3 +3542,23 @@ msgstr "自动回复"
 #: src/options_overlay.py
 msgid "KEEP 1 HEAL"
 msgstr "留1次霍伊米"
+
+#: src/auto_grind.py
+msgid "Auto-grind: off to the inn"
+msgstr "自动升级: 前往旅馆"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: no inn to go to"
+msgstr "自动升级 停止: 没有能去的旅馆"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: lost the way"
+msgstr "自动升级 停止: 迷路了"
+
+#: src/inn_trip.py
+msgid "Auto-grind: back to grinding"
+msgstr "自动升级: 回到练级地点"
+
+#: src/options_overlay.py
+msgid "AUTO-INN"
+msgstr "自动旅馆"

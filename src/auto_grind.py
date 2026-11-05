@@ -22,14 +22,20 @@ the player would (``steer_heal``: SPELL in the battle's command window, or A the
 map, then the spell in the SPELL window), and checks again after the spell, until HP is out of danger. The spell and
 when to cast it are src/grind_safety.py choose_heal's.
 
+With AUTO-INN (AUTO_INN) on, when it can't go on on the map (HP low with no heal to cast, or with AUTO-HEAL on no MP
+left for a heal), it walks to the nearest inn it can pay for, stays the night and walks back (src/inn_trip.py), then
+paces again.
+
 It stops, with the menu button sound and a message saying why, and hands the game back on the screen it is at:
 - HP at or below the line, with no heal to cast (AUTO-HEAL off, no healing spell, MP too low or kept in reserve, or
-  in a fight no heal that surely gets HP out of danger);
+  in a fight no heal that surely gets HP out of danger) and no trip to an inn (AUTO-INN off, in a fight, or no inn it
+  can pay for and get to: NO_INN), or on the way to one where fights can start;
 - the hero asleep at the start of a turn, or STOPSPELL working on the hero (``stopspell_hit``);
 - a scripted fight, a guardian or the Dragonlord (``scripted_fight_starts``), before its first command;
 - a level up (``level_up``), before the promotion and the stat lines, which wait for the player; G goes on;
 - any key the player presses (G included) but the game speed keys 1 to 5 and the zoom keys (``real_key``);
-- the hero dying, or being somewhere he wasn't walking to (a map change), without a message for a death.
+- the hero dying, or being somewhere he wasn't walking to (a map change), without a message for a death;
+- an inn trip that loses its way (LOST: no way back, or TALK or STAIRS that keep doing nothing).
 """
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -46,7 +52,9 @@ from src.coordinates import Cell
 from src.windows import COMMAND_ROWS
 from src.encounters import ENEMY_GROUPS, encounter_group
 from src.enemy_lookup import enemy_string_lookup
-from src.grind_safety import choose_heal, heal_reserve, worst_enemy_damage, worst_group_damage
+from src.grind_route import RouteMaps
+from src.grind_safety import HERO_HEALS, choose_heal, heal_reserve, worst_enemy_damage, worst_group_damage
+from src.inn_trip import InnTrip, TripResult
 from src.guardians import guardian_at
 from src.movement import DIRECTION_KEYS
 from src.npc_movement import step
@@ -123,13 +131,16 @@ class StopReason(Enum):
     KEY = 'key'
     INTERRUPTED = 'interrupted'
     DEATH = 'death'
+    NO_INN = 'no inn'
+    LOST = 'lost'
 
 
 # The stops that hand a fight back to the player because it has turned dangerous (or special): auto-battle (F4, a
 # cheat) is turned off with them, or it would pick the last command again the moment auto-grind lets go, and the
 # COMMAND window wouldn't really be the player's
 SAFETY_STOPS = frozenset({StopReason.HP_LOW, StopReason.MP_LOW, StopReason.ASLEEP, StopReason.STOPSPELL,
-                          StopReason.SCRIPTED_FIGHT})
+                          StopReason.SCRIPTED_FIGHT, StopReason.NO_INN, StopReason.LOST})
+TRIP_STOPS = {TripResult.NO_INN: StopReason.NO_INN, TripResult.LOST: StopReason.LOST}
 
 
 class AutoGrind:
@@ -147,6 +158,11 @@ class AutoGrind:
         self.pending_message: str | None = None
         # The healing spell AUTO-HEAL is steering the windows to, until it is chosen in the SPELL window
         self.heal_spell: Spell | None = None
+        # AUTO-INN: the trip under way, the maps its routes have loaded (kept for the game), and whether a trip for MP
+        # found no inn since auto-grind started (it grinds on until HP is low, without looking again every fight)
+        self.trip: InnTrip | None = None
+        self.route_maps: RouteMaps | None = None
+        self.no_inn_for_mp = False
 
     @property
     def active(self) -> bool:
@@ -174,7 +190,8 @@ class AutoGrind:
     def enemies_here(self) -> set[str]:
         """The enemies that can fight the hero where he paces (or stands, before he starts): both tiles, as they can be
         in two zones of the overworld."""
-        cells = [cell for cell in (self.origin, self.partner) if cell is not None] if self.active else []
+        cells = [cell for cell in (self.origin, self.partner) if cell is not None] \
+            if self.active and self.trip is None else []
         identifier = self.game.current_map.identifier
         groups = {encounter_group(identifier, column, row) for row, column in cells or [self.hero_cell()]}
         return {name for group in groups if group is not None for name in ENEMY_GROUPS[group]
@@ -189,13 +206,28 @@ class AutoGrind:
         player = self.game.player
         if setting == AUTO_HEAL_OFF or (in_fight and player.is_stopspelled):
             return None
+        # KEEP 1 HEAL keeps its HEAL for the way to the inn: on the way, it's spent
+        keep_one = setting == AUTO_HEAL_KEEP_ONE and self.trip is None
         return choose_heal(player.spells, player.current_mp, player.current_hp, player.max_hp, self.hp_line(in_fight),
-                           heal_reserve(player.spells, setting == AUTO_HEAL_KEEP_ONE), in_fight)
+                           heal_reserve(player.spells, keep_one), in_fight)
+
+    def out_of_heals(self) -> bool:
+        """With AUTO-HEAL on: the hero has a healing spell, but not the MP for one (above the reserve)."""
+        setting = self.game.game_state.config.get('AUTO_HEAL', AUTO_HEAL_OFF)
+        player = self.game.player
+        known = [spell for spell in HERO_HEALS if spell in player.spells]
+        reserve = heal_reserve(player.spells, setting == AUTO_HEAL_KEEP_ONE)
+        return (setting != AUTO_HEAL_OFF and bool(known) and
+                all(player.current_mp - HERO_HEALS[spell][0] < reserve for spell in known))
 
     def heal_or_stop(self, in_fight: bool) -> None:
         """HP is low: heal (steer_heal), or stop. MP LOW when AUTO-HEAL is on and a heal would do with more MP."""
         self.heal_spell = self.heal_choice(in_fight)
         if self.heal_spell is not None:
+            return
+        if not in_fight and self.trip is None and self.start_trip():
+            return
+        if self.inn_lets_it_go_on(in_fight):
             return
         player = self.game.player
         mp_short = (self.game.game_state.config.get('AUTO_HEAL', AUTO_HEAL_OFF) != AUTO_HEAL_OFF and
@@ -203,6 +235,21 @@ class AutoGrind:
                     choose_heal(player.spells, player.max_mp, player.current_hp, player.max_hp,
                                 self.hp_line(in_fight), 0, in_fight) is not None)
         self.stop(StopReason.MP_LOW if mp_short else StopReason.HP_LOW)
+
+    def inn_lets_it_go_on(self, in_fight: bool) -> bool:
+        """With AUTO-INN on, HP low with no heal doesn't stop auto-grind while one enemy turn can't end it: in a fight
+        it fights on (the trip starts on the map after it), and on the way to the inn it walks on (in a town, always).
+        The worst hit is src/grind_safety.py's, whatever GRIND STOP says."""
+        if not self.game.game_state.config.get('AUTO_INN'):
+            return False
+        player = self.game.player
+        battle = self.game.cmd_menu.current_battle
+        if in_fight:
+            return battle is not None and player.current_hp > worst_enemy_damage(battle.enemy, player.defense_power,
+                                                                                  player.armor)
+        if self.trip is None:
+            return False
+        return player.current_hp > worst_group_damage(self.enemies_here(), player.defense_power, player.armor)
 
     def has_random_fights(self) -> bool:
         """Whether a step here can start a random fight (FieldEncounters.roll_for_fight): a map with an encounter
@@ -229,12 +276,15 @@ class AutoGrind:
         if not self.has_random_fights():
             self.show(_("Auto-grind: no fights here"))
             return False
-        heal = self.heal_choice(in_fight) if self.hp_low(in_fight) else None
-        if self.hp_low(in_fight) and heal is None:
-            self.show(_("Auto-grind: HP is already low"))
-            return False
+        hp_low = self.hp_low(in_fight)
+        heal = self.heal_choice(in_fight) if hp_low else None
         origin = self.hero_cell()
         partner = self.safe_partner(origin)
+        # With HP low and no heal, off to the inn at once, if AUTO-INN is on and there is one (on the map)
+        trip = self.new_trip(origin) if hp_low and heal is None and not in_fight and partner is not None else None
+        if hp_low and heal is None and trip is None:
+            self.show(_("Auto-grind: HP is already low"))
+            return False
         if partner is None:
             self.show(_("Auto-grind: no safe tile to walk to"))
             return False
@@ -243,10 +293,42 @@ class AutoGrind:
         self.last_stop = None
         self.pending_message = None
         self.heal_spell = heal
-        self.show(_("Auto-grind on\n(G or any key to stop)"))
+        self.trip = trip
+        self.no_inn_for_mp = False
+        self.show(_("Auto-grind on\n(G or any key to stop)") if trip is None else _("Auto-grind: off to the inn"))
         self.next_tap_frame = 0
         self.joypad.connect()
         return True
+
+    # AUTO-INN (src/inn_trip.py)
+
+    def new_trip(self, home: Cell) -> InnTrip | None:
+        """A trip to the nearest inn and back to home on this map, if AUTO-INN is on and there is a way to one."""
+        if not self.game.game_state.config.get('AUTO_INN'):
+            return None
+        if self.route_maps is None:
+            self.route_maps = RouteMaps(self.game)
+        trip = InnTrip(self, (self.game.current_map.identifier, home), self.route_maps)
+        return trip if trip.plan() else None
+
+    def start_trip(self) -> bool:
+        """Off to the inn from where auto-grind paces (heal_or_stop, after_fight). Returns whether the trip started."""
+        assert self.origin is not None
+        self.trip = self.new_trip(self.origin)
+        if self.trip is None:
+            return False
+        self.heal_spell = None
+        self.show(self.game._("Auto-grind: off to the inn"))
+        return True
+
+    def back_home(self) -> None:
+        """The trip is over, on the tile auto-grind started on: pace again, with the partner tile if nobody is on it."""
+        self.trip = None
+        assert self.origin is not None
+        if self.partner is None or not self.safe_tile(self.partner):
+            self.partner = self.safe_partner(self.origin)
+            if self.partner is None:
+                self.stop(StopReason.LOST)
 
     def start_in_fight(self) -> bool:
         """G at the battle's command window (BattleController.handle_battle_prompts): auto-grind takes over from this
@@ -264,6 +346,7 @@ class AutoGrind:
         self.joypad.disconnect()
         self.last_stop = reason
         self.heal_spell = None
+        self.trip = None
         if reason in SAFETY_STOPS:
             self.game.auto_battle = False
         if reason == StopReason.DEATH:
@@ -290,6 +373,10 @@ class AutoGrind:
                 return _("Auto-grind stopped: special fight")
             case StopReason.LEVEL_UP:
                 return _("Auto-grind stopped: level up\n(G to go on)")
+            case StopReason.NO_INN:
+                return _("Auto-grind stopped: no inn to go to")
+            case StopReason.LOST:
+                return _("Auto-grind stopped: lost the way")
         return _("Auto-grind stopped")
 
     def show(self, message: str) -> None:
@@ -337,6 +424,9 @@ class AutoGrind:
         self.heal_spell = None  # the fight's heal, if it never came to it: the map's line decides now
         if self.active and self.hp_low():
             self.heal_or_stop(in_fight=False)
+        elif self.active and self.trip is None and not self.no_inn_for_mp and self.out_of_heals():
+            # No MP left for a heal: to the inn while HP is still good, or grind on until it isn't
+            self.no_inn_for_mp = not self.start_trip()
 
     def after_step(self) -> None:
         if self.active and self.heal_spell is None and self.hp_low():
@@ -449,8 +539,9 @@ class AutoGrind:
 
     def walk(self, joypad: VirtualJoypad) -> None:
         """Hold the direction to the other tile of the two (or keep holding it while a step is under way). On the map
-        with HP low (a heal cast, or the COMMAND window closed after it), heal again or stop first."""
-        if self.game.current_map.identifier != self.map_identifier:
+        with HP low (a heal cast, or the COMMAND window closed after it), heal again or stop first. On an inn trip,
+        the trip drives (InnTrip.drive)."""
+        if self.trip is None and self.game.current_map.identifier != self.map_identifier:
             self.stop(StopReason.INTERRUPTED, show_now=False)
             return
         if self.heal_spell is None and not self.game.player.is_moving and not self.game.cmd_menu.menu.is_enabled() \
@@ -460,6 +551,13 @@ class AutoGrind:
                 return
         if self.heal_spell is not None:
             self.heal_on_the_map(joypad)
+            return
+        if self.trip is not None:
+            result = self.trip.drive(joypad)
+            if result == TripResult.HOME:
+                self.back_home()
+            elif result in TRIP_STOPS:
+                self.stop(TRIP_STOPS[result])
             return
         joypad.release_all(joypad.held - ALL_DIRECTION_KEYS)
         if self.game.player.is_moving:
@@ -477,9 +575,25 @@ class AutoGrind:
         if direction is None:
             self.stop(StopReason.INTERRUPTED, show_now=False)
             return
+        self.hold_direction(joypad, direction)
+
+    def hold_direction(self, joypad: VirtualJoypad, direction: int) -> None:
+        """Walk this way: hold its key, and let go of every other key."""
         walk_key = walk_key_for(direction)
-        joypad.release_all(ALL_DIRECTION_KEYS - {walk_key})
+        joypad.release_all(joypad.held - {walk_key})
         joypad.hold(walk_key)
+
+    @staticmethod
+    def direction_keys_held(joypad: VirtualJoypad) -> set[int]:
+        return set(ALL_DIRECTION_KEYS & joypad.held)
+
+    @staticmethod
+    def walk_key(direction: int) -> int:
+        return walk_key_for(direction)
+
+    @staticmethod
+    def a_key() -> int:
+        return a_key()
 
     def real_key(self, current_event: Event) -> bool:
         """The player pressed a key: the speed keys and the zoom keys go on to the game as usual; any other key (G too)

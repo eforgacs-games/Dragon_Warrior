@@ -67,6 +67,8 @@ base_config = {
     # AUTO-HEAL (not NES): at the GRIND STOP HP, auto-grind heals instead of stopping: "Off", "On" (with all the MP) or
     # "KeepOneHeal" (keeping the MP for one HEAL)
     "AUTO_HEAL": "Off",
+    # AUTO-INN (not NES): when auto-grind can't go on, it goes to the nearest inn and back (src/inn_trip.py)
+    "AUTO_INN": False,
     # MENU SPEED (not NES, #440): "Normal" keeps the selection windows (their cursor's blink and held button repeat) at
     # 1x whatever the game speed (keys 1 to 5); "FollowGameSpeed" speeds them up with the game (src/waiting.py)
     "MENU_SPEED": "Normal",
