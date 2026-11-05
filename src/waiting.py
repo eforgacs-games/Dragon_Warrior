@@ -139,8 +139,10 @@ _virtual_joypad: VirtualJoypadHook | None = None  # the connected virtual joypad
 
 
 class GamepadHook(Protocol):
-    """What this module needs of a gamepad (src/gamepad.py Gamepad)."""
-    held: set[int]
+    """What this module needs of a gamepad (src/gamepad.py Gamepad, or Gamepads for both players')."""
+
+    @property
+    def held(self) -> set[int]: ...
 
     def poll(self) -> None: ...
 

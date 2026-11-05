@@ -4045,3 +4045,35 @@ msgstr "{} takes {} point of damage!\n"
 #: src/hero_damage.py
 msgid "{}'s Hit Points decreased by {}.\n"
 msgstr "{} takes {} points of damage!\n"
+
+#: src/controls_screen.py
+msgid "P2 A"
+msgstr "P2 A"
+
+#: src/controls_screen.py
+msgid "P2 B"
+msgstr "P2 B"
+
+#: src/controls_screen.py
+msgid "P2 START"
+msgstr "P2 START"
+
+#: src/controls_screen.py
+msgid "P2 SELECT"
+msgstr "P2 SELECT"
+
+#: src/controls_screen.py
+msgid "P2 UP"
+msgstr "P2 UP"
+
+#: src/controls_screen.py
+msgid "P2 DOWN"
+msgstr "P2 DOWN"
+
+#: src/controls_screen.py
+msgid "P2 LEFT"
+msgstr "P2 LEFT"
+
+#: src/controls_screen.py
+msgid "P2 RIGHT"
+msgstr "P2 RIGHT"

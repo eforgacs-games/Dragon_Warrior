@@ -3664,3 +3664,35 @@ msgstr "{}은/는 {}포인트의 대미지를 입었다!\n"
 #: src/hero_damage.py
 msgid "{}'s Hit Points decreased by {}.\n"
 msgstr "{}은/는 {}포인트의 대미지를 입었다!\n"
+
+#: src/controls_screen.py
+msgid "P2 A"
+msgstr "P2 A 버튼"
+
+#: src/controls_screen.py
+msgid "P2 B"
+msgstr "P2 B 버튼"
+
+#: src/controls_screen.py
+msgid "P2 START"
+msgstr "P2 스타트"
+
+#: src/controls_screen.py
+msgid "P2 SELECT"
+msgstr "P2 셀렉트"
+
+#: src/controls_screen.py
+msgid "P2 UP"
+msgstr "P2 위"
+
+#: src/controls_screen.py
+msgid "P2 DOWN"
+msgstr "P2 아래"
+
+#: src/controls_screen.py
+msgid "P2 LEFT"
+msgstr "P2 왼쪽"
+
+#: src/controls_screen.py
+msgid "P2 RIGHT"
+msgstr "P2 오른쪽"

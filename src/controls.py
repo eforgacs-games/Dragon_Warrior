@@ -34,6 +34,7 @@ in ACTIONS keeps it).
 This module imports nothing from ``src``, so src/common.py and src/waiting.py can use it.
 """
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any, NamedTuple, Union, override
 
@@ -125,7 +126,20 @@ ACTIONS: tuple[Action, ...] = (
     _extra('TROPHIES', "TROPHIES", ('t',)),
     # The next game speed, back to 1x after 16x
     _extra('NEXT_SPEED', "NEXT SPEED", (), 'righttrigger'),
+    # Player 2's NES joypad (co-op, src/party.py), on the numpad: the second hero's turns in a fight read it
+    # (player_input). A second controller presses these (src/gamepad.py).
+    _extra('P2_A', "P2 A", ('KP0',), modifiers=False),
+    _extra('P2_B', "P2 B", ('KP_PERIOD',), modifiers=False),
+    _extra('P2_START', "P2 START", ('KP_PLUS',), modifiers=False),
+    _extra('P2_SELECT', "P2 SELECT", ('KP_MINUS',), modifiers=False),
+    _extra('P2_UP', "P2 UP", ('KP8',), modifiers=False),
+    _extra('P2_DOWN', "P2 DOWN", ('KP2',), modifiers=False),
+    _extra('P2_LEFT', "P2 LEFT", ('KP4',), modifiers=False),
+    _extra('P2_RIGHT', "P2 RIGHT", ('KP6',), modifiers=False),
 )
+# Player 2's action for each NES button (co-op): what a key set of NES buttons reads while player 2's input is in use
+PLAYER_TWO_ACTIONS = {name: f'P2_{name}' for name in ('A', 'B', 'START', 'SELECT', 'UP', 'DOWN', 'LEFT', 'RIGHT')}
+PLAYER_ONE, PLAYER_TWO = 1, 2
 ACTION_NAMES = tuple(action.name for action in ACTIONS)
 ACTIONS_BY_NAME: dict[str, Action] = {action.name: action for action in ACTIONS}
 # The game speed each speed action sets (src/waiting.py), and the action that steps to the next speed
@@ -515,6 +529,7 @@ class Controls:
 # The controls in use
 _controls = Controls.defaults()
 _version = 0  # counts the changes, so the key sets know when to look again
+_input_player = PLAYER_ONE  # whose joypad the key sets read (player_input)
 
 
 _listener: Callable[[Controls], None] | None = None  # told of every change the player makes (to save it)
@@ -567,6 +582,23 @@ def set_controls(controls: Controls) -> None:
 def controls_version() -> int:
     """Counts the changes to the controls in use, so what is worked out from them can be kept until they change."""
     return _version
+
+
+@contextmanager
+def player_input(player: int) -> Iterator[None]:
+    """For the length of the block, the key sets of the NES buttons (src/common.py A_BUTTON_KEYS ...) read
+    ``player``'s joypad: player 2's actions (PLAYER_TWO_ACTIONS) for player 2. Co-op's second hero's turns in a fight
+    run under it (src/battle_controller.py)."""
+    global _input_player
+    before, _input_player = _input_player, player
+    try:
+        yield
+    finally:
+        _input_player = before
+
+
+def input_player() -> int:
+    return _input_player
 
 
 def reset_controls() -> None:
@@ -623,17 +655,23 @@ class KeySet(Sequence[int]):
             raise ValueError(f"Unknown actions: {unknown}")
         self.names = names
         self.fixed = tuple(fixed)
-        self._cache_version = -1
+        self._cache_version: tuple[int, int] = (-1, PLAYER_ONE)
         self._cache: tuple[int, ...] = ()
 
     def keys(self) -> tuple[int, ...]:
-        if self._cache_version != _version:
+        """The keys bound now, for the player whose input is in use (player_input): player 2's NES buttons stand for
+        the NES buttons, and this game's own actions aren't player 2's."""
+        if self._cache_version != (_version, _input_player):
+            if _input_player == PLAYER_TWO:
+                names = [PLAYER_TWO_ACTIONS[name] for name in self.names if name in PLAYER_TWO_ACTIONS]
+            else:
+                names = list(self.names)
             keys: list[int] = []
-            for name in self.names:
+            for name in names:
                 keys += [key for key in action_keys(name) if key not in keys]
             keys += [key for key in self.fixed if key not in keys]
             self._cache = tuple(keys)
-            self._cache_version = _version
+            self._cache_version = (_version, _input_player)
         return self._cache
 
     @override
