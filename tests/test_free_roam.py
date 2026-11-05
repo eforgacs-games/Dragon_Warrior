@@ -231,3 +231,20 @@ class TestSavingWhileRoaming(FreeRoamTestCase):
     def test_no_rewind_snapshots_while_roaming(self):
         self.game.config['REWIND'] = True
         self.assertFalse(self.game.rewind.enabled)
+
+
+class TestFullscreen(FreeRoamTestCase):
+
+    def test_both_halves_again(self):
+        # F11 and every other change to the window make it again with set_screen (the dummy video driver can't make a
+        # fullscreen window, so the window is made again as it is)
+        width, height = self.game.screen.get_size()
+        self.game.screen = self.game.set_screen(height, width)
+        display_surface = pygame.display.get_surface()
+        width, height = self.game.screen.get_size()
+        self.assertEqual((width * 2, height), display_surface.get_size())
+        self.assertIs(display_surface, self.game.screen.get_parent())
+        with use_session(self.gwens):
+            self.assertIs(display_surface, self.game.screen.get_parent())
+            self.assertEqual((width, 0), self.game.screen.get_abs_offset())
+            self.assertIs(self.game.screen, self.game.cmd_menu.screen)

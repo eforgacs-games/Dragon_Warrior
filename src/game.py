@@ -315,7 +315,11 @@ class Game:
 
     def set_screen(self, win_height: int, win_width: int) -> Surface:
         """Open the window (or make it again) and return the game's screen. In the WIDE view (src/view.py) the window
-        is wider than win_width, and the screen is the NES-sized area in its middle."""
+        is wider than win_width, and the screen is the NES-sized area in its middle. While the heroes roam apart (free
+        roam co-op, src/sessions.py) it's two screens wide, whatever the view: each hero's session gets their half
+        again (with their windows and camera), and the session in use's is returned."""
+        if self.free_roam_active:
+            return self.split_screen(win_width, win_height)
         if view_name(self.game_state.config) == VIEW_NES:
             reset_view()
             return set_mode((win_width, win_height), self.flags)
@@ -474,6 +478,20 @@ class Game:
         self.free_roam_tasks = [RoamTask(self, self.main_session, PLAYER_ONE), RoamTask(self, session, PLAYER_TWO)]
         for task in self.free_roam_tasks:
             self.free_roam_scheduler.add(task)
+
+    def split_screen(self, width: int, height: int) -> Surface:
+        """The window two screens wide, the first hero's half on the left and the second's on the right: each session's
+        screen, and its COMMAND window's and camera's. Returns the session in use's."""
+        display_surface = set_mode((width * 2, height), self.flags)
+        reset_view()
+        for number, session in enumerate(self.sessions[:2]):
+            half = display_surface.subsurface((width * number, 0, width, height))
+            with use_session(session):
+                self.screen = half
+                for holder in ('cmd_menu', 'camera'):
+                    if hasattr(session, holder):
+                        getattr(self, holder).screen = half
+        return self.screen
 
     def stop_free_roam(self) -> None:
         """The heroes travel together again: the second hero back behind the first, one screen."""
