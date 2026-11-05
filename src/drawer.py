@@ -334,6 +334,11 @@ class Drawer:
         left_throne_room = game.story_flags.left_throne_room
         if events is None:
             events = game.events
+        # The party's second hero (src/follower.py), put on a new map before it's drawn
+        follower = getattr(game, 'follower', None)
+        if follower is not None:
+            follower.sync()
+        companion = follower.on_map() if follower is not None else None
 
         # In the WIDE view (src/view.py) the map is drawn across the whole display, and the screen is its middle
         view, view_x = full_screen(screen), screen_origin_x(screen)
@@ -409,8 +414,16 @@ class Drawer:
         # Every character is drawn onto the background each frame, on screen or not, so the tiles under every character
         # are redrawn each frame too, on screen or not. Otherwise a character off screen leaves its old frames on the
         # background, and they show up as a ghost once the camera scrolls over them (#98).
-        block_corners_to_draw = block_corners_under_rects([player_check_rect] + fixed_character_rects + all_roaming_rects,
-                                              tile_size)
+        companion_rects = []
+        if companion is not None:
+            # Under the second hero and where they were last frame, and the block types there
+            companion_rects.append(get_surrounding_rect(companion, tile_size))
+            tile_types_to_draw += replace_characters_with_underlying_tiles(
+                convert_numeric_tile_list_to_unique_tile_values(
+                    current_map, tile_values_under_rect(companion_rects[0], current_map.layout, tile_size)),
+                current_map.character_key)
+        block_corners_to_draw = block_corners_under_rects([player_check_rect] + fixed_character_rects + all_roaming_rects
+                                                          + companion_rects, tile_size)
         tile_types_set = set(tile_types_to_draw)
         cover_cells_to_draw = set()
         for tile, tile_dict in current_map.floor_tile_key.items():

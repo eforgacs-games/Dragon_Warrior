@@ -62,6 +62,7 @@ from src.sound import Sound
 from src.battle_controller import BattleController
 from src.ending import Ending
 from src.achievements import Achievements
+from src.follower import Follower
 from src.party import new_hero, party_of
 from src.play_stats import PlayClock, PlayStats, subscribe_play_stats
 from src.step_triggers import StepTriggers
@@ -212,6 +213,7 @@ class Game:
                              fighters_ring_attack_bonus=self.game_state.config['FIGHTERS_RING_ATTACK_BONUS'])
         # The party's second hero (src/party.py), with HEROES on 2; None for the NES's one
         self.companion: Player | None = None
+        self.follower = Follower(self)  # the second hero on the map, one step behind the first (src/follower.py)
         self.last_coordinates = None
         self.player.restore_hp()
         self.tile_size = self.game_state.config["TILE_SIZE"]
@@ -436,6 +438,7 @@ class Game:
             event.pump()
             return
         self.movement.handle_player_movement()
+        self.follower.frame()
         self.field_encounters.handle_battles()
         if not self.movement.hill_pause_frames:
             self.step_triggers.tick_repel_timer_after_step()
@@ -494,6 +497,7 @@ class Game:
                                                  self.player.rect.x // self.tile_size, self.player.direction_value,
                                                  offset=2)
         self.set_player_images_by_equipment()
+        self.follower.update_images()
         self.hero_damage.handle_environment_damage()
         self.hero_death.handle_death()
 

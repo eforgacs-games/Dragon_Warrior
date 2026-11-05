@@ -536,8 +536,9 @@ GAME_NOT_KEPT = {
     # Kept for whoever plays on this computer, not with an adventure (src/achievements.py): putting a state back
     # doesn't lock what was unlocked since
     'achievements',
-    # The party's second hero is kept in its own entry (src/party.py)
-    'companion',
+    # The party's second hero is kept in its own entry (src/party.py), and put back on the map under the first
+    # (src/follower.py)
+    'companion', 'follower',
 }
 # The MovementController attributes a snapshot deliberately doesn't keep
 MOVEMENT_NOT_KEPT = {
