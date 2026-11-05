@@ -188,13 +188,18 @@ class Follower:
             path = directories.ARMED_HERO_WITH_SHIELD_PATH if companion.shield else directories.ARMED_HERO_PATH
         else:
             path = directories.UNARMED_HERO_WITH_SHIELD_PATH if companion.shield else directories.UNARMED_HERO_PATH
-        key = path + ('/fallen' if companion.is_dead else '')
+        return self.sheet_for(path, companion.is_dead)
+
+    def sheet_for(self, path: str, fallen: bool) -> Any:
+        """A hero sprite sheet in the second hero's colors (grey if they've fallen): theirs as they follow, and as they
+        roam on their own (Game.set_player_images_by_equipment, src/sessions.py)."""
+        key = path + ('/fallen' if fallen else '')
         if key not in self._sheets:
             current_map = self.game.current_map
             sheet = current_map.graphics.get_image(path)
             sheet = scale(sheet, (sheet.get_width() * current_map.scale, sheet.get_height() * current_map.scale))
             sheet = parse_animated_sprite_sheet(recolored(sheet, COMPANION_COLORS), self.game.config)
-            self._sheets[key] = greyed(sheet) if companion.is_dead else sheet
+            self._sheets[key] = greyed(sheet) if fallen else sheet
         return self._sheets[key]
 
     def cells(self) -> list[Cell]:

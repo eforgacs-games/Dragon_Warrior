@@ -3916,3 +3916,15 @@ msgstr "やどやまで"
 #: src/options_overlay.py
 msgid "GET UP"
 msgstr "おきあがる"
+
+#: src/options_overlay.py
+msgid "CO-OP"
+msgstr "きょうりょく"
+
+#: src/options_overlay.py
+msgid "PARTY"
+msgstr "パーティ"
+
+#: src/options_overlay.py
+msgid "FREE ROAM"
+msgstr "べつこうどう"
