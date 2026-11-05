@@ -22,7 +22,7 @@ from src.play_stats import PlayStats
 from src.window_renderer import draw_window as generated_window
 from src.windows import BUY_SELL_LAYOUT, WindowLayout, shop_inventory_layout
 from src.menu_functions import draw_player_sprites, draw_character_sprites
-from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
+from src.shops import ShopInventories, FAIRY_WATER_COST, INN_COSTS, KEY_COSTS, buyback_price, \
     pay_player, sell_price
 from src.selection import run_selection, stop_at_edges
 from src.shop_preview import SHOP_PREVIEW_WINDOW, StatPreview, draw_shop_preview, stat_preview
@@ -66,11 +66,11 @@ class DialogLookup:
         self.goodbye_tempt_not_the_fates = _("Goodbye now, {}.\n'Take care and tempt not the Fates.")
 
         where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
-        brecconary_inn_cost = 6
-        kol_inn_cost = 20
-        garinham_inn_cost = 25
-        rimuldar_inn_cost = 55
-        cantlin_inn_cost = 100
+        brecconary_inn_cost = INN_COSTS['Brecconary']
+        kol_inn_cost = INN_COSTS['Kol']
+        garinham_inn_cost = INN_COSTS['Garinham']
+        rimuldar_inn_cost = INN_COSTS['Rimuldar']
+        cantlin_inn_cost = INN_COSTS['Cantlin']
 
         self.tools_intro = _("Welcome.\n"
                              "We deal in tools.\n"

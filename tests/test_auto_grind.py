@@ -11,6 +11,7 @@ import pygame
 from pygame import K_2, K_DOWN, K_F2, K_LCTRL, K_RIGHT, K_UP, K_g, K_j, K_k, KEYDOWN, KMOD_CTRL, KMOD_LCTRL
 from pygame.event import Event
 
+from data.text.dialog_lookup_table import DialogLookup
 from src.auto_grind import ALL_DIRECTION_KEYS, GRIND_STOP_DANGER, GRIND_STOP_HALF_HP, GRIND_STOP_RED_HP, \
     GRIND_STOP_THREE_QUARTERS_HP, UNSAFE_TILES, AutoGrind, StopReason, at_grind_stop_hp
 from src.battle import Battle
@@ -20,7 +21,9 @@ from src.controls import Binding, Controls, reset_controls, set_controls
 from src.direction import Direction
 from src.enemy_lookup import enemy_string_lookup
 from src.game_options import AUTO_HEAL_KEEP_ONE, AUTO_HEAL_OFF, AUTO_HEAL_ON
+from src.grind_route import Exit, Leg
 from src.grind_safety import worst_enemy_damage, worst_group_damage
+from src.inn_trip import ATTEMPTS, COMMAND_STAIRS, STUCK_FRAMES, TripResult
 from src.maps import map_lookup
 from src.maps_functions import get_center_point
 from src.spells import Spell
@@ -852,3 +855,195 @@ class TestHealSteering(GrindTestCase):
             cmd_menu.menu.selected = selected
             with self.subTest(selected=selected):
                 self.assertEqual(expected, self.grind.heal_key())
+
+
+class TestHeadlessInnTrip(HeadlessTestCase):
+    """AUTO-INN in the real game loop, near Tantegel: level 2, no spells, 100 gold. HP low on the map: to Brecconary,
+    a night at the inn, and back to the tile auto-grind started on."""
+    experience = 7  # level 2: 22 HP, no HEAL
+
+    def new_game(self, **overrides):
+        return super().new_game(AUTO_INN=True, AUTO_GRIND_STOP=GRIND_STOP_DANGER, **overrides)
+
+    def test_to_the_inn_and_back(self):
+        random.seed(2)
+        game, player, grind = self.game, self.player, self.grind
+        player.gold = 100
+        maps, nights = [], []
+        real_change_map, real_back_home = game.map_mgr.change_map, grind.back_home
+        real_sleep = DialogLookup.inn_sleep
+
+        def change_map(*args, **kwargs):
+            real_change_map(*args, **kwargs)
+            maps.append(game.current_map.identifier)
+
+        def inn_sleep(dialog_lookup, cost):
+            nights.append((cost, player.current_hp))
+            real_sleep(dialog_lookup, cost)
+
+        def back_home():
+            real_back_home()
+            raise Done
+
+        pygame.event.post(key(K_g))
+        with patch.object(game.map_mgr, 'change_map', side_effect=change_map), \
+                patch.object(DialogLookup, 'inn_sleep', autospec=True, side_effect=inn_sleep), \
+                patch.object(grind, 'back_home', side_effect=back_home):
+            with self.assertRaises(Done):
+                self.run_main_loop(20_000)
+        self.assertEqual(['Brecconary', 'Alefgard'], maps)
+        self.assertEqual(1, len(nights))
+        cost, hp_at_the_inn = nights[0]
+        self.assertEqual(6, cost)
+        self.assertLess(hp_at_the_inn, player.max_hp)
+        # back where it started, with full HP and MP and 6 gold less than it had at the inn (the fights pay on the way)
+        self.assertEqual(GRASS, grind.hero_cell())
+        self.assertEqual(player.max_hp, player.current_hp)
+        self.assertTrue(grind.active)
+        self.assertIsNone(grind.trip)
+        self.assertEqual((GRASS, (51, 44)), (grind.origin, grind.partner))
+
+
+class TestAutoInn(GrindTestCase):
+
+    def new_game(self, **overrides):
+        return super().new_game(AUTO_INN=True, **overrides)
+
+    def setUp(self):
+        super().setUp()
+        self.player.gold = 100
+
+    def test_hp_low_on_the_map_starts_a_trip(self):
+        self.start()
+        self.player.current_hp = 1
+        self.grind.after_step()
+        self.assertTrue(self.grind.active)
+        self.assertIsNotNone(self.grind.trip)
+        self.temporary_text.assert_called_with("Auto-grind: off to the inn")
+
+    def test_without_auto_inn_it_stops(self):
+        self.game.game_state.config['AUTO_INN'] = False
+        self.start()
+        self.player.current_hp = 1
+        self.grind.after_step()
+        self.assertFalse(self.grind.active)
+        self.assertEqual(StopReason.HP_LOW, self.grind.last_stop)
+
+    def test_no_inn_it_can_pay_for(self):
+        self.player.gold = 5
+        self.start()
+        self.player.current_hp = 1
+        self.grind.after_step()
+        self.assertFalse(self.grind.active)
+        self.assertEqual(StopReason.HP_LOW, self.grind.last_stop)
+
+    def test_starting_with_hp_low_goes_to_the_inn_first(self):
+        self.player.current_hp = 1
+        self.assertTrue(self.grind.start())
+        self.assertIsNotNone(self.grind.trip)
+        self.assertEqual((GRASS, (51, 44)), (self.grind.origin, self.grind.partner))
+
+    def test_out_of_mp_for_a_heal_goes_while_hp_is_good(self):
+        self.game.game_state.config['AUTO_HEAL'] = AUTO_HEAL_KEEP_ONE
+        self.player.spells = [Spell.HEAL]
+        self.player.current_mp = 7  # one HEAL kept for the way: none to spend
+        self.start()
+        self.grind.after_fight()
+        self.assertIsNotNone(self.grind.trip)
+        # on the way, the HEAL kept is spent
+        self.player.current_hp = 1
+        self.assertEqual(Spell.HEAL, self.grind.heal_choice(in_fight=False))
+
+    def test_out_of_mp_with_no_inn_grinds_on(self):
+        self.player.gold = 0
+        self.game.game_state.config['AUTO_HEAL'] = AUTO_HEAL_ON
+        self.player.spells = [Spell.HEAL]
+        self.player.current_mp = 3
+        self.start()
+        self.grind.after_fight()
+        self.assertTrue(self.grind.active)
+        self.assertIsNone(self.grind.trip)
+        self.assertTrue(self.grind.no_inn_for_mp)  # and it doesn't look again every fight
+
+    def test_in_a_fight_it_fights_on_while_the_enemy_cannot_kill(self):
+        self.start()
+        battle = MagicMock()
+        battle.enemy = enemy_string_lookup['Slime']()
+        self.game.cmd_menu.current_battle = battle
+        player = self.player
+        worst = worst_enemy_damage(battle.enemy, player.defense_power, player.armor)
+        with patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'):
+            player.current_hp = worst + 1
+            self.grind.heal_or_stop(in_fight=True)
+            self.assertTrue(self.grind.active)
+            player.current_hp = worst
+            self.grind.heal_or_stop(in_fight=True)
+        self.assertFalse(self.grind.active)
+        self.assertEqual(StopReason.HP_LOW, self.grind.last_stop)
+
+    def test_on_the_way_in_a_town_it_walks_on(self):
+        self.player.current_hp = 1
+        self.assertTrue(self.grind.start())
+        self.go_to('Brecconary', (23, 10))
+        self.grind.heal_or_stop(in_fight=False)
+        self.assertTrue(self.grind.active)
+
+
+class TestInnTripSteps(GrindTestCase):
+    """The trip's steps on their own (src/inn_trip.py): stairs, someone in the way, a command that does nothing."""
+
+    def new_game(self, **overrides):
+        return super().new_game(AUTO_INN=True, **overrides)
+
+    def setUp(self):
+        super().setUp()
+        self.player.gold = 100
+        self.player.current_hp = 1
+        self.assertTrue(self.grind.start())
+        self.trip = self.grind.trip
+        self.joypad = self.grind.joypad
+
+    def test_stairs_at_the_end_of_the_leg_are_taken_with_the_stairs_command(self):
+        cell = self.grind.hero_cell()
+        self.trip.leg = Leg([cell], exit=Exit.STAIRS)
+        self.trip.leg_map = self.game.current_map.identifier
+        self.assertEqual(TripResult.WALKING, self.trip.drive(self.joypad))
+        self.assertEqual(COMMAND_STAIRS, self.trip.command)
+        # down the stairs: the next map's leg is worked out afresh
+        self.trip.leg_map = 'ErdricksCaveB1'
+        self.assertEqual(TripResult.WALKING, self.trip.drive(self.joypad))
+        self.assertIsNone(self.trip.command)
+        self.assertIsNone(self.trip.leg)
+
+    def test_a_command_that_keeps_doing_nothing_loses_the_way(self):
+        self.trip.start_command(COMMAND_STAIRS)
+        results = []
+        for _ in range(ATTEMPTS + 1):
+            self.trip.command_chosen = True  # chosen in the COMMAND window, which has closed again, and nothing came of it
+            results.append(self.trip.drive(self.joypad))
+        self.assertEqual([TripResult.WALKING] * ATTEMPTS + [TripResult.LOST], results)
+
+    def test_someone_in_the_way_is_gone_round(self):
+        self.assertIsNotNone(self.trip.leg)
+        self.trip.drive(self.joypad)  # the first step: the hero is "still" from now
+        self.joypad.now += STUCK_FRAMES + 1
+        npc = MagicMock(row=50, column=45, step_destination=None)
+        with patch.object(self.game.current_map, 'roaming_characters', [npc]):
+            self.assertEqual(TripResult.WALKING, self.trip.drive(self.joypad))
+        self.assertEqual(1, self.trip.attempts)
+        self.assertEqual({(50, 45)}, self.trip.blocked)
+        self.assertNotIn((50, 45), self.trip.leg.cells)
+
+    def test_stuck_for_good_loses_the_way(self):
+        self.trip.attempts = ATTEMPTS
+        self.trip.drive(self.joypad)
+        self.joypad.now += STUCK_FRAMES + 1
+        self.assertEqual(TripResult.LOST, self.trip.drive(self.joypad))
+
+    def test_a_lost_trip_stops_auto_grind(self):
+        self.player.current_hp = self.player.max_hp  # no HP stop first
+        with patch.object(self.trip, 'drive', return_value=TripResult.LOST), \
+                patch.object(self.game.cmd_menu, 'show_line_in_dialog_box'):
+            self.grind.walk(self.joypad)
+        self.assertFalse(self.grind.active)
+        self.assertEqual(StopReason.LOST, self.grind.last_stop)

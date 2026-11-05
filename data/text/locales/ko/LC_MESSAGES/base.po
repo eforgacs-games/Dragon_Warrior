@@ -3339,3 +3339,23 @@ msgstr "자동 회복"
 #: src/options_overlay.py
 msgid "KEEP 1 HEAL"
 msgstr "호이미 1번 남김"
+
+#: src/auto_grind.py
+msgid "Auto-grind: off to the inn"
+msgstr "자동 사냥: 여관으로 간다"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: no inn to go to"
+msgstr "자동 사냥 멈춤: 갈 수 있는 여관이 없다"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: lost the way"
+msgstr "자동 사냥 멈춤: 길을 잃었다"
+
+#: src/inn_trip.py
+msgid "Auto-grind: back to grinding"
+msgstr "자동 사냥: 사냥터로 돌아간다"
+
+#: src/options_overlay.py
+msgid "AUTO-INN"
+msgstr "자동 여관"

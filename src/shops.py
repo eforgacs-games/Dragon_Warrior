@@ -8,6 +8,8 @@ from src.items import MAX_GOLD, armor, shields, tools, weapons
 KEY_COSTS = {'Cantlin': 98, 'Rimuldar': 53, 'TantegelCourtyard': 85}
 # NES FairyDialog: LDA #$26
 FAIRY_WATER_COST = 38
+# NES InnCostTbl (Bank00): a night at each town's inn
+INN_COSTS = {'Kol': 20, 'Brecconary': 6, 'Garinham': 25, 'Cantlin': 100, 'Rimuldar': 55}
 
 
 def pay_player(gold: int, amount: int) -> int:

@@ -3542,3 +3542,23 @@ msgstr "自動回復"
 #: src/options_overlay.py
 msgid "KEEP 1 HEAL"
 msgstr "ホイミ1回分 残す"
+
+#: src/auto_grind.py
+msgid "Auto-grind: off to the inn"
+msgstr "自動レベル上げ: 宿屋へ 向かう"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: no inn to go to"
+msgstr "自動レベル上げ 停止: 行ける 宿屋が ない"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: lost the way"
+msgstr "自動レベル上げ 停止: 道に 迷った"
+
+#: src/inn_trip.py
+msgid "Auto-grind: back to grinding"
+msgstr "自動レベル上げ: 狩り場へ 戻る"
+
+#: src/options_overlay.py
+msgid "AUTO-INN"
+msgstr "自動宿屋"
