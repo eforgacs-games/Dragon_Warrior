@@ -540,7 +540,11 @@ GAME_NOT_KEPT = {
     # (src/follower.py)
     'companion', 'follower', 'first_hero', 'fallen_sheets',
     # The hero sessions themselves (src/sessions.py): their attributes are the Game's, accounted for above
-    'main_session',
+    'main_session', 'sessions',
+    # Free roam's tasks (src/sessions.py RoamTask): not kept; a state is put back with the heroes together
+    'free_roam_scheduler', 'free_roam_tasks',
+    # Who carries Gwaelin while roaming apart: the story flag is kept; after a state, the first hero carries her
+    'gwaelin_carrier',
 }
 # The MovementController attributes a snapshot deliberately doesn't keep
 MOVEMENT_NOT_KEPT = {
@@ -558,7 +562,8 @@ class TestEverythingIsKept(SaveStateTestCase):
 
     def test_every_game_attribute_is_kept_or_left_out_on_purpose(self):
         # The game's own and its hero session's (src/sessions.py: the per-hero ones, kept on the session)
-        attributes = (set(vars(self.game)) | set(vars(self.game.main_session)) - {'name'}) - {'draw_temporary_text'}
+        session = set(vars(self.game.main_session)) - {'name', 'hero_key'}
+        attributes = (set(vars(self.game)) | session) - {'draw_temporary_text'}
         accounted_for = set(GAME_VALUES) | GAME_KEPT_IN_THEIR_OWN_ENTRIES | GAME_NOT_KEPT
         self.assertEqual(set(), attributes - accounted_for)
         self.assertEqual(set(), accounted_for - attributes, "listed above, but no longer in the Game")

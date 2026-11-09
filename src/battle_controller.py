@@ -11,11 +11,11 @@ from collections.abc import Callable
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from pygame import KEYDOWN, Surface, display, event, key, time
+from pygame import KEYDOWN, Surface, display, key, time
 
 from src.battle import Battle, calculate_enemy_attack_damage, enemy_dodges, enemy_flees, player_acts_first
 from src.color import LOW_HP_RED
-from src.controls import PLAYER_ONE, PLAYER_TWO, player_input, pressed
+from src.controls import PLAYER_ONE, input_player, player_input, pressed
 from src.common import A_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, reject_keys, singular_or_plural
 from src.menu import BATTLE_LINE
 from src.cursor import BlinkingCursor
@@ -29,7 +29,7 @@ from src.enemy_spells import enemy_spell_lookup
 from src.game_events import FightLost, FightWon, RanAway
 from src.guardians import escape_coordinates, record_victory
 from src.maps import map_lookup
-from src.party import acting, companion_of, heroes, in_party_mode, living, stays_down
+from src.party import acting, free_roaming, heroes, in_party_mode, input_for, living, stays_down
 from src.random_streams import hero_random
 from src.selection import frame_events, next_frame
 from src.sound import SPELL_SFX_FRAMES
@@ -37,7 +37,8 @@ from src.spells import Spell
 from src.translated_window import draw_translated_window
 from src.windows import COMBAT_COMMAND_LAYOUT, COMBAT_COMMAND_WINDOW
 from src.visual_effects import player_hit_shake
-from src.waiting import handle_speed_key, poll_virtual_joypad, scaled_ms, with_virtual_keys
+from src.tasks import current_task
+from src.waiting import handle_speed_key, poll_virtual_joypad, queued_key_presses, scaled_ms, wait, with_virtual_keys
 from src.zoom import handle_zoom_event
 
 from src.cursor import IN_A, IN_B, IN_DOWN, IN_LEFT, IN_RIGHT, IN_UP, SelectionButtons, first_button
@@ -285,7 +286,7 @@ class BattleController:
         while current_battle.enemy.hp > 0 and not run_away and not self.party_fallen():
             # Each hero's turn is played with them as game.player (src/party.py acting), on their player's joypad
             hero = self.hero_to_act()
-            with acting(self.game, hero), player_input(PLAYER_TWO if hero is companion_of(self.game) else PLAYER_ONE):
+            with acting(self.game, hero), player_input(input_for(self.game, hero)):
                 run_away = self.handle_battle_prompts(run_away, current_battle)
         if current_battle.enemy.hp <= 0:
             if current_battle.enemy.name == 'Dragonlord':
@@ -362,8 +363,9 @@ class BattleController:
         """The enemy's turn, against one of the heroes (enemy_target), ending the round: the next one starts from the
         first hero standing. A hero it brings to 0 HP has fallen. Returns True if the enemy ran away."""
         self.turn_hero = None
-        # The enemy's turn is on player 1's joypad, whoever acted last
-        with acting(self.game, self.enemy_target()), player_input(PLAYER_ONE):
+        # The enemy's turn is on player 1's joypad, whoever acted last (roaming apart, the fighting hero's player's)
+        with acting(self.game, self.enemy_target()), \
+                player_input(input_player() if free_roaming(self.game) else PLAYER_ONE):
             if self.enemy_move(current_battle):
                 return True
             if self.player.current_hp <= 0:
@@ -461,7 +463,10 @@ class BattleController:
                 self.drawn_command_window = drawn
             if self.auto_battle and not self.grinding:
                 selected_executed_option = self.last_battle_action
-                time.wait(scaled_ms(AUTO_BATTLE_DELAY_MS))
+                if current_task() is not None:
+                    wait(AUTO_BATTLE_DELAY_MS)  # in a hero's task (free roam): frames for the other hero meanwhile
+                else:
+                    time.wait(scaled_ms(AUTO_BATTLE_DELAY_MS))
             else:
                 next_frame()  # one pass of the fight loop per NES frame (src/selection.py)
                 tapped = 0  # keys pressed since the last call, which may have been let go already
@@ -555,7 +560,7 @@ class BattleController:
         self.battle_menu_row = 0
         self.battle_menu_column = 0
         poll_virtual_joypad()  # a key the player pressed stops auto-grind before the queue is dropped
-        for queued_event in event.get(KEYDOWN):
+        for queued_event in queued_key_presses():
             # the speed keys (1 to 5) and the zoom keys (src/zoom.py) still count; every other key is dropped
             handle_speed_key(queued_event) or handle_zoom_event(queued_event)
         self.command_buttons.open(held_joypad_buttons())

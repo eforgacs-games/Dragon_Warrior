@@ -1,7 +1,9 @@
 """Hero sessions: what the game holds for each hero playing on their own (free roam co-op, #438). Not NES.
 
 The game is one world (the maps' layouts, the story, the chests, the play statistics, the random numbers, the music)
-and, for each hero roaming on their own, a session: the hero, the map they're on and the one before, their camera,
+and, for each hero roaming on their own, a session: the hero's GameState (movement held or not, the light, the
+king's dialogs), their screen (their half of the window), their music player (the second hero's is silent: the music
+is the first hero's), the hero, the map they're on and the one before, their camera,
 their COMMAND window and dialogs (CommandMenu), their fights (BattleController), their steps and what the steps lead
 to (MovementController, StepTriggers, FieldEncounters, HeroDamage, HeroDeath), the map changes (MapManager), the
 drawing of their view (Drawer), and the step counters, the repel timer and the map keys' requests that go with them
@@ -12,29 +14,40 @@ write the session in use, so the game's code keeps reading them as it always has
 variable (``use_session``), so each hero's task (src/tasks.py) has its own: the code running in hero 2's task sees
 hero 2, their map and their windows. Without a session set, it's the game's first one (Game.main_session), which is
 the whole game as one hero plays it, so nothing changes for one hero or for a party.
+
+Two heroes on the same map share it (Game.map_shared_with: one DragonWarriorMap, the second hero among its characters
+under their session's hero_key): they see each other, block each other, and the map's NPCs move once a frame, in the
+first of their sessions (Game.moves_npcs).
 """
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any, override
 
+from src.controls import player_input
+from src.tasks import Task, next_task_frame
+
 # The Game attributes that are each hero's own (see the module docstring)
 SESSION_ATTRIBUTES = (
-    'player', 'current_map', 'last_map', 'camera', 'big_map', 'cmd_menu', 'battle_ctrl', 'movement', 'step_triggers',
-    'field_encounters', 'hero_damage', 'hero_death', 'map_mgr', 'drawer', 'hotkeys', 'events', 'foreground_rects',
-    'loop_count', 'frame_pacer', 'color', 'last_zone', 'last_amount_of_tiles_moved', 'tiles_moved_since_spawn',
-    'repel_timer', 'repel_tick_pending', 'magic_armor_steps', 'skip_next_encounter', 'step_roll', 'door_history',
-    'last_coordinates', 'paused', 'pause_requested', 'cmd_menu_requested', 'smart_a_pending', 'options_requested',
-    'dungeon_map_requested', 'message_log_requested', 'play_stats_requested', 'achievements_requested',
-    'player_two_menu_requested', 'auto_grind_requested', 'state_request', 'state_request_due',
+    'game_state', 'screen', 'music_player', 'player', 'current_map', 'last_map', 'camera', 'big_map', 'cmd_menu',
+    'battle_ctrl', 'movement', 'step_triggers', 'field_encounters', 'hero_damage', 'hero_death', 'map_mgr', 'drawer',
+    'hotkeys', 'events', 'foreground_rects', 'loop_count', 'frame_pacer', 'color', 'last_zone',
+    'last_amount_of_tiles_moved', 'tiles_moved_since_spawn', 'repel_timer', 'repel_tick_pending', 'magic_armor_steps',
+    'skip_next_encounter', 'step_roll', 'door_history', 'last_coordinates', 'paused', 'pause_requested',
+    'cmd_menu_requested', 'smart_a_pending', 'options_requested', 'dungeon_map_requested', 'message_log_requested',
+    'play_stats_requested', 'achievements_requested', 'player_two_menu_requested', 'auto_grind_requested',
+    'state_request', 'state_request_due',
 )
 
 
 class HeroSession:
     """One hero's share of the game (SESSION_ATTRIBUTES), set as the game makes them."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, hero_key: str = 'HERO') -> None:
         self.name = name
+        # The hero's key among a map's characters (DragonWarriorMap.characters): 'HERO' for the first hero, the
+        # second's own on a map they share (src/follower.py IDENTIFIER, which the party's second hero has too)
+        self.hero_key = hero_key
 
     @override
     def __repr__(self) -> str:
@@ -91,3 +104,24 @@ def add_session_attributes(cls: type) -> type:
         attribute.__set_name__(cls, name)
         setattr(cls, name, attribute)
     return cls
+
+
+class RoamTask(Task):
+    """A hero's play while the heroes roam apart (Game.start_free_roam): the map, a frame at a time, in the hero's
+    session and on their player's joypad, for as long as the session is the game's. ``idle`` while it's between two
+    map frames (not inside a fight, a dialog or a window), when free roam can stop."""
+
+    def __init__(self, game: Any, session: HeroSession, player: int) -> None:
+        super().__init__(session.name, self.roam)
+        self.game = game
+        self.session = session
+        self.player = player
+        self.idle = True
+
+    def roam(self) -> None:
+        with use_session(self.session), player_input(self.player):
+            while self.session in self.game.sessions:
+                self.idle = False
+                self.game.roam_frame(self.take_events())
+                self.idle = True
+                next_task_frame()

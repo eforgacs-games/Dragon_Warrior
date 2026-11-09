@@ -200,7 +200,7 @@ class TestLowHPWindowColor(TestCase):
             self.set_hp(hp)
             with patch('src.translated_window.draw_window') as draw_window, \
                     patch('src.battle_controller.display'), \
-                    patch('src.battle_controller.event.get', return_value=[]), \
+                    patch('src.battle_controller.queued_key_presses', return_value=[]), \
                     patch.dict(self.game.game_state.config, NO_BLIT=False):
                 battle_ctrl.handle_battle_prompts(False, MagicMock())
             # The border, the text and the cursor are all in the window color (see tests/test_generated_windows.py)

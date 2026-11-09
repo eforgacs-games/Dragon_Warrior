@@ -474,7 +474,7 @@ def _rebuild_map(game: 'Game', state: dict[str, Any], cut_to_black_first: bool) 
     next_map.load_map(game.player, (hero['row'], hero['column']), game.tile_size)
     # NPCs a dialog took off the map (DialogLookup.remove_npc) stay off it; the others keep their mobile slots
     kept = {values['identifier'] for values in (*state['roaming'], *state['fixed'])}
-    for identifier in [identifier for identifier in next_map.characters if identifier != 'HERO']:
+    for identifier in [identifier for identifier in next_map.characters if not identifier.startswith('HERO')]:
         if identifier not in kept:
             character = next_map.characters.pop(identifier)['character']
             for characters in (next_map.fixed_characters, next_map.roaming_characters):
