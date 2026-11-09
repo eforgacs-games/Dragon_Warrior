@@ -8,7 +8,8 @@ All notable changes to this project are written down here. The format follows
 ## [1.0.0] - Unreleased
 
 The first release: the whole of *Dragon Warrior*, from King Lorik's throne room to the Dragonlord and the ending,
-playable start to finish, with downloads for Windows, macOS and Linux.
+playable start to finish, alone as on the NES or with a friend as a co-op party, with downloads for Windows, macOS
+and Linux.
 
 ### NES accuracy
 
@@ -39,11 +40,25 @@ off on its own.
 - **Save states** (three slots), **rewind** (hold Backspace on the map) and an **autosave** when you enter a town or
   castle and every 3 minutes.
 - **Game speed** from 1x up to 16x (keys 1 to 5), with the menus kept at normal speed unless you choose otherwise.
-- **Auto-grind** (G): walk and fight until HP gets low or something needs you.
-- A **quest journal** (Q) with what to do next, and a mode that only shows what the hero has learned so far; a
-  **message log** (L) of the last 50 messages; a **dungeon map** (M) that fills in as you explore.
+- **Auto-grind** (G): walk and fight until HP gets low or something needs you. **AUTO-HEAL** casts HEAL or HEALMORE
+  instead of stopping, and **AUTO-INN** walks to the nearest inn, stays the night and walks back
+  ([#499](https://github.com/eforgacs-games/Dragon_Warrior/pull/499),
+  [#500](https://github.com/eforgacs-games/Dragon_Warrior/pull/500)).
+- A **quest journal** (Q) with what to do next, and a mode that only shows what the hero has learned so far. It keeps
+  Erdrick's tablet and King Lorik's charge to read again, and each hint names who told it
+  ([#501](https://github.com/eforgacs-games/Dragon_Warrior/pull/501)). A **message log** (L) of the last 50 messages;
+  a **dungeon map** (M) that fills in as you explore.
 - A **stats page** (P) for each adventure: play time, steps, fights won, fled and lost, deaths, gold earned and
   spent, chests opened and monsters defeated by type ([#488](https://github.com/eforgacs-games/Dragon_Warrior/pull/488)).
+- **Achievements** (T): 21 of them, for the story, challenges (such as the Dragonlord without dying, or at level 20 or
+  lower), every kind of monster and milestones, with a banner when one unlocks. They're kept for whoever plays on the
+  computer, across adventure logs, and nothing unlocks while a cheat is on
+  ([#505](https://github.com/eforgacs-games/Dragon_Warrior/pull/505)).
+- **RANDOMNESS**: NES (the default) makes every roll from the NES's own random number, which moves on every frame, so
+  when you press a button changes what happens, as on the NES. SEEDED gives the hero and the world separate seeded
+  generators, and `--seed` on the command line replays the same rolls
+  ([#503](https://github.com/eforgacs-games/Dragon_Warrior/pull/503),
+  [#504](https://github.com/eforgacs-games/Dragon_Warrior/pull/504)).
 - A **shop preview** of the attack or defense power a weapon or armor would give you, part of the presets (off with
   NES, on with MODERN).
 - Townspeople who step aside, stairs taken by stepping on them, QUICK ACTION and SMART A (talk, take, open a door or
@@ -52,6 +67,30 @@ off on its own.
 - Name entry where a full name waits on END so you can still change it.
 - Cheats (F4 auto-battle, F9 invulnerability) are off unless you switch them on in the options.
 - FAST is the default message speed.
+
+### Co-op and network play
+
+Not on the NES either: a new game is one hero unless you choose otherwise.
+
+- **A party of two heroes** (HEROES: 2): a second hero with their own name, stats, equipment, items and spells, saved
+  with the adventure log. Player 2 plays on the numpad or a second controller
+  ([#506](https://github.com/eforgacs-games/Dragon_Warrior/pull/506)–[#511](https://github.com/eforgacs-games/Dragon_Warrior/pull/511),
+  [#515](https://github.com/eforgacs-games/Dragon_Warrior/pull/515)).
+  - **PARTY** (the default CO-OP): the second hero follows one step behind. Both fight, each choosing their own
+    command, and the fight is lost only when both fall. Inns, shops, chests, STATUS, ITEM and SPELL all work for two,
+    and player 2 has the second hero's ITEM, SPELL and STATUS on the map.
+  - **FALLEN HEROES**: a hero who falls stays down until an inn (INN, the default), or gets back up with 1 HP after
+    the fight (GET UP) ([#516](https://github.com/eforgacs-games/Dragon_Warrior/pull/516)).
+  - **FREE ROAM** (CO-OP): each hero goes their own way in one shared world, on a split screen, each fighting and
+    talking on their own while the other plays on. Save states and the rewind are off while they're apart
+    ([#517](https://github.com/eforgacs-games/Dragon_Warrior/pull/517)–[#522](https://github.com/eforgacs-games/Dragon_Warrior/pull/522)).
+- **Network play**: `--host` on one computer and `--join <address>` on the other. Player 2 sees the host's game (in free
+  roam, only their own hero's half) and hears its music and sounds, played from their own copy of the game
+  ([#512](https://github.com/eforgacs-games/Dragon_Warrior/pull/512),
+  [#514](https://github.com/eforgacs-games/Dragon_Warrior/pull/514),
+  [#521](https://github.com/eforgacs-games/Dragon_Warrior/pull/521)).
+- Adventure logs with a second hero are save format 2. Logs from earlier versions load as one-hero logs, and an older
+  version never writes over a format 2 log.
 
 ### Music
 

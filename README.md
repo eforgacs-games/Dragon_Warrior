@@ -9,6 +9,9 @@ speed, a quest journal, a message log and a stats page. Each one has its NES beh
 or off on its own. A new game starts as the NES game and nothing else; choose the MODERN preset in the options to turn
 the recommended conveniences on at once.
 
+Two can play it too: a [co-op](#co-op) party of two heroes, on one computer or over a network, who travel and fight
+together or each go their own way on a split screen.
+
 It plays in English, Korean, Japanese, Traditional Chinese or Simplified Chinese, or in the English of the 2014
 remake.
 
@@ -132,7 +135,7 @@ arrows and A.
 ### Controller
 
 A controller works alongside the keyboard: plug it in before or while the game runs (with more than one, the first is
-used). Common pads (Xbox, PlayStation, Switch Pro, Steam Deck, 8BitDo and others) work without setup. The buttons go
+player 1's and the second player 2's, for [co-op](#co-op)). Common pads (Xbox, PlayStation, Switch Pro, Steam Deck, 8BitDo and others) work without setup. The buttons go
 by where they are on the pad, as on the NES and SNES, whatever they're labelled:
 
 | Controller | Does |
@@ -201,7 +204,7 @@ page; J, Esc, U or Tab close the window.
   set, so trying a preset doesn't lose it.
 
 Most settings belong to the adventure log and are saved with it the next time you save with the king. LANGUAGE,
-SCANLINES, SCALING, VIEW, DUNGEON MAP, CONFIRM NAME and your keys are yours instead: they're kept for every adventure,
+SCANLINES, SCALING, VIEW, DUNGEON MAP, CONFIRM NAME, HEROES and your keys are yours instead: they're kept for every adventure,
 in `settings.json`.
 
 A new game starts with the **Default** column, which is the NES preset: PRESET reads NES until you change something.
@@ -259,6 +262,10 @@ about it, in the townsperson's own words (or a short hint, for something you fou
 saved with the adventure log and in save states; an adventure log from an older version starts having heard nothing,
 but still lists what it has done and the items it holds.
 
+The journal also keeps the texts worth reading again: once you've read Erdrick's tablet, or heard King Lorik's charge
+(or left his throne room), Q opens a JOURNAL window with GOALS, ERDRICK'S TABLET and KING LORIK; A shows one. Each hint names who
+told it to you ("A wizard in Cantlin said:").
+
 ### CONTROLS
 
 With one of these OFF, its key does nothing, as on the NES.
@@ -286,20 +293,60 @@ With one of these OFF, its key does nothing, as on the NES.
 | AUTO-INN | When auto-grind can't go on (HP low with no heal, or no MP left for one): OFF (NES): it stops; ON: it goes to the nearest inn it can pay for and back | OFF | OFF | ON |
 | RANDOMNESS | NES: every roll comes from the NES's own random number, which moves on every frame as well as every roll, so when you press a button changes what happens, as on the NES; SEEDED: the hero's rolls and the world's (the townspeople's wandering) come from two separate generators, so the same play with the same `--seed` gets the same rolls. A seed keeps it on SEEDED (grayed out) | NES | NES | NES |
 | ACHIEVEMENTS | OFF (NES), or ON: achievements unlock as you play (story milestones, every monster, a low-level or deathless Dragonlord, and more), with a banner at the top of the map, and T lists them. They're kept for whoever plays on this computer, across every adventure log, in `achievements.json` next to the settings. Nothing unlocks while a cheat is on (CHEATS, `--dev`) | OFF | OFF | ON |
-| HEROES | How many heroes the next new quest starts with: 1 (NES), or 2, a co-op party (in progress: the second hero, in green, has stats, items and spells of their own, is saved with the adventure log and follows one step behind the first hero on the map. In a fight each hero standing chooses a command, then the enemy acts against one of them at random; a hero at 0 HP falls and sits the fight out; the fight is lost when both fall. Both heroes standing get the experience, the party the gold once. The second hero's turns are player 2's: the numpad (8, 2, 4 and 6 the D-pad, 0 A, . B, + START, - SELECT, all rebindable on the CONTROLS screen) or a second controller. Inns charge for each hero and both rest; at a shop the player first chooses who is shopping, and the gold is the party's; a chest's item goes to the first hero with room; STATUS shows each hero in turn; ITEM and SPELL on the map first ask which hero: the cost is theirs, HEAL and Herbs heal them, and what moves or helps the whole party, such as Wings, RETURN, OUTSIDE, REPEL or a Magic Key, works where the party stands). An adventure log keeps the party it started with | 1 | | |
+| HEROES | How many heroes the next new quest starts with: 1 (NES), or 2, a co-op party: BEGIN A NEW QUEST then asks for a second name (see [Co-op](#co-op)). An adventure log keeps the party it started with | 1 | | |
 | FALLEN HEROES | In co-op, what becomes of a hero who falls in a fight that's won or fled. INN: they stay down, grey on the map, until the party stays at an inn (they can't fight, use items or spells, or shop, and get no experience; if the first hero falls, they still lead). GET UP: they get back up with 1 HP after the fight | INN | | |
-| CO-OP | How the two heroes of a co-op party play: PARTY, together, the second one step behind the first; or FREE ROAM (in progress), each going their own way on their own half of a window twice as wide, player 1 on the usual keys and player 2 on theirs (the numpad or the second controller): one world, so they meet on the same map, and each fights alone while the other plays on. The music is the first hero's. In network play, player 2's window shows the second hero's half and plays their sounds. Save states and the rewind are off while the heroes roam apart | PARTY | | |
+| CO-OP | How a co-op party plays: PARTY, together, the second hero one step behind the first; or FREE ROAM, each going their own way on their own half of a window twice as wide (see [Co-op](#co-op)) | PARTY | | |
 
 
-## Network play
+## Co-op
 
-Player 2 can play the co-op party from another computer. The host plays as usual, started with `--host` (it listens
-on port 52528; `--host 6000` for another). Player 2 starts the game with `--join` and the host's address
-(`--join 192.168.0.5`, or `--join 192.168.0.5:6000`): their window shows the host's game, and their own keys and
-controller are player 2's joypad, so they choose the second hero's commands in a fight, and their A opens the second
-hero's ITEM, SPELL and STATUS on the map. There is one game, the host's; player 2's window plays its music and sounds
-from player 2's own copy of the game (the NES and SFC soundtracks need libgme there too). Play on a local network or
-over a VPN such as Tailscale rather than opening the port to the internet: whoever connects is player 2.
+Not on the NES: two players can share a quest as a party of two heroes, on one computer or over a network. A new game
+is one hero, as on the NES.
+
+**Starting a party.** Set **HEROES** to 2 in the options (OTHER page) before you choose BEGIN A NEW QUEST: after the
+first hero's name, the game asks for the second's. The second hero, drawn in green, has their own stats (from their
+own name, as on the NES), HP, MP, equipment, items and spells; the gold is the party's. Both are saved in the
+adventure log, and a log keeps the party it started with whatever HEROES says later.
+
+**Player 2's controls.** Player 2 plays on the numpad (8, 2, 4 and 6 the D-pad, 0 A, . B, + START, - SELECT, all
+rebindable on the CONTROLS screen) or on a second controller.
+
+**CO-OP: PARTY** (the default). The heroes travel together, the second one step behind the first, who leads.
+- In a fight, each hero standing chooses their command, the second on player 2's joypad. Then the enemy acts against
+  one of them at random. A hero at 0 HP falls and sits the fight out; the fight is lost only when both fall, and then
+  both wake at King Lorik's. Both heroes standing at the end get the full experience; the party gets the gold once.
+- On the map, player 2's A opens the second hero's own ITEM, SPELL and STATUS. Player 1's ITEM and SPELL first ask
+  which hero: the cost is theirs, HEAL and Herbs heal them, and what moves or helps the whole party (Wings, RETURN,
+  OUTSIDE, REPEL, a Magic Key) works where the party stands.
+- Inns charge for each hero and both rest. At a shop you first choose who is shopping. A chest's item goes to the
+  first hero with room. STATUS shows each hero in turn.
+- **FALLEN HEROES** decides what becomes of a hero who falls in a fight the party wins or flees. INN (the default,
+  the later Dragon Quests' rule): they stay down, grey on the map, until the party stays at an inn; they can't fight,
+  use items or spells, or shop, and get no experience. GET UP: they get back up with 1 HP after the fight.
+
+**CO-OP: FREE ROAM.** Each hero goes their own way, on their own half of a window twice as wide: player 1 on the usual
+keys, player 2 on theirs. It's one world, so whatever one hero does (a chest, a door, Gwaelin) is done for both, and
+they meet on the same map, where they block each other like townspeople. Each fights, talks and shops alone while the
+other plays on, and the gold is still shared. The music is the first hero's. Whoever saves with King Lorik, the
+adventure log is saved as a party, with the first hero as its hero; loading it starts free roam again. Save states
+and the rewind are off while the heroes roam apart (the autosave still works). Switching CO-OP back to PARTY brings
+the heroes together again.
+
+### Network play
+
+Player 2 can join from another computer. The host plays as usual, started with `--host` (it listens on port 52528;
+`--host 6000` for another). Player 2 starts the game with `--join` and the host's address (`--join 192.168.0.5`, or
+`--join 192.168.0.5:6000`): their window shows the host's game, and their own keys and controller are player 2's
+joypad. In FREE ROAM, player 2's window shows only the second hero's half and plays only their sounds and music.
+There is one game, the host's; player 2's window plays its music and sounds from player 2's own copy of the game (the
+NES and SFC soundtracks need libgme there too), so both players need the same version of the game.
+
+From a download, start the game from a terminal with the option after it: `DragonWarrior\DragonWarrior.exe --host`
+on Windows, `DragonWarrior/DragonWarrior --join 192.168.0.5` on Linux, or
+`"Dragon Warrior.app/Contents/MacOS/DragonWarrior" --host` on macOS.
+
+Play on a local network, or over a VPN such as Tailscale, rather than opening the port to the internet: whoever
+connects is player 2.
 
 ## Languages
 
@@ -346,4 +393,4 @@ Thanks to:
 Bug reports and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to set up the project, run
 the tests and checks, start from a playtest checkpoint with the debug keys, and make a release.
 [PLAYTEST.md](PLAYTEST.md) is a checklist for a pass through the whole game in about 40 minutes, and
-[docs/multiplayer.md](docs/multiplayer.md) is the design for online co-op (not built yet).
+[docs/multiplayer.md](docs/multiplayer.md) explains how co-op and network play are built, and ideas for later.

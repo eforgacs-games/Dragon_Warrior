@@ -1,8 +1,50 @@
 # Multiplayer design
 
-A design for online co-op, written before any code. Part of
-[#438](https://github.com/eforgacs-games/Dragon_Warrior/issues/438), which also asks about achievements; those
-are out of scope here (see #438).
+Co-op as version 1.0 builds it comes first: [What 1.0 has](#what-10-has). After it is the first design for online
+co-op, written before any code and part of [#438](https://github.com/eforgacs-games/Dragon_Warrior/issues/438):
+separate games that see each other ("overlapping worlds"). 1.0 took a simpler road, so that design isn't built. It's
+kept for a later online mode, and most of its [more ideas](#10-more-ideas) still apply. Achievements, also asked for
+in #438, are in 1.0 too (`src/achievements.py`) but aren't covered here.
+
+## What 1.0 has
+
+The player's side is in the README's [Co-op](../README.md#co-op) section. In short: a party of two heroes in **one
+game**, on one computer or with player 2 on another, who either travel together (CO-OP: PARTY) or each go their own way
+in the same world on a split screen (CO-OP: FREE ROAM).
+
+How it differs from the design below:
+
+| | The design below | 1.0 |
+| --- | --- | --- |
+| The world | Each player's own game and save; others are ghosts | One game and one adventure log, both heroes in it |
+| Networking | A self-hosted server; each player runs their own game | The host runs the only game, streams its screen and sound to player 2, and gets player 2's buttons back |
+| Joining a fight | Nearby players get a short window to join | In PARTY, both heroes are in every fight; in FREE ROAM, each fights alone |
+| A round | Commands chosen, then all act in agility order, with a turn timer | The first hero acts, then the second, then the enemy against one of them at random; no timer |
+| Rewards | Full EXP and gold for each, enemy HP scaled up | Each hero still standing gets the full EXP, the party the gold once, enemy HP as on the NES |
+| A fallen hero (open question 7) | | Gets no EXP, and stays down until an inn (FALLEN HEROES: INN) or gets up with 1 HP after the fight (GET UP) |
+| Versus (open question 11) | | Not built |
+| Determinism | The server makes the random rolls | Not needed, since there's one game; RANDOMNESS keeps working as in one-player play |
+
+Where the code is:
+
+- `src/party.py`: the second hero (`game.companion`, saved with the adventure log as `Companion`, save format 2),
+  their turns in a fight (`party.acting`), fallen heroes, and the party's inns, shops and chests.
+- `src/follower.py`: the second hero one step behind on the map, in PARTY.
+- `src/controls.py`, `src/gamepad.py`: player 2's joypad, the `P2_` actions on the numpad or a second controller.
+- `src/player_two_menu.py`: player 2's A on the map, the second hero's ITEM, SPELL and STATUS.
+- `src/tasks.py`, `src/sessions.py`: FREE ROAM. Each hero's play is a greenlet task, run a frame at a time by the main
+  loop; each hero has a session (`SESSION_ATTRIBUTES`: their hero, map, windows, screen half and so on) that
+  `game.player`, `game.current_map` and the rest read. Two heroes on one map share one `DragonWarriorMap`, whose NPCs
+  move once a frame.
+- `src/netplay.py`: network play (`--host`, `--join`). The host wraps `display.flip`/`update` and sends the screen,
+  only when it changed, zlib-compressed, at most 60 times a second, along with the sound and music events
+  (`sound.audio_event`). The client sends NES button presses, which the host's `RemoteJoypad` presses as player 2's.
+  In FREE ROAM, player 2 gets only the second hero's half and sounds.
+
+In FREE ROAM, save states and the rewind are off, since they can only hold one hero's play; saving with King Lorik
+and the autosave keep the adventure as a party, with the first hero as the log's hero.
+
+# The first design: overlapping worlds (not built)
 
 Contents:
 
@@ -20,7 +62,7 @@ Contents:
 
 ## 1. Summary
 
-These points are decided:
+These points were decided for it:
 
 - **Overlapping worlds, not a shared world.** Every player keeps their own save and their own story: their own
   Gwaelin, chests, doors, story flags and Dragonlord. Two things are shared: **presence** (players on the same map
