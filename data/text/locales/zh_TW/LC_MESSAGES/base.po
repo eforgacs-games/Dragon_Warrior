@@ -107,41 +107,41 @@ msgstr ""
 "有什麼需要嗎？"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Descendant of Erdrick, listen now to my words."
 msgstr "繼承了勇者洛特之血的人啊！我正在等你。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
 msgstr "很久以前，傳說中的勇者洛特被神賜予了光之石，將世界上肆虐的魔物們都給封印了起來。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
 msgstr "但是不知從何處而來的惡魔的化身——龍王卻將光之石封在了黑暗之中！"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Now, {}, thou must help us recover the Ball of Light and restore peace to our land."
 msgstr "勇者{}！去打倒龍王，把光之石取回來吧！"
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "The Dragonlord must be defeated."
 msgstr "必須打倒龍王。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."
 msgstr "我給你準備了一些東西！去打開那邊的寶箱吧。都是一些應該能幫得上你的東西。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then speak with the guards, for they have much knowledge that may aid thee."
 msgstr "還有，這個房間裏的人們會告訴你一些旅行心得。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "May the light shine upon thee, {}."
 msgstr "那就再見了！勇者{}！"
 
@@ -881,39 +881,39 @@ msgid "Tablet"
 msgstr "石板"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "The tablet reads as follows:"
 msgstr "石板上寫著這樣的內容。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "I am Erdrick and thou art my descendant."
 msgstr ""
 "我的名字是洛特。\n"
 "繼承了我的血脈的人啊。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
 msgstr "如果想要登上拉達托姆南方的魔島，需要3件東西。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
 msgstr "我集齊了這3樣東西登上了魔島，並打倒了魔王。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Now I have entrusted the three items to three worthy keepers."
 msgstr "然後，我將這3樣神秘的東西託付給了3位賢者。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
 msgstr "他們的子孫應該會守護著這些東西，直到你前去尋找。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "When a new evil arises, find the three items, then fight!"
 msgstr "如果魔島上的邪惡再次復蘇，就找齊這些東西去戰鬥吧！"
 
@@ -3036,6 +3036,7 @@ msgstr "找到龍王城裏隱藏的下行通道。"
 msgid "Search behind the Dragonlord's throne."
 msgstr "調查龍王王座的後面。"
 
+#: src/achievements.py
 #: src/quest_journal.py
 msgid "Defeat the Dragonlord."
 msgstr "打倒龍王。"
@@ -3386,6 +3387,7 @@ msgid "{} (hold): Rewind"
 msgstr "{} (按住): 倒帶"
 
 #: src/controls_screen.py
+#: src/records.py
 msgid "JOURNAL"
 msgstr "旅行筆記"
 
@@ -3419,6 +3421,7 @@ msgid "NO MESSAGES YET"
 msgstr "還沒有對話"
 
 #: src/message_log.py
+#: src/records.py
 msgid "KING LORIK"
 msgstr "國王"
 
@@ -3450,6 +3453,7 @@ msgstr "女子"
 msgid "WISE MAN"
 msgstr "賢者"
 
+#: src/achievements.py
 #: src/message_log.py
 msgid "DRAGONLORD"
 msgstr "龍王"
@@ -3522,3 +3526,405 @@ msgstr "打開的寶箱"
 #: src/stats_screen.py
 msgid "MONSTERS DEFEATED"
 msgstr "打倒的魔物"
+
+#: src/auto_grind.py
+msgid "Auto-grind: not in this fight"
+msgstr "自動升級: 這場戰鬥不能用"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: MP too low to heal"
+msgstr "自動升級 停止: MP不夠回復"
+
+#: src/options_overlay.py
+msgid "DANGER"
+msgstr "危險"
+
+#: src/options_overlay.py
+msgid "AUTO-HEAL"
+msgstr "自動回復"
+
+#: src/options_overlay.py
+msgid "KEEP 1 HEAL"
+msgstr "留1次霍伊米"
+
+#: src/auto_grind.py
+msgid "Auto-grind: off to the inn"
+msgstr "自動升級: 前往旅館"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: no inn to go to"
+msgstr "自動升級 停止: 沒有能去的旅館"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: lost the way"
+msgstr "自動升級 停止: 迷路了"
+
+#: src/inn_trip.py
+msgid "Auto-grind: back to grinding"
+msgstr "自動升級: 回到練級地點"
+
+#: src/options_overlay.py
+msgid "AUTO-INN"
+msgstr "自動旅館"
+
+#: src/quest_journal.py
+msgid "{} said:"
+msgstr "{}說："
+
+#: src/quest_journal.py
+msgid "{} in {}"
+msgstr "{1}的{0}"
+
+#: src/quest_journal.py
+msgid "An old man"
+msgstr "老人"
+
+#: src/quest_journal.py
+msgid "King Lorik"
+msgstr "拉魯斯十六世"
+
+#: src/quest_journal.py
+msgid "A guard"
+msgstr "士兵"
+
+#: src/quest_journal.py
+msgid "A soldier"
+msgstr "戰士"
+
+#: src/quest_journal.py
+msgid "A wizard"
+msgstr "魔法師"
+
+#: src/quest_journal.py
+msgid "A merchant"
+msgstr "商人"
+
+#: src/quest_journal.py
+msgid "A man"
+msgstr "男子"
+
+#: src/quest_journal.py
+msgid "A woman"
+msgstr "女子"
+
+#: src/quest_journal.py
+msgid "Tantegel Castle"
+msgstr "拉達托姆城"
+
+#: src/quest_journal.py
+msgid "Brecconary"
+msgstr "拉達托姆鎮"
+
+#: src/quest_journal.py
+msgid "Garinham"
+msgstr "加雷鎮"
+
+#: src/quest_journal.py
+msgid "Kol"
+msgstr "麥拉村"
+
+#: src/quest_journal.py
+msgid "Rimuldar"
+msgstr "利姆爾達鎮"
+
+#: src/quest_journal.py
+msgid "Cantlin"
+msgstr "麥爾基德"
+
+#: src/quest_journal.py
+msgid "a shrine"
+msgstr "祠堂"
+
+#: src/records.py
+msgid "GOALS"
+msgstr "目標"
+
+#: src/records.py
+msgid "ERDRICK'S TABLET"
+msgstr "洛特的石板"
+
+#: src/options_overlay.py
+msgid "RANDOMNESS"
+msgstr "亂數"
+
+#: src/options_overlay.py
+msgid "SEEDED"
+msgstr "固定種子"
+
+#: src/achievements.py
+#: src/options_overlay.py
+msgid "ACHIEVEMENTS"
+msgstr "成就"
+
+#: src/controls_screen.py
+msgid "TROPHIES"
+msgstr "成就"
+
+#: src/achievements.py
+msgid "ACHIEVEMENT"
+msgstr "達成成就"
+
+#: src/achievements.py
+msgid "UNLOCKED"
+msgstr "已達成"
+
+#: src/achievements.py
+msgid "FIRST VICTORY"
+msgstr "初次勝利"
+
+#: src/achievements.py
+msgid "Win a fight."
+msgstr "贏得一場戰鬥。"
+
+#: src/achievements.py
+msgid "STONE GUARDIAN"
+msgstr "石之守衛"
+
+#: src/achievements.py
+msgid "Defeat the Golem."
+msgstr "打倒巨像兵。"
+
+#: src/achievements.py
+msgid "DRAGON'S LAIR"
+msgstr "龍之洞窟"
+
+#: src/achievements.py
+msgid "Defeat the Green Dragon."
+msgstr "打倒守護公主的龍。"
+
+#: src/achievements.py
+msgid "HOMECOMING"
+msgstr "凱旋"
+
+#: src/achievements.py
+msgid "Bring Princess Gwaelin home."
+msgstr "將蘿拉公主帶回城堡。"
+
+#: src/achievements.py
+msgid "CURSED"
+msgstr "詛咒"
+
+#: src/achievements.py
+msgid "Find the Death Necklace."
+msgstr "找到死之項鏈。"
+
+#: src/achievements.py
+msgid "RAINBOW BRIDGE"
+msgstr "彩虹橋"
+
+#: src/achievements.py
+msgid "Make the Rainbow Bridge."
+msgstr "架起彩虹橋。"
+
+#: src/achievements.py
+msgid "ERDRICK'S HEIR"
+msgstr "洛特的後裔"
+
+#: src/achievements.py
+msgid "Wear Erdrick's Armor and wield Erdrick's Sword."
+msgstr "穿上洛特之鎧，手持洛特之劍。"
+
+#: src/achievements.py
+msgid "UNDYING"
+msgstr "不死之身"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord without dying."
+msgstr "一次都不死地打倒龍王。"
+
+#: src/achievements.py
+msgid "UNDERDOG"
+msgstr "以下剋上"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord at level 20 or lower."
+msgstr "在20級以下打倒龍王。"
+
+#: src/achievements.py
+msgid "SWIFT"
+msgstr "疾風"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord in under two hours of play."
+msgstr "在遊戲時間2小時內打倒龍王。"
+
+#: src/achievements.py
+msgid "MONSTER HUNTER"
+msgstr "魔物獵人"
+
+#: src/achievements.py
+msgid "Defeat every kind of monster."
+msgstr "打倒所有種類的魔物。"
+
+#: src/achievements.py
+msgid "QUICKSILVER"
+msgstr "水銀"
+
+#: src/achievements.py
+msgid "Defeat a Metal Slime."
+msgstr "打倒金屬史萊姆。"
+
+#: src/achievements.py
+msgid "LEVEL 10"
+msgstr "10級"
+
+#: src/achievements.py
+msgid "Reach level 10."
+msgstr "達到10級。"
+
+#: src/achievements.py
+msgid "LEVEL 20"
+msgstr "20級"
+
+#: src/achievements.py
+msgid "Reach level 20."
+msgstr "達到20級。"
+
+#: src/achievements.py
+msgid "LEVEL 30"
+msgstr "30級"
+
+#: src/achievements.py
+msgid "Reach the highest level."
+msgstr "達到最高等級。"
+
+#: src/achievements.py
+msgid "CENTURION"
+msgstr "百戰老兵"
+
+#: src/achievements.py
+msgid "Win 100 fights."
+msgstr "贏得100場戰鬥。"
+
+#: src/achievements.py
+msgid "DISCRETION"
+msgstr "三十六計"
+
+#: src/achievements.py
+msgid "Run away from 50 fights."
+msgstr "從戰鬥中逃跑50次。"
+
+#: src/achievements.py
+msgid "WANDERER"
+msgstr "流浪者"
+
+#: src/achievements.py
+msgid "Take 10000 steps."
+msgstr "走10000步。"
+
+#: src/achievements.py
+msgid "RICHES"
+msgstr "大富翁"
+
+#: src/achievements.py
+msgid "Carry 65535 gold."
+msgstr "持有65535金幣。"
+
+#: src/achievements.py
+msgid "THOU ART DEAD"
+msgstr "你死了"
+
+#: src/achievements.py
+msgid "Die for the first time."
+msgstr "第一次死亡。"
+
+#: src/title_menu.py
+msgid "Now the second hero's name.\n"
+msgstr "接下來決定第二位勇者的名字。\n"
+
+#: src/options_overlay.py
+msgid "HEROES"
+msgstr "勇者"
+
+#: src/options_overlay.py
+msgid "1 (NES)"
+msgstr "1 (NES)"
+
+#: src/options_overlay.py
+msgid "2"
+msgstr "2"
+
+#: src/battle_controller.py
+msgid "Command for {}?\n"
+msgstr "{}要做什麼？\n"
+
+#: src/battle_controller.py
+msgid "{} is still asleep.\n"
+msgstr "{}還在睡覺……\n"
+
+#: src/battle_controller.py
+msgid "{} is asleep.\n"
+msgstr "{}睡著了！\n"
+
+#: data/text/dialog_lookup_table.py
+#: src/battle_controller.py
+msgid "{} hath fallen.\n"
+msgstr "{}倒下了！\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Point decreased by {}.\n"
+msgstr "{}受到了{}點傷害！\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Points decreased by {}.\n"
+msgstr "{}受到了{}點傷害！\n"
+
+#: src/controls_screen.py
+msgid "P2 A"
+msgstr "P2 A按鈕"
+
+#: src/controls_screen.py
+msgid "P2 B"
+msgstr "P2 B按鈕"
+
+#: src/controls_screen.py
+msgid "P2 START"
+msgstr "P2 開始"
+
+#: src/controls_screen.py
+msgid "P2 SELECT"
+msgstr "P2 選擇"
+
+#: src/controls_screen.py
+msgid "P2 UP"
+msgstr "P2 上"
+
+#: src/controls_screen.py
+msgid "P2 DOWN"
+msgstr "P2 下"
+
+#: src/controls_screen.py
+msgid "P2 LEFT"
+msgstr "P2 左"
+
+#: src/controls_screen.py
+msgid "P2 RIGHT"
+msgstr "P2 右"
+
+#: data/text/dialog_lookup_table.py
+msgid "Who will it be?"
+msgstr "要讓誰來？"
+
+#: src/options_overlay.py
+msgid "FALLEN HEROES"
+msgstr "倒下的勇者"
+
+#: src/options_overlay.py
+msgid "INN"
+msgstr "到旅館"
+
+#: src/options_overlay.py
+msgid "GET UP"
+msgstr "站起來"
+
+#: src/options_overlay.py
+msgid "CO-OP"
+msgstr "合作"
+
+#: src/options_overlay.py
+msgid "PARTY"
+msgstr "隊伍"
+
+#: src/options_overlay.py
+msgid "FREE ROAM"
+msgstr "自由行動"

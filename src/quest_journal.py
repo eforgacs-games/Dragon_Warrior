@@ -15,7 +15,9 @@ Each known goal is one dialog box page: the open ones first, the main quest's in
 then the optional ones, then the ones done, marked DONE_FORMAT. A goal that can't be done any more (missed: the
 optional ones and Gwaelin's rescue once the Dragonlord is dead) isn't shown unless it was done. With nothing known,
 the journal says NOTHING_HEARD. With HINTS on, each open goal is followed by a page with what the hero was told of it:
-the NPC's own words (Told.line), or, for a goal found out or told of without words to quote, the goal's hint.
+the NPC's own words (Told.line), under who said them and where ("A guard in Rimuldar said:", worked out from the maps'
+NPC tables and the map the hero heard it on, StoryFlags.heard_where), or, for a goal found out or told of without words
+to quote, the goal's hint.
 
 The whole game, in order (who tells of each goal: the dialog bytes in told_by):
 
@@ -40,8 +42,10 @@ The whole game, in order (who tells of each goal: the dialog bytes in told_by):
 An item counts as found once anything it leads to is done too: the Silver Harp is given away for the Staff of Rain,
 and the Staff and the Stones are given away for the Rainbow Drop.
 """
+import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
+from functools import cache
 from typing import TYPE_CHECKING
 
 from src.story_flags import GoalSource, StoryFlags
@@ -185,10 +189,6 @@ class Goal:
     def line_from(self, source: GoalSource | None) -> str | None:
         """What ``source`` said of this goal, if there are words to show."""
         return next((told.line for told in self.told_by if told.source == source), None)
-
-    def hint_for(self, progress: Progress) -> str:
-        """What the hero was told of it, or else its hint."""
-        return self.line_from(progress.flags.heard_goals.get(self.key)) or self.hint
 
 
 GOALS = (
@@ -364,15 +364,78 @@ DONE_FORMAT = "Done: {}"
 NOTHING_HEARD = "Thou hast heard of nothing yet."
 
 
-def hear(flags: StoryFlags, source: GoalSource | None) -> None:
-    """The hero has just been told something by ``source`` (an NPC's dialog byte, KING_OPENING_SPEECH or GOLEM_FIGHT):
-    remember each goal it tells of. The first teller is kept, unless it had no words to show and this one has."""
+def hear(flags: StoryFlags, source: GoalSource | None, map_name: str | None = None) -> None:
+    """The hero has just been told something by ``source`` (an NPC's dialog byte, KING_OPENING_SPEECH or GOLEM_FIGHT)
+    on the map ``map_name``: remember each goal it tells of, and where. The first teller is kept, unless it had no
+    words to show and this one has."""
     if source is None or (source == THRONE_ROOM_KEY_ADVICE and flags.left_throne_room):
         return
     for goal in GOALS_TOLD_BY.get(source, ()):
         told_before = flags.heard_goals.get(goal.key)
         if told_before is None or (goal.line_from(told_before) is None and goal.line_from(source) is not None):
             flags.heard_goals[goal.key] = source
+            if map_name is None:
+                flags.heard_where.pop(goal.key, None)
+            else:
+                flags.heard_where[goal.key] = map_name
+
+
+# Who said a hint, for the line over it: "A guard in Rimuldar said:". An NPC is named by its sprite (src/npcs.py
+# NPC.name without its number: GUARD_3 is a GUARD) and the place by its map.
+SAID_FORMAT = "{} said:"
+TELLER_IN_PLACE = "{} in {}"
+TELLERS = {
+    'GUARD': "A guard", 'SOLDIER': "A soldier", 'WISE_MAN': "A wizard", 'MERCHANT': "A merchant", 'MAN': "A man",
+    'WOMAN': "A woman",
+}
+PLACES = {
+    'TantegelCourtyard': "Tantegel Castle", 'TantegelThroneRoom': "Tantegel Castle", 'Brecconary': "Brecconary",
+    'Garinham': "Garinham", 'Kol': "Kol", 'Rimuldar': "Rimuldar", 'Cantlin': "Cantlin", 'StaffOfRainCave': "a shrine",
+    'MagicTemple': "a shrine",
+}
+# The two shrines' keepers are wizards by their sprite, but the game calls them old men
+SHRINE_KEEPER = "An old man"
+SHRINES = ('StaffOfRainCave', 'MagicTemple')
+KING_LORIK = "King Lorik"
+
+
+@cache
+def npc_places() -> dict[GoalSource, tuple[tuple[str, str], ...]]:
+    """Each dialog byte's NPCs: (map, sprite), from the maps' NPC tables. (src.maps is imported here, not at the top:
+    it imports the modules that import this one.)"""
+    from src.maps import map_lookup
+    places: dict[GoalSource, tuple[tuple[str, str], ...]] = {}
+    for map_name, map_class in map_lookup.items():
+        for npc in getattr(map_class, 'npc_table', ()):
+            places[npc.dialog] = places.get(npc.dialog, ()) + ((map_name, re.sub(r'_\d+$', '', npc.name)),)
+    return places
+
+
+def teller(source: GoalSource | None, map_name: str | None = None) -> tuple[str, str | None] | None:
+    """Who ``source`` is, and where (untranslated): the NPC with that dialog byte on ``map_name``, or, without one
+    (heard before heard_where was kept), the only map it's on. None when it can't be told."""
+    if source is None:
+        return None
+    if source == KING_OPENING_SPEECH:
+        return KING_LORIK, None
+    npcs = [(place, sprite) for place, sprite in npc_places().get(source, ())
+            if map_name is None or place == map_name]
+    if len(npcs) != 1:
+        return None
+    place, sprite = npcs[0]
+    who = SHRINE_KEEPER if place in SHRINES else TELLERS.get(sprite)
+    if who is None or place not in PLACES:
+        return None
+    return who, PLACES[place]
+
+
+def said_by(source: GoalSource | None, map_name: str | None, _: Callable[[str], str] = str) -> str | None:
+    """The line over a hint, "A guard in Rimuldar said:", translated; None when who said it can't be told."""
+    told = teller(source, map_name)
+    if told is None:
+        return None
+    who, place = told
+    return _(SAID_FORMAT).format(_(who) if place is None else _(TELLER_IN_PLACE).format(_(who), _(place)))
 
 
 def open_goals(progress: Progress, goals: Iterable[Goal] = GOALS) -> list[Goal]:
@@ -386,10 +449,23 @@ def done_goals(progress: Progress, goals: Iterable[Goal] = GOALS) -> list[Goal]:
     return [goal for goal in goals if goal.is_done(progress)]
 
 
-def journal_pages(progress: Progress, hints: bool, _: Callable[[str], str] = str) -> list[str]:
-    """A dialog box page per open goal, with hints followed by a page of what was said of it, then a page per goal
-    done; NOTHING_HEARD if there are none. The first optional goal starts with OPTIONAL_HEADING. ``_`` translates them
-    (set_gettext_language)."""
+def hint_page(goal: Goal, progress: Progress, _: Callable[[str], str] = str,
+              quote: Callable[[str], str] = lambda line: line) -> str:
+    """What the hero was told of the goal, quoted (``quote``: Language.quote) under who said it, or the goal's own
+    hint."""
+    source = progress.flags.heard_goals.get(goal.key)
+    line = goal.line_from(source)
+    if line is None:
+        return _(goal.hint)
+    heading = said_by(source, progress.flags.heard_where.get(goal.key), _)
+    return _(line) if heading is None else heading + "\n" + quote(_(line))
+
+
+def journal_pages(progress: Progress, hints: bool, _: Callable[[str], str] = str,
+                  quote: Callable[[str], str] = lambda line: line) -> list[str]:
+    """A dialog box page per open goal, with hints followed by a page of what was said of it (hint_page), then a page
+    per goal done; NOTHING_HEARD if there are none. The first optional goal starts with OPTIONAL_HEADING. ``_``
+    translates them (set_gettext_language), and ``quote`` quotes what was said (Language.quote)."""
     pages = []
     open_ones = open_goals(progress)
     first_optional = next((goal for goal in open_ones if goal.optional), None)
@@ -397,7 +473,7 @@ def journal_pages(progress: Progress, hints: bool, _: Callable[[str], str] = str
         text = _(goal.text)
         pages.append(_(OPTIONAL_HEADING) + "\n" + text if goal is first_optional else text)
         if hints:
-            pages.append(_(goal.hint_for(progress)))
+            pages.append(hint_page(goal, progress, _, quote))
     pages += [_(DONE_FORMAT).format(_(goal.done_text)) for goal in done_goals(progress)]
     return pages or [_(NOTHING_HEARD)]
 
@@ -410,7 +486,8 @@ def game_progress(game: 'Game') -> Progress:
 def journal_texts() -> list[str]:
     """Every text of its own the journal can show, for the translation catalog (catalog_tools.dynamic_messages). The
     NPCs' words (Told.line) are the dialog table's, translated with it."""
-    return [OPTIONAL_HEADING, DONE_FORMAT, NOTHING_HEARD] + [
+    return [OPTIONAL_HEADING, DONE_FORMAT, NOTHING_HEARD, SAID_FORMAT, TELLER_IN_PLACE, SHRINE_KEEPER, KING_LORIK,
+            *TELLERS.values(), *dict.fromkeys(PLACES.values())] + [
         text for goal in GOALS for text in (goal.text, goal.hint, goal.short_text) if text is not None]
 
 

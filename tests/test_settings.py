@@ -71,6 +71,7 @@ class TestSettingsFile(TempDirTestCase):
         save_settings(self.path, Settings(zoom=3, language='Korean'))
         self.assertEqual({'version': 1, 'zoom': 3, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
                           'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': False, 'name_confirm': False,
+                          'party': 1,
                           'controls': None},
                          self.saved())
         self.assertEqual(['settings.json'], os.listdir(os.path.dirname(self.path)))  # no temporary file left over
@@ -294,6 +295,7 @@ class TestSavedWhenChanged(GameTestCase):
         # and nothing else was written
         self.assertEqual({'version': 1, 'zoom': None, 'fullscreen': False, 'game_speed': 1, 'language': 'Korean',
                           'scanlines': False, 'scaling': 'Smooth', 'view': 'NES', 'dungeon_map': False, 'name_confirm': False,
+                          'party': 1,
                           'controls': None},
                          self.saved())
 

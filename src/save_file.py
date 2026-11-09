@@ -23,6 +23,10 @@ tests/sample_saves/ (tests/test_save_compatibility.py loads every one).
   inventory was the items alone, packed, rather than the slots with None for an emptied one.
 - Version 1: the same keys as the last version 0 saves, with VERSION_KEY, the story flags always as the StoryFlags
   entry and the inventory always as slots.
+- Version 2: a party's log (co-op, src/party.py) has the second hero as COMPANION_KEY, an object with the hero's
+  own keys (NAME_KEY, EXPERIENCE_KEY and the rest, but no gold: the party's gold is the first hero's). A version 1
+  log is a log with one hero, so nothing changes; but a build from before never writes over a version 2 log, so it
+  can't lose a second hero.
 
 A save from a newer build is read as far as this build can, but never written over by it (is_from_a_newer_build,
 CommandMenu.save): this build would write it back in its own, older format and lose what it doesn't know of it, and
@@ -48,7 +52,7 @@ from src.story_flags import SAVE_KEY as STORY_FLAGS_SAVE_KEY
 from src.story_flags import StoryFlags
 
 # The format of the saves this build writes (see the module docstring), the first key of every save from 1.0 on
-SAVE_FORMAT_VERSION = 1
+SAVE_FORMAT_VERSION = 2
 VERSION_KEY = 'SaveVersion'
 
 # The save file keys, in the order CommandMenu.save writes them (after VERSION_KEY); the StoryFlags entry and the
@@ -70,6 +74,7 @@ SPELLS_KEY = 'Spells'
 CURRENT_MAP_KEY = 'CurrentMap'
 PLAYER_ROW_KEY = 'PlayerRow'
 PLAYER_COLUMN_KEY = 'PlayerColumn'
+COMPANION_KEY = 'Companion'
 
 # The NES has three adventure logs (reference/sram-doc.txt), numbered 1 to 3 on screen
 ADVENTURE_LOGS = (1, 2, 3)
@@ -90,6 +95,97 @@ def play_stats_from_save(save: dict[str, Any]) -> dict[str, Any]:
     """The log's play statistics (src/play_stats.py), or none for a save from before they were kept (all 0)."""
     record = save.get(PLAY_STATS_SAVE_KEY)
     return record if isinstance(record, dict) else {}
+
+
+@dataclass(slots=True, kw_only=True)
+class HeroSave:
+    """One hero as saved, without the gold (the party's, kept with the first hero): the second hero of a party's log
+    (COMPANION_KEY), and what restore_player puts back of the first."""
+    name: str
+    experience: int
+    inventory: list[str | None]
+    current_hp: int | None = None
+    current_mp: int | None = None
+    weapon: str = ''
+    armor: str = ''
+    shield: str = ''
+    wearing_dragon_scale: bool = False
+    wearing_fighters_ring: bool = False
+    wearing_cursed_belt: bool = False
+    wearing_death_necklace: bool = False
+    spells: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_player(cls, player: Any) -> 'HeroSave':
+        return cls(name=player.name, experience=player.total_experience,
+                   inventory=player.inventory.with_empty_slots(), current_hp=player.current_hp,
+                   current_mp=player.current_mp, weapon=player.weapon, armor=player.armor, shield=player.shield,
+                   wearing_dragon_scale=player.wearing_dragon_scale,
+                   wearing_fighters_ring=player.wearing_fighters_ring, wearing_cursed_belt=player.wearing_cursed_belt,
+                   wearing_death_necklace=player.wearing_death_necklace, spells=list(player.spells))
+
+    def to_save(self) -> dict[str, Any]:
+        return {
+            NAME_KEY: self.name,
+            EXPERIENCE_KEY: self.experience,
+            CURRENT_HP_KEY: self.current_hp,
+            CURRENT_MP_KEY: self.current_mp,
+            WEAPON_KEY: self.weapon,
+            ARMOR_KEY: self.armor,
+            SHIELD_KEY: self.shield,
+            WEARING_DRAGON_SCALE_KEY: self.wearing_dragon_scale,
+            WEARING_FIGHTERS_RING_KEY: self.wearing_fighters_ring,
+            WEARING_CURSED_BELT_KEY: self.wearing_cursed_belt,
+            WEARING_DEATH_NECKLACE_KEY: self.wearing_death_necklace,
+            INVENTORY_KEY: self.inventory,
+            SPELLS_KEY: self.spells,
+        }
+
+    @classmethod
+    def from_save(cls, save: dict[str, Any]) -> 'HeroSave':
+        """A hero's keys (Name, Experience and Inventory must be there: KeyError if not)."""
+        return cls(name=save[NAME_KEY], experience=save[EXPERIENCE_KEY], inventory=save[INVENTORY_KEY],
+                   current_hp=save.get(CURRENT_HP_KEY), current_mp=save.get(CURRENT_MP_KEY),
+                   weapon=save.get(WEAPON_KEY, ''), armor=save.get(ARMOR_KEY, ''), shield=save.get(SHIELD_KEY, ''),
+                   wearing_dragon_scale=save.get(WEARING_DRAGON_SCALE_KEY, False),
+                   wearing_fighters_ring=save.get(WEARING_FIGHTERS_RING_KEY, False),
+                   wearing_cursed_belt=save.get(WEARING_CURSED_BELT_KEY, False),
+                   wearing_death_necklace=save.get(WEARING_DEATH_NECKLACE_KEY, False),
+                   spells=save.get(SPELLS_KEY, []))
+
+    def restore(self, player: Any) -> None:
+        """NES LoadSavedData: the hero as saved. The stats are worked out again from the name and experience, and HP
+        and MP the save doesn't have are full."""
+        player.name = self.name
+        player.total_experience = self.experience
+        player.level = player.get_level_by_experience()
+        player.update_stats_to_current_level()
+        player.current_hp = player.max_hp if self.current_hp is None else self.current_hp
+        player.current_mp = player.max_mp if self.current_mp is None else self.current_mp
+        # A party's hero saved fallen (0 HP, src/party.py) is still down; anyone else is up
+        player.is_dead = player.current_hp <= 0
+        player.weapon = self.weapon
+        player.armor = self.armor
+        player.shield = self.shield
+        player.wearing_dragon_scale = self.wearing_dragon_scale
+        player.wearing_fighters_ring = self.wearing_fighters_ring
+        player.wearing_cursed_belt = self.wearing_cursed_belt
+        player.wearing_death_necklace = self.wearing_death_necklace
+        player.update_attack_power()
+        player.update_defense_power()
+        player.inventory = self.inventory
+        player.spells = list(self.spells)
+
+
+def companion_from_save(save: dict[str, Any]) -> HeroSave | None:
+    """The party's second hero, or None for a log with one hero (or a second hero that can't be read)."""
+    record = save.get(COMPANION_KEY)
+    if not isinstance(record, dict):
+        return None
+    try:
+        return HeroSave.from_save(record)
+    except KeyError:
+        return None
 
 
 @dataclass(slots=True, kw_only=True)
@@ -120,10 +216,13 @@ class SaveFile:
     dungeon_map: dict[str, Any] = field(default_factory=dict)
     # The play statistics (src/play_stats.py PlayStats.to_save); none in an older save
     play_stats: dict[str, Any] = field(default_factory=dict)
+    # A party's second hero (src/party.py); None for one hero
+    companion: HeroSave | None = None
 
     @classmethod
     def from_game(cls, player: Any, current_map: str, story_flags: StoryFlags, options: Options,
-                  dungeon_map: dict[str, Any] | None = None, play_stats: dict[str, Any] | None = None) -> 'SaveFile':
+                  dungeon_map: dict[str, Any] | None = None, play_stats: dict[str, Any] | None = None,
+                  companion: Any = None) -> 'SaveFile':
         """What CommandMenu.save keeps of the running game."""
         return cls(name=player.name, experience=player.total_experience, gold=player.gold,
                    inventory=player.inventory.with_empty_slots(),
@@ -134,7 +233,8 @@ class SaveFile:
                    wearing_death_necklace=player.wearing_death_necklace, spells=player.spells,
                    current_map=current_map, player_row=player.row, player_column=player.column,
                    story_flags=story_flags, options=options, dungeon_map=dungeon_map or {},
-                   play_stats=play_stats or {})
+                   play_stats=play_stats or {},
+                   companion=HeroSave.from_player(companion) if companion is not None else None)
 
     def to_save(self) -> dict[str, Any]:
         """The save file's JSON object, key for key as CommandMenu.save has always written it."""
@@ -164,6 +264,7 @@ class SaveFile:
             # The dungeon map's record, once the hero has been in a dark dungeon (so other saves stay as they were)
             **({DUNGEON_MAP_SAVE_KEY: self.dungeon_map} if self.dungeon_map else {}),
             **({PLAY_STATS_SAVE_KEY: self.play_stats} if self.play_stats else {}),
+            **({COMPANION_KEY: self.companion.to_save()} if self.companion is not None else {}),
         }
 
     @classmethod
@@ -184,29 +285,17 @@ class SaveFile:
                    spells=save.get(SPELLS_KEY, []), current_map=save.get(CURRENT_MAP_KEY),
                    player_row=save.get(PLAYER_ROW_KEY), player_column=save.get(PLAYER_COLUMN_KEY),
                    story_flags=StoryFlags.from_save(save), options=options_from_save(save),
-                   dungeon_map=dungeon_map_from_save(save), play_stats=play_stats_from_save(save))
+                   dungeon_map=dungeon_map_from_save(save), play_stats=play_stats_from_save(save),
+                   companion=companion_from_save(save))
 
     def restore_player(self, player: Any) -> None:
-        """NES LoadSavedData: the hero as saved. The stats are worked out again from the name and experience, and HP
-        and MP the save doesn't have are full."""
-        player.name = self.name
-        player.total_experience = self.experience
-        player.level = player.get_level_by_experience()
-        player.update_stats_to_current_level()
+        """NES LoadSavedData: the hero as saved (HeroSave.restore), with the party's gold."""
+        HeroSave(name=self.name, experience=self.experience, inventory=self.inventory, current_hp=self.current_hp,
+                 current_mp=self.current_mp, weapon=self.weapon, armor=self.armor, shield=self.shield,
+                 wearing_dragon_scale=self.wearing_dragon_scale, wearing_fighters_ring=self.wearing_fighters_ring,
+                 wearing_cursed_belt=self.wearing_cursed_belt, wearing_death_necklace=self.wearing_death_necklace,
+                 spells=self.spells).restore(player)
         player.gold = self.gold
-        player.current_hp = player.max_hp if self.current_hp is None else self.current_hp
-        player.current_mp = player.max_mp if self.current_mp is None else self.current_mp
-        player.weapon = self.weapon
-        player.armor = self.armor
-        player.shield = self.shield
-        player.wearing_dragon_scale = self.wearing_dragon_scale
-        player.wearing_fighters_ring = self.wearing_fighters_ring
-        player.wearing_cursed_belt = self.wearing_cursed_belt
-        player.wearing_death_necklace = self.wearing_death_necklace
-        player.update_attack_power()
-        player.update_defense_power()
-        player.inventory = self.inventory
-        player.spells = self.spells
 
 
 def save_format_version(save: dict[str, Any]) -> int:
@@ -235,6 +324,7 @@ def _from_version_0(save: dict[str, Any]) -> dict[str, Any]:
 # MIGRATIONS[n] turns a save in format n into format n + 1; there is one for every version before SAVE_FORMAT_VERSION
 MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {
     0: _from_version_0,
+    1: dict,  # version 2 only adds the second hero, which a version 1 log hasn't got
 }
 
 

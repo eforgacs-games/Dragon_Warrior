@@ -108,41 +108,41 @@ msgstr ""
 "どんな ご用でしょう？"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Descendant of Erdrick, listen now to my words."
 msgstr "勇者ロトの 血をひきし者よ！ そなたが来るのを 待っておった。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
 msgstr "その昔 伝説の勇者ロトは 神から ひかりのたまを さずかり この世界を おおっていた まものたちを封じこめたという。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
 msgstr "しかし いずこともなく現れた 悪魔の化身 竜王が その玉を 闇にとざしてしまったのじゃ！ このままでは 世界は 闇に のみこまれ やがて ほろんでしまうことだろう。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Now, {}, thou must help us recover the Ball of Light and restore peace to our land."
 msgstr "勇者{}よ！ 竜王をたおし その手から ひかりのたまを 取りもどしてくれ！"
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "The Dragonlord must be defeated."
 msgstr "竜王を たおさねば ならぬ。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."
 msgstr "わしからの おくり物じゃ！ そこにある宝箱を 開けるがよい。 そなたの役に立つ物が 入っておるはずじゃ。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then speak with the guards, for they have much knowledge that may aid thee."
 msgstr "そして この部屋にいる者に たずねれば 旅の心得を 教えてくれよう。"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "May the light shine upon thee, {}."
 msgstr "では また会おう！ 勇者{}よ！"
 
@@ -882,39 +882,39 @@ msgid "Tablet"
 msgstr "せきばん"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "The tablet reads as follows:"
 msgstr "石板には こう 書かれている。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "I am Erdrick and thou art my descendant."
 msgstr ""
 "わたしの名は ロト。\n"
 "わたしの 血をひきし者よ。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
 msgstr "ラダトームから見える 魔の島に わたるには 3つの物が 必要だった。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
 msgstr "わたしは それらを あつめ 魔の島に わたり 魔王を たおした。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Now I have entrusted the three items to three worthy keepers."
 msgstr "そして 今 その3つの しんぴなる物を 3人の 賢者に たくす。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
 msgstr "かれらの 子孫が それらを 守ってゆくだろう。"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "When a new evil arises, find the three items, then fight!"
 msgstr ""
 "ふたたび 魔の島に 悪が よみがえったとき\n"
@@ -3036,6 +3036,7 @@ msgstr "竜王の城の 隠された 下り道を 探そう。"
 msgid "Search behind the Dragonlord's throne."
 msgstr "竜王の 玉座の 後ろを 調べよう。"
 
+#: src/achievements.py
 #: src/quest_journal.py
 msgid "Defeat the Dragonlord."
 msgstr "竜王を 倒そう。"
@@ -3386,6 +3387,7 @@ msgid "{} (hold): Rewind"
 msgstr "{} (長押し): 巻き戻し"
 
 #: src/controls_screen.py
+#: src/records.py
 msgid "JOURNAL"
 msgstr "旅のメモ"
 
@@ -3419,6 +3421,7 @@ msgid "NO MESSAGES YET"
 msgstr "まだ 会話は ない"
 
 #: src/message_log.py
+#: src/records.py
 msgid "KING LORIK"
 msgstr "王さま"
 
@@ -3450,6 +3453,7 @@ msgstr "女"
 msgid "WISE MAN"
 msgstr "賢者"
 
+#: src/achievements.py
 #: src/message_log.py
 msgid "DRAGONLORD"
 msgstr "竜王"
@@ -3522,3 +3526,405 @@ msgstr "開けた宝箱"
 #: src/stats_screen.py
 msgid "MONSTERS DEFEATED"
 msgstr "やっつけたまもの"
+
+#: src/auto_grind.py
+msgid "Auto-grind: not in this fight"
+msgstr "自動レベル上げ: この 戦いでは 使えない"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: MP too low to heal"
+msgstr "自動レベル上げ 停止: 回復する MPが 足りない"
+
+#: src/options_overlay.py
+msgid "DANGER"
+msgstr "危険"
+
+#: src/options_overlay.py
+msgid "AUTO-HEAL"
+msgstr "自動回復"
+
+#: src/options_overlay.py
+msgid "KEEP 1 HEAL"
+msgstr "ホイミ1回分 残す"
+
+#: src/auto_grind.py
+msgid "Auto-grind: off to the inn"
+msgstr "自動レベル上げ: 宿屋へ 向かう"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: no inn to go to"
+msgstr "自動レベル上げ 停止: 行ける 宿屋が ない"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: lost the way"
+msgstr "自動レベル上げ 停止: 道に 迷った"
+
+#: src/inn_trip.py
+msgid "Auto-grind: back to grinding"
+msgstr "自動レベル上げ: 狩り場へ 戻る"
+
+#: src/options_overlay.py
+msgid "AUTO-INN"
+msgstr "自動宿屋"
+
+#: src/quest_journal.py
+msgid "{} said:"
+msgstr "{}の話:"
+
+#: src/quest_journal.py
+msgid "{} in {}"
+msgstr "{1}の{0}"
+
+#: src/quest_journal.py
+msgid "An old man"
+msgstr "老人"
+
+#: src/quest_journal.py
+msgid "King Lorik"
+msgstr "ラルス16世"
+
+#: src/quest_journal.py
+msgid "A guard"
+msgstr "兵士"
+
+#: src/quest_journal.py
+msgid "A soldier"
+msgstr "戦士"
+
+#: src/quest_journal.py
+msgid "A wizard"
+msgstr "魔法使い"
+
+#: src/quest_journal.py
+msgid "A merchant"
+msgstr "商人"
+
+#: src/quest_journal.py
+msgid "A man"
+msgstr "男の人"
+
+#: src/quest_journal.py
+msgid "A woman"
+msgstr "女の人"
+
+#: src/quest_journal.py
+msgid "Tantegel Castle"
+msgstr "ラダトームの城"
+
+#: src/quest_journal.py
+msgid "Brecconary"
+msgstr "ラダトームの町"
+
+#: src/quest_journal.py
+msgid "Garinham"
+msgstr "ガライの町"
+
+#: src/quest_journal.py
+msgid "Kol"
+msgstr "マイラの村"
+
+#: src/quest_journal.py
+msgid "Rimuldar"
+msgstr "リムルダールの町"
+
+#: src/quest_journal.py
+msgid "Cantlin"
+msgstr "メルキド"
+
+#: src/quest_journal.py
+msgid "a shrine"
+msgstr "ほこら"
+
+#: src/records.py
+msgid "GOALS"
+msgstr "目標"
+
+#: src/records.py
+msgid "ERDRICK'S TABLET"
+msgstr "ロトの石板"
+
+#: src/options_overlay.py
+msgid "RANDOMNESS"
+msgstr "乱数"
+
+#: src/options_overlay.py
+msgid "SEEDED"
+msgstr "シード固定"
+
+#: src/achievements.py
+#: src/options_overlay.py
+msgid "ACHIEVEMENTS"
+msgstr "じっせき"
+
+#: src/controls_screen.py
+msgid "TROPHIES"
+msgstr "じっせき"
+
+#: src/achievements.py
+msgid "ACHIEVEMENT"
+msgstr "じっせき かいじょ"
+
+#: src/achievements.py
+msgid "UNLOCKED"
+msgstr "かいじょ"
+
+#: src/achievements.py
+msgid "FIRST VICTORY"
+msgstr "はじめての しょうり"
+
+#: src/achievements.py
+msgid "Win a fight."
+msgstr "たたかいに かつ。"
+
+#: src/achievements.py
+msgid "STONE GUARDIAN"
+msgstr "いしの まもりて"
+
+#: src/achievements.py
+msgid "Defeat the Golem."
+msgstr "ゴーレムを たおす。"
+
+#: src/achievements.py
+msgid "DRAGON'S LAIR"
+msgstr "ドラゴンの どうくつ"
+
+#: src/achievements.py
+msgid "Defeat the Green Dragon."
+msgstr "ひめを まもる ドラゴンを たおす。"
+
+#: src/achievements.py
+msgid "HOMECOMING"
+msgstr "きかん"
+
+#: src/achievements.py
+msgid "Bring Princess Gwaelin home."
+msgstr "ローラ姫を 城へ つれかえる。"
+
+#: src/achievements.py
+msgid "CURSED"
+msgstr "のろい"
+
+#: src/achievements.py
+msgid "Find the Death Necklace."
+msgstr "しのくびかざりを みつける。"
+
+#: src/achievements.py
+msgid "RAINBOW BRIDGE"
+msgstr "虹の橋"
+
+#: src/achievements.py
+msgid "Make the Rainbow Bridge."
+msgstr "虹の橋を かける。"
+
+#: src/achievements.py
+msgid "ERDRICK'S HEIR"
+msgstr "ロトの しそん"
+
+#: src/achievements.py
+msgid "Wear Erdrick's Armor and wield Erdrick's Sword."
+msgstr "ロトのよろいを きて ロトのつるぎを もつ。"
+
+#: src/achievements.py
+msgid "UNDYING"
+msgstr "ふじみ"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord without dying."
+msgstr "いちども しなずに 竜王を たおす。"
+
+#: src/achievements.py
+msgid "UNDERDOG"
+msgstr "げこくじょう"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord at level 20 or lower."
+msgstr "レベル20 いかで 竜王を たおす。"
+
+#: src/achievements.py
+msgid "SWIFT"
+msgstr "しっぷう"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord in under two hours of play."
+msgstr "プレイ時間 2時間 いないに 竜王を たおす。"
+
+#: src/achievements.py
+msgid "MONSTER HUNTER"
+msgstr "まもの ハンター"
+
+#: src/achievements.py
+msgid "Defeat every kind of monster."
+msgstr "すべての しゅるいの まものを たおす。"
+
+#: src/achievements.py
+msgid "QUICKSILVER"
+msgstr "すいぎん"
+
+#: src/achievements.py
+msgid "Defeat a Metal Slime."
+msgstr "メタルスライムを たおす。"
+
+#: src/achievements.py
+msgid "LEVEL 10"
+msgstr "レベル10"
+
+#: src/achievements.py
+msgid "Reach level 10."
+msgstr "レベル10に なる。"
+
+#: src/achievements.py
+msgid "LEVEL 20"
+msgstr "レベル20"
+
+#: src/achievements.py
+msgid "Reach level 20."
+msgstr "レベル20に なる。"
+
+#: src/achievements.py
+msgid "LEVEL 30"
+msgstr "レベル30"
+
+#: src/achievements.py
+msgid "Reach the highest level."
+msgstr "さいこう レベルに なる。"
+
+#: src/achievements.py
+msgid "CENTURION"
+msgstr "ひゃくせんれんま"
+
+#: src/achievements.py
+msgid "Win 100 fights."
+msgstr "たたかいに 100かい かつ。"
+
+#: src/achievements.py
+msgid "DISCRETION"
+msgstr "にげるが かち"
+
+#: src/achievements.py
+msgid "Run away from 50 fights."
+msgstr "たたかいから 50かい にげる。"
+
+#: src/achievements.py
+msgid "WANDERER"
+msgstr "たびびと"
+
+#: src/achievements.py
+msgid "Take 10000 steps."
+msgstr "10000ぽ あるく。"
+
+#: src/achievements.py
+msgid "RICHES"
+msgstr "おおがねもち"
+
+#: src/achievements.py
+msgid "Carry 65535 gold."
+msgstr "65535ゴールド もつ。"
+
+#: src/achievements.py
+msgid "THOU ART DEAD"
+msgstr "しんで しまうとは"
+
+#: src/achievements.py
+msgid "Die for the first time."
+msgstr "はじめて しぬ。"
+
+#: src/title_menu.py
+msgid "Now the second hero's name.\n"
+msgstr "つぎに ふたりめの ゆうしゃの なまえを きめよう。\n"
+
+#: src/options_overlay.py
+msgid "HEROES"
+msgstr "ゆうしゃ"
+
+#: src/options_overlay.py
+msgid "1 (NES)"
+msgstr "1 (NES)"
+
+#: src/options_overlay.py
+msgid "2"
+msgstr "2"
+
+#: src/battle_controller.py
+msgid "Command for {}?\n"
+msgstr "{}は どうする？\n"
+
+#: src/battle_controller.py
+msgid "{} is still asleep.\n"
+msgstr "{}は まだ 眠っている……。\n"
+
+#: src/battle_controller.py
+msgid "{} is asleep.\n"
+msgstr "{}は 眠ってしまった！\n"
+
+#: data/text/dialog_lookup_table.py
+#: src/battle_controller.py
+msgid "{} hath fallen.\n"
+msgstr "{}は 力つきた！\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Point decreased by {}.\n"
+msgstr "{}は {}ポイントの ダメージを うけた！\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Points decreased by {}.\n"
+msgstr "{}は {}ポイントの ダメージを うけた！\n"
+
+#: src/controls_screen.py
+msgid "P2 A"
+msgstr "P2 Aボタン"
+
+#: src/controls_screen.py
+msgid "P2 B"
+msgstr "P2 Bボタン"
+
+#: src/controls_screen.py
+msgid "P2 START"
+msgstr "P2 スタート"
+
+#: src/controls_screen.py
+msgid "P2 SELECT"
+msgstr "P2 セレクト"
+
+#: src/controls_screen.py
+msgid "P2 UP"
+msgstr "P2 上"
+
+#: src/controls_screen.py
+msgid "P2 DOWN"
+msgstr "P2 下"
+
+#: src/controls_screen.py
+msgid "P2 LEFT"
+msgstr "P2 左"
+
+#: src/controls_screen.py
+msgid "P2 RIGHT"
+msgstr "P2 右"
+
+#: data/text/dialog_lookup_table.py
+msgid "Who will it be?"
+msgstr "だれに しますか？"
+
+#: src/options_overlay.py
+msgid "FALLEN HEROES"
+msgstr "たおれた ゆうしゃ"
+
+#: src/options_overlay.py
+msgid "INN"
+msgstr "やどやまで"
+
+#: src/options_overlay.py
+msgid "GET UP"
+msgstr "おきあがる"
+
+#: src/options_overlay.py
+msgid "CO-OP"
+msgstr "きょうりょく"
+
+#: src/options_overlay.py
+msgid "PARTY"
+msgstr "パーティ"
+
+#: src/options_overlay.py
+msgid "FREE ROAM"
+msgstr "べつこうどう"

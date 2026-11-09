@@ -311,8 +311,10 @@ class TestNoController(TestCase):
         from tests.helpers import new_game
         new_game(dict(test_config))
         self.addCleanup(set_gamepad, None)
-        self.assertIsInstance(gamepad(), Gamepad)
-        self.assertIsInstance(gamepad().backend, SdlBackend)
+        # Player 1's controller and player 2's (co-op), the first and the second plugged in
+        pads = gamepad().pads
+        self.assertEqual([(1, 0), (2, 1)], [(pad.player, pad.slot) for pad in pads])
+        self.assertTrue(all(isinstance(pad, Gamepad) and isinstance(pad.backend, SdlBackend) for pad in pads))
 
 
 class TestAutoGrind(GamepadTestCase):

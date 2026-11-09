@@ -1,7 +1,6 @@
 """Rewind (src/rewind.py): hold Backspace on the map to step back through the last snapshots. Not NES."""
 import json
 import os
-import random
 import sys
 from unittest.mock import patch
 
@@ -9,11 +8,12 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
-from pygame import K_BACKSPACE, K_ESCAPE, K_k, KEYDOWN, KEYUP
+from pygame import K_BACKSPACE, K_DOWN, K_ESCAPE, K_k, K_RIGHT, KEYDOWN, KEYUP
 from pygame.event import Event
 
 from src.battle_controller import BattleOutcome
 from src.debug_tools import DebugTools
+from src.random_streams import seed_all
 from src.rewind import REWIND_CAPACITY, REWIND_INTERVAL_FRAMES
 from src.options_overlay import apply_option
 from src.save_state import take_snapshot
@@ -46,7 +46,7 @@ class RewindTestCase(SaveStateTestCase):
         super().setUp()
         self.rewind = self.game.rewind
         self.go_to(self.game, 'Brecconary')
-        random.seed(SEED)
+        seed_all(SEED)
 
     def press_backspace(self):
         self.game._handle_pygame_events([key(K_BACKSPACE)])
@@ -193,6 +193,27 @@ class TestRewinding(RewindTestCase):
         self.press_backspace()
         for screen in reversed(screens):
             game.drawer.draw_all(game, game.movement.sprites_animate)
+            self.assertEqual(screen, pygame.image.tobytes(game.screen, 'RGB'))
+            self.rewind.step_back()
+
+    def test_no_ghosts_where_the_hero_was(self):
+        # the hero walks several blocks away between snapshots; each snapshot put back on the same map draws the whole
+        # map again, or his frames from where he stood before stay on the background (Drawer.forget_drawn_in_full)
+        self.game.config['NO_BLIT'] = False
+        pygame.display.set_mode((256 * 3, 240 * 3))
+        game = self.game
+        game.screen = pygame.display.get_surface()
+        screens = []
+        for frame in range(REWIND_INTERVAL_FRAMES * 4):
+            recorded = len(self.rewind.snapshots)
+            self.run_frames(game, 1, first_frame=frame, script=lambda f: {K_RIGHT} if f % 60 < 50 else {K_DOWN})
+            if len(self.rewind.snapshots) > recorded:
+                screens.append(pygame.image.tobytes(game.screen, 'RGB'))
+        self.assertEqual(4, len(screens))
+        self.press_backspace()
+        for screen in reversed(screens):
+            game.drawer.draw_all(game, game.movement.sprites_animate)
+            game.loop_count += 1
             self.assertEqual(screen, pygame.image.tobytes(game.screen, 'RGB'))
             self.rewind.step_back()
 

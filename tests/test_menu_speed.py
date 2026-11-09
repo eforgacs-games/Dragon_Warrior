@@ -235,7 +235,7 @@ class TestBattleCommandWindow(RealClock):
         patch('src.battle_controller.display').start()
         patch('src.battle_controller.time').start()
         patch('src.selection.wait_frames', side_effect=self.wait).start()
-        patch('src.battle_controller.random.random', return_value=0.99).start()
+        patch('src.battle_controller.hero_random.random', return_value=0.99).start()
         self.held = defaultdict(int)
         patch('src.battle_controller.key.get_pressed', side_effect=lambda: self.held).start()
 

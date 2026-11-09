@@ -111,34 +111,34 @@ msgstr ""
 "이곳은 도구점입니다.\n"
 "무슨 일로 오셨습니까?"
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Descendant of Erdrick, listen now to my words."
 msgstr "용사 로토의 피를 이어받은 자여! 자네가 돌아오기를 기다리고 있었다네."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
 msgstr ""
 "먼 옛날, 전설의 용사 로토는 신으로부터 빛의 구슬을 부여받아 이 세상을 덮고 있던 "
 "마물들을 봉인했다고 하네."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid ""
 "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
 msgstr ""
 "허나 어디선가 나타난 악의 화신 용왕이 그 구슬을 어둠 속에 가두고 말았지! 이대로 "
 "가다가는 이 세상은 어둠에 집어 삼켜져 이윽고 멸망에 이르고 말 게야."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid ""
 "Now, {}, thou must help us recover the Ball of Light and restore peace to our "
 "land."
 msgstr "용사 {}! 용왕을 쓰러트리고 그 손으로 빛의 구슬을 되찾아 와 주게!"
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "The Dragonlord must be defeated."
 msgstr "용왕을 처치해야 합니다."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid ""
 "Take now whatever thou may find in these Treasure Chests to aid thee in thy "
 "quest."
@@ -146,11 +146,11 @@ msgstr ""
 "자네에게 선물을 주지! 거기 있는 보물 상자를 열도록 하게. 자네의 여행에 도움이 될 "
 "물건이 들어 있을 걸세."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then speak with the guards, for they have much knowledge that may aid thee."
 msgstr "그리고 이 방에 있는 자에게 물어보면 모험 수칙을 알려 줄 걸세."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "May the light shine upon thee, {}."
 msgstr "그럼 또 보세! 용사 {}!"
 
@@ -848,31 +848,31 @@ msgstr "에르드릭의 태블릿"
 msgid "Tablet"
 msgstr "석판"
 
-#: src/menu.py
+#: src/records.py
 msgid "The tablet reads as follows:"
 msgstr "석판에는 이렇게 쓰여 있다."
 
-#: src/menu.py
+#: src/records.py
 msgid "I am Erdrick and thou art my descendant."
 msgstr "나의 이름은 로토.\n나의 피를 이어받은 자여."
 
-#: src/menu.py
+#: src/records.py
 msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
 msgstr "라다톰 남쪽에 있는 마의 섬으로 건너가려면 세 가지 물건이 필요했다."
 
-#: src/menu.py
+#: src/records.py
 msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
 msgstr "나는 그것들을 모아 마의 섬으로 건너가 그곳에서 마왕을 쓰러뜨렸다."
 
-#: src/menu.py
+#: src/records.py
 msgid "Now I have entrusted the three items to three worthy keepers."
 msgstr "그리고 이제 그 세 가지 신비한 물건을 세 명의 현자에게 맡긴다."
 
-#: src/menu.py
+#: src/records.py
 msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
 msgstr "그대가 그것들을 찾아 나설 때까지 현자의 자손들이 지켜 줄 것이다."
 
-#: src/menu.py
+#: src/records.py
 msgid "When a new evil arises, find the three items, then fight!"
 msgstr "다시 악이 되살아나거든\n세 가지 물건을 모아 싸우거라!"
 
@@ -2839,6 +2839,7 @@ msgstr "용왕의 성에서 숨겨진 아래로 가는 길을 찾자."
 msgid "Search behind the Dragonlord's throne."
 msgstr "용왕의 옥좌 뒤를 조사하자."
 
+#: src/achievements.py
 #: src/quest_journal.py
 msgid "Defeat the Dragonlord."
 msgstr "용왕을 물리치자."
@@ -3184,6 +3185,7 @@ msgid "{} (hold): Rewind"
 msgstr "{} (누르고 있기): 되감기"
 
 #: src/controls_screen.py
+#: src/records.py
 msgid "JOURNAL"
 msgstr "모험 일지"
 
@@ -3216,6 +3218,7 @@ msgid "NO MESSAGES YET"
 msgstr "아직 대화가 없습니다"
 
 #: src/message_log.py
+#: src/records.py
 msgid "KING LORIK"
 msgstr "로릭 왕"
 
@@ -3247,6 +3250,7 @@ msgstr "여자"
 msgid "WISE MAN"
 msgstr "현자"
 
+#: src/achievements.py
 #: src/message_log.py
 msgid "DRAGONLORD"
 msgstr "용왕"
@@ -3319,3 +3323,405 @@ msgstr "연 보물 상자"
 #: src/stats_screen.py
 msgid "MONSTERS DEFEATED"
 msgstr "물리친 마물"
+
+#: src/auto_grind.py
+msgid "Auto-grind: not in this fight"
+msgstr "자동 사냥: 이 싸움에서는 안 된다"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: MP too low to heal"
+msgstr "자동 사냥 멈춤: 회복할 MP 부족"
+
+#: src/options_overlay.py
+msgid "DANGER"
+msgstr "위험"
+
+#: src/options_overlay.py
+msgid "AUTO-HEAL"
+msgstr "자동 회복"
+
+#: src/options_overlay.py
+msgid "KEEP 1 HEAL"
+msgstr "호이미 1번 남김"
+
+#: src/auto_grind.py
+msgid "Auto-grind: off to the inn"
+msgstr "자동 사냥: 여관으로 간다"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: no inn to go to"
+msgstr "자동 사냥 멈춤: 갈 수 있는 여관이 없다"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: lost the way"
+msgstr "자동 사냥 멈춤: 길을 잃었다"
+
+#: src/inn_trip.py
+msgid "Auto-grind: back to grinding"
+msgstr "자동 사냥: 사냥터로 돌아간다"
+
+#: src/options_overlay.py
+msgid "AUTO-INN"
+msgstr "자동 여관"
+
+#: src/quest_journal.py
+msgid "{} said:"
+msgstr "{}의 말:"
+
+#: src/quest_journal.py
+msgid "{} in {}"
+msgstr "{1}의 {0}"
+
+#: src/quest_journal.py
+msgid "An old man"
+msgstr "노인"
+
+#: src/quest_journal.py
+msgid "King Lorik"
+msgstr "로릭 왕"
+
+#: src/quest_journal.py
+msgid "A guard"
+msgstr "병사"
+
+#: src/quest_journal.py
+msgid "A soldier"
+msgstr "전사"
+
+#: src/quest_journal.py
+msgid "A wizard"
+msgstr "마법사"
+
+#: src/quest_journal.py
+msgid "A merchant"
+msgstr "상인"
+
+#: src/quest_journal.py
+msgid "A man"
+msgstr "남자"
+
+#: src/quest_journal.py
+msgid "A woman"
+msgstr "여자"
+
+#: src/quest_journal.py
+msgid "Tantegel Castle"
+msgstr "라다톰 성"
+
+#: src/quest_journal.py
+msgid "Brecconary"
+msgstr "라다톰 마을"
+
+#: src/quest_journal.py
+msgid "Garinham"
+msgstr "가라이"
+
+#: src/quest_journal.py
+msgid "Kol"
+msgstr "마이라"
+
+#: src/quest_journal.py
+msgid "Rimuldar"
+msgstr "리무르다"
+
+#: src/quest_journal.py
+msgid "Cantlin"
+msgstr "메르키드"
+
+#: src/quest_journal.py
+msgid "a shrine"
+msgstr "사당"
+
+#: src/records.py
+msgid "GOALS"
+msgstr "목표"
+
+#: src/records.py
+msgid "ERDRICK'S TABLET"
+msgstr "로토의 석판"
+
+#: src/options_overlay.py
+msgid "RANDOMNESS"
+msgstr "난수"
+
+#: src/options_overlay.py
+msgid "SEEDED"
+msgstr "시드 고정"
+
+#: src/achievements.py
+#: src/options_overlay.py
+msgid "ACHIEVEMENTS"
+msgstr "업적"
+
+#: src/controls_screen.py
+msgid "TROPHIES"
+msgstr "업적"
+
+#: src/achievements.py
+msgid "ACHIEVEMENT"
+msgstr "업적 달성"
+
+#: src/achievements.py
+msgid "UNLOCKED"
+msgstr "달성"
+
+#: src/achievements.py
+msgid "FIRST VICTORY"
+msgstr "첫 승리"
+
+#: src/achievements.py
+msgid "Win a fight."
+msgstr "싸움에서 이긴다."
+
+#: src/achievements.py
+msgid "STONE GUARDIAN"
+msgstr "돌의 파수꾼"
+
+#: src/achievements.py
+msgid "Defeat the Golem."
+msgstr "골렘을 물리친다."
+
+#: src/achievements.py
+msgid "DRAGON'S LAIR"
+msgstr "드래곤의 동굴"
+
+#: src/achievements.py
+msgid "Defeat the Green Dragon."
+msgstr "공주를 지키는 드래곤을 물리친다."
+
+#: src/achievements.py
+msgid "HOMECOMING"
+msgstr "귀환"
+
+#: src/achievements.py
+msgid "Bring Princess Gwaelin home."
+msgstr "로라 공주를 성으로 모셔 온다."
+
+#: src/achievements.py
+msgid "CURSED"
+msgstr "저주"
+
+#: src/achievements.py
+msgid "Find the Death Necklace."
+msgstr "죽음의 목걸이를 찾는다."
+
+#: src/achievements.py
+msgid "RAINBOW BRIDGE"
+msgstr "무지개 다리"
+
+#: src/achievements.py
+msgid "Make the Rainbow Bridge."
+msgstr "무지개 다리를 놓는다."
+
+#: src/achievements.py
+msgid "ERDRICK'S HEIR"
+msgstr "로토의 후예"
+
+#: src/achievements.py
+msgid "Wear Erdrick's Armor and wield Erdrick's Sword."
+msgstr "로토의 갑옷을 입고 로토의 검을 든다."
+
+#: src/achievements.py
+msgid "UNDYING"
+msgstr "불사신"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord without dying."
+msgstr "한 번도 죽지 않고 용왕을 물리친다."
+
+#: src/achievements.py
+msgid "UNDERDOG"
+msgstr "약자의 반란"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord at level 20 or lower."
+msgstr "레벨 20 이하로 용왕을 물리친다."
+
+#: src/achievements.py
+msgid "SWIFT"
+msgstr "질풍"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord in under two hours of play."
+msgstr "플레이 시간 2시간 안에 용왕을 물리친다."
+
+#: src/achievements.py
+msgid "MONSTER HUNTER"
+msgstr "마물 사냥꾼"
+
+#: src/achievements.py
+msgid "Defeat every kind of monster."
+msgstr "모든 종류의 마물을 물리친다."
+
+#: src/achievements.py
+msgid "QUICKSILVER"
+msgstr "수은"
+
+#: src/achievements.py
+msgid "Defeat a Metal Slime."
+msgstr "메탈 슬라임을 물리친다."
+
+#: src/achievements.py
+msgid "LEVEL 10"
+msgstr "레벨 10"
+
+#: src/achievements.py
+msgid "Reach level 10."
+msgstr "레벨 10이 된다."
+
+#: src/achievements.py
+msgid "LEVEL 20"
+msgstr "레벨 20"
+
+#: src/achievements.py
+msgid "Reach level 20."
+msgstr "레벨 20이 된다."
+
+#: src/achievements.py
+msgid "LEVEL 30"
+msgstr "레벨 30"
+
+#: src/achievements.py
+msgid "Reach the highest level."
+msgstr "최고 레벨이 된다."
+
+#: src/achievements.py
+msgid "CENTURION"
+msgstr "백전노장"
+
+#: src/achievements.py
+msgid "Win 100 fights."
+msgstr "싸움에서 100번 이긴다."
+
+#: src/achievements.py
+msgid "DISCRETION"
+msgstr "도망도 전략"
+
+#: src/achievements.py
+msgid "Run away from 50 fights."
+msgstr "싸움에서 50번 도망친다."
+
+#: src/achievements.py
+msgid "WANDERER"
+msgstr "방랑자"
+
+#: src/achievements.py
+msgid "Take 10000 steps."
+msgstr "10000걸음 걷는다."
+
+#: src/achievements.py
+msgid "RICHES"
+msgstr "갑부"
+
+#: src/achievements.py
+msgid "Carry 65535 gold."
+msgstr "65535골드를 가진다."
+
+#: src/achievements.py
+msgid "THOU ART DEAD"
+msgstr "죽어 버리다니"
+
+#: src/achievements.py
+msgid "Die for the first time."
+msgstr "처음으로 죽는다."
+
+#: src/title_menu.py
+msgid "Now the second hero's name.\n"
+msgstr "이제 두 번째 용사의 이름을 정하자.\n"
+
+#: src/options_overlay.py
+msgid "HEROES"
+msgstr "용사"
+
+#: src/options_overlay.py
+msgid "1 (NES)"
+msgstr "1 (NES)"
+
+#: src/options_overlay.py
+msgid "2"
+msgstr "2"
+
+#: src/battle_controller.py
+msgid "Command for {}?\n"
+msgstr "{}은/는 무엇을 할까?\n"
+
+#: src/battle_controller.py
+msgid "{} is still asleep.\n"
+msgstr "{}은/는 아직 잠들어 있다.\n"
+
+#: src/battle_controller.py
+msgid "{} is asleep.\n"
+msgstr "{}은/는 잠들어 버렸다!\n"
+
+#: data/text/dialog_lookup_table.py
+#: src/battle_controller.py
+msgid "{} hath fallen.\n"
+msgstr "{}은/는 쓰러졌다!\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Point decreased by {}.\n"
+msgstr "{}은/는 {}포인트의 대미지를 입었다!\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Points decreased by {}.\n"
+msgstr "{}은/는 {}포인트의 대미지를 입었다!\n"
+
+#: src/controls_screen.py
+msgid "P2 A"
+msgstr "P2 A 버튼"
+
+#: src/controls_screen.py
+msgid "P2 B"
+msgstr "P2 B 버튼"
+
+#: src/controls_screen.py
+msgid "P2 START"
+msgstr "P2 스타트"
+
+#: src/controls_screen.py
+msgid "P2 SELECT"
+msgstr "P2 셀렉트"
+
+#: src/controls_screen.py
+msgid "P2 UP"
+msgstr "P2 위"
+
+#: src/controls_screen.py
+msgid "P2 DOWN"
+msgstr "P2 아래"
+
+#: src/controls_screen.py
+msgid "P2 LEFT"
+msgstr "P2 왼쪽"
+
+#: src/controls_screen.py
+msgid "P2 RIGHT"
+msgstr "P2 오른쪽"
+
+#: data/text/dialog_lookup_table.py
+msgid "Who will it be?"
+msgstr "누가 할까?"
+
+#: src/options_overlay.py
+msgid "FALLEN HEROES"
+msgstr "쓰러진 용사"
+
+#: src/options_overlay.py
+msgid "INN"
+msgstr "여관까지"
+
+#: src/options_overlay.py
+msgid "GET UP"
+msgstr "일어선다"
+
+#: src/options_overlay.py
+msgid "CO-OP"
+msgstr "협력"
+
+#: src/options_overlay.py
+msgid "PARTY"
+msgstr "파티"
+
+#: src/options_overlay.py
+msgid "FREE ROAM"
+msgstr "자유 행동"

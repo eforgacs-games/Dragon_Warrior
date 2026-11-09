@@ -1,8 +1,8 @@
 """Save states (src/save_state.py): Shift + F1/F2/F3 saves the game into slot 1/2/3, F1/F2/F3 loads it. Not NES."""
 import json
 import os
-import random
 import tempfile
+from random import Random
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -18,6 +18,7 @@ from src.config.test_config import test_config
 from src.direction import Direction
 from src.maps import map_lookup
 from src.message_log import LogEntry
+from src.random_streams import encode_random_state, seed_all
 from src.save_state import GAME_VALUES, MOVEMENT_VALUES, STATE_FORMAT_VERSION, VERSION_KEY, StateError, \
     decode_snapshot, load_from_slot, migrate_snapshot, read_state, restore_snapshot, save_to_slot, state_path, take_snapshot
 from src.virtual_joypad import VirtualJoypad
@@ -107,7 +108,7 @@ class TestSnapshot(SaveStateTestCase):
     def test_save_change_everything_load(self):
         game = self.game
         self.go_to(game, 'Brecconary')
-        random.seed(SEED)
+        seed_all(SEED)
         self.run_frames(game, 50)
         player = game.player
         player.inventory.append('Magic Key')
@@ -135,7 +136,7 @@ class TestSnapshot(SaveStateTestCase):
         for npc in game.current_map.roaming_characters:
             npc.rect.x += 3
             npc.direction_value = Direction.LEFT.value
-        random.seed(99)
+        seed_all(99)
         self.go_to(game, 'Alefgard', ALEFGARD_GRASS, direction=Direction.RIGHT.value)
 
         load_from_slot(game, 1)
@@ -151,7 +152,7 @@ class TestSnapshot(SaveStateTestCase):
     def test_npcs_and_the_hero_are_put_back_pixel_for_pixel(self):
         game = self.game
         self.go_to(game, 'Brecconary')
-        random.seed(SEED)
+        seed_all(SEED)
         self.run_frames(game, 60)
         positions = [(npc.identifier, npc.rect.topleft, npc.direction_value, npc.is_moving)
                      for npc in game.current_map.roaming_characters]
@@ -215,7 +216,7 @@ class TestRedraw(SaveStateTestCase):
         game = self.game
         game.screen = pygame.display.get_surface()
         self.go_to(game, 'Brecconary')
-        random.seed(SEED)
+        seed_all(SEED)
         self.run_frames(game, 70)
         saved_screen = pygame.image.tobytes(game.screen, 'RGB')
         self.assertGreater(len(set(saved_screen)), 3)  # the map is on it
@@ -249,7 +250,7 @@ class TestReplay(SaveStateTestCase):
             patch.object(game.battle_ctrl, 'run_battle',
                          side_effect=lambda enemies: fights.append(enemies) or BattleOutcome.ESCAPED).start()
             self.go_to(game, map_name, coordinates)
-            random.seed(SEED)
+            seed_all(SEED)
 
         # without saving or loading
         reference = self.new_game()
@@ -275,7 +276,7 @@ class TestReplay(SaveStateTestCase):
         rolls.clear()
         loader = self.new_game()
         start(loader)
-        random.seed(5)
+        seed_all(5)
         self.go_to(loader, 'TantegelCourtyard')
         load_from_slot(loader, 1)
         rolls.clear()
@@ -407,12 +408,12 @@ class TestKeys(SaveStateTestCase):
 
     def test_waits_for_the_step_to_finish(self):
         game = self.game
-        self.run_frames(game, 20)  # partway through the second step down
+        self.run_frames(game, 8)  # partway through the first step down
         self.assertTrue(game.player.is_moving)
         self.press(K_F1, KMOD_SHIFT)
         self.assertFalse(os.path.exists(state_path(self.save_dir, 1)))
         for _ in range(40):
-            self.run_frames(game, 1, first_frame=20)
+            self.run_frames(game, 1, first_frame=8)
             if os.path.exists(state_path(self.save_dir, 1)):
                 break
         self.assertTrue(os.path.exists(state_path(self.save_dir, 1)))
@@ -505,6 +506,7 @@ GAME_KEPT_IN_THEIR_OWN_ENTRIES = {
     'battle_ctrl',  # 'last_battle_action' and 'pending_scripted_battle'
     'drawer',  # 'pop_up_window'
     'config',  # 'options': the options in force
+    'random_streams',  # 'random': the seed and every stream's state
     'cmd_menu',  # made again with the map
 }
 # The Game attributes a snapshot deliberately doesn't keep
@@ -514,20 +516,35 @@ GAME_NOT_KEPT = {
     'show_coordinates', 'last_coordinates', 'debug_tools', 'splash_screen_enabled', 'start_time',
     # Requests for a window or a state: a snapshot is taken with none asked for, and putting one back clears them
     'paused', 'pause_requested', 'cmd_menu_requested', 'options_requested', 'message_log_requested',
-    'auto_grind_requested', 'dungeon_map_requested', 'play_stats_requested', 'smart_a_pending', 'state_request',
-    'state_request_due',
+    'auto_grind_requested', 'dungeon_map_requested', 'play_stats_requested', 'achievements_requested',
+    'player_two_menu_requested', 'smart_a_pending', 'state_request', 'state_request_due',
     # Only set and read during a map change
     'last_map',
     # The snapshots' own machinery, and auto-grind, which drives the game rather than being part of it
     'autosave', 'rewind', 'auto_grind', 'play_clock',
     # The map's key handlers (src/map_hotkeys.py), which hold no state: their requests are listed above
     'hotkeys',
+    # Who is told of the game's events (src/game_events.py): set up once with the game, and the stats it counts in
+    # are always game.play_stats, whichever a state has put back
+    'event_bus',
     # The step, damage, fight and death logic moved out of Game, which keeps its state on the game (GAME_VALUES)
     'step_triggers', 'hero_damage', 'field_encounters', 'hero_death',
     # Drawing, timing and the game's other parts, which hold no state of the game
     'screen', 'big_map', 'graphics', 'tile_size', 'foreground_rects', 'loop_count', 'events', 'clock', 'frame_clock',
     'frame_pacer', 'calculation', 'directories', 'game_functions', 'music_player', 'sound', 'title_menu', 'ending',
     'settings',
+    # Kept for whoever plays on this computer, not with an adventure (src/achievements.py): putting a state back
+    # doesn't lock what was unlocked since
+    'achievements',
+    # The party's second hero is kept in its own entry (src/party.py), and put back on the map under the first
+    # (src/follower.py)
+    'companion', 'follower', 'first_hero', 'fallen_sheets',
+    # The hero sessions themselves (src/sessions.py): their attributes are the Game's, accounted for above
+    'main_session', 'sessions',
+    # Free roam's tasks (src/sessions.py RoamTask): not kept; a state is put back with the heroes together
+    'free_roam_scheduler', 'free_roam_tasks',
+    # Who carries Gwaelin while roaming apart: the story flag is kept; after a state, the first hero carries her
+    'gwaelin_carrier',
 }
 # The MovementController attributes a snapshot deliberately doesn't keep
 MOVEMENT_NOT_KEPT = {
@@ -544,7 +561,9 @@ class TestEverythingIsKept(SaveStateTestCase):
     repel_tick_pending once were)."""
 
     def test_every_game_attribute_is_kept_or_left_out_on_purpose(self):
-        attributes = set(vars(self.game)) - {'draw_temporary_text'}  # patched in by setUp
+        # The game's own and its hero session's (src/sessions.py: the per-hero ones, kept on the session)
+        session = set(vars(self.game.main_session)) - {'name', 'hero_key'}
+        attributes = (set(vars(self.game)) | session) - {'draw_temporary_text'}
         accounted_for = set(GAME_VALUES) | GAME_KEPT_IN_THEIR_OWN_ENTRIES | GAME_NOT_KEPT
         self.assertEqual(set(), attributes - accounted_for)
         self.assertEqual(set(), accounted_for - attributes, "listed above, but no longer in the Game")
@@ -571,6 +590,7 @@ class TestEverythingIsKept(SaveStateTestCase):
         self.go_to(game, 'Brecconary')
         snapshot = comparable(take_snapshot(game))
         snapshot[VERSION_KEY] = 1
+        snapshot['random'] = encode_random_state(Random(SEED).getstate())  # Python's one generator, before version 3
         for name in ('skip_next_encounter', 'repel_tick_pending'):
             del snapshot['game'][name]
         del snapshot['movement']['running_step']

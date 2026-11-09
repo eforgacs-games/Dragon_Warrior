@@ -7,7 +7,6 @@ darkness, the fades and the flashes cover the whole width."""
 import hashlib
 import os
 import tempfile
-import random
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import patch
@@ -21,6 +20,7 @@ from src.config.test_config import test_config
 from src.display_filters import SCALING_PIXEL_PERFECT, presentation_rect
 from src.frame_recorder import recording
 from src.game import Game
+from src.random_streams import seed_all
 from src.settings import load_settings
 from src.maps import map_lookup
 from src.options_overlay import OptionsOverlay, apply_option
@@ -54,7 +54,7 @@ def middle(game: Game) -> bytes:
 
 def walk(game: Game, frames: int = 40, before_frame=None) -> list[bytes]:
     """The pictures of the hero walking left then right (the 4:3 middle of each, and a hash of the whole)."""
-    random.seed(411)
+    seed_all(411)
     held_keys: defaultdict = defaultdict(int)
     pictures = []
     with patch('src.game.get_ticks', return_value=0), patch('src.movement.key.get_pressed', return_value=held_keys):

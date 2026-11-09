@@ -5,7 +5,7 @@ from pygame import mixer
 from src.chiptune import chiptune_library, is_chiptune, tagged_length_seconds
 from src.chiptune_soundtracks import is_clip
 from src.music_stream import MusicStream, Segment
-from src.sound import music_channel
+from src.sound import audio_event, music_channel
 from src.waiting import POLL_INTERVAL_MS, game_ticks, wait
 
 
@@ -48,8 +48,10 @@ class MusicPlayer:
         A chiptune track loops by itself, as on the console: the NES's MSC_ENTR_FGHT track already runs into the fight
         loop, so only a clip (src/chiptune_soundtracks.py), which ends, is followed by then_loop."""
         if not self.music_enabled:
+            audio_event('music', path, loop=loop, then_loop=then_loop)
             return
         self.stop_music()  # also drops anything queued
+        audio_event('music', path, loop=loop, then_loop=then_loop)  # after the stop, which is part of it
         if is_chiptune(path):
             self._play_chiptune(self._chiptune_segments(path, loop, then_loop))
             return
@@ -89,6 +91,7 @@ class MusicPlayer:
         channel. With the music off (or a chiptune clip without libgme), nothing plays, but wait_for_music_end still
         waits as long as the clip lasts."""
         self.stop_music()
+        audio_event('clip', path)
         self._clip_end_ticks = None
         if self.music_enabled:
             if not is_chiptune(path):
@@ -127,24 +130,28 @@ class MusicPlayer:
         self.wait_for_music_end(config)
 
     def stop_music(self):
+        audio_event('stop_music')
         if self.music_enabled:
             mixer.music.stop()
             if self._stream is not None:
                 self._stream.stop()
 
     def pause_music(self):
+        audio_event('pause_music')
         if self.music_enabled:
             mixer.music.pause()
             if self._stream is not None:
                 self._stream.pause()
 
     def unpause_music(self):
+        audio_event('unpause_music')
         if self.music_enabled:
             mixer.music.unpause()
             if self._stream is not None:
                 self._stream.unpause()
 
     def fadeout_music(self, fadeout_time):
+        audio_event('fadeout_music', milliseconds=fadeout_time)
         if self.music_enabled:
             mixer.music.fadeout(fadeout_time)
             if self._stream is not None:

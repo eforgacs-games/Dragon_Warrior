@@ -209,13 +209,13 @@ class TestDragonlordBattle(unittest.TestCase):
 
     def test_run_odds_follow_try_run(self):
         # Player rolls 100 * agility 100 = 10000; enemy rolls 200 * defense 75 = 15000: blocked
-        with patch('src.battle.random.randint', side_effect=[200, 100]):
+        with patch('src.battle.hero_random.randint', side_effect=[200, 100]):
             self.assertFalse(can_run_away(100, 75, 4))
         # Same rolls against a group 1 enemy: 200 & 0x3F = 8, so 8 * 75 = 600: escapes
-        with patch('src.battle.random.randint', side_effect=[200, 100]):
+        with patch('src.battle.hero_random.randint', side_effect=[200, 100]):
             self.assertTrue(can_run_away(100, 75, 1))
         # Equal products count as a successful run (no borrow in the NES subtraction)
-        with patch('src.battle.random.randint', side_effect=[100, 100]):
+        with patch('src.battle.hero_random.randint', side_effect=[100, 100]):
             self.assertTrue(can_run_away(75, 75, 4))
 
     def test_blocked_run_from_dragonlord_gives_him_a_turn(self):
@@ -223,7 +223,7 @@ class TestDragonlordBattle(unittest.TestCase):
         cmd_menu = Mock()
         cmd_menu.game.battle_ctrl.enemy_move = Mock(return_value=False)
         player = Mock(agility=1, current_hp=50)
-        with patch('src.battle.random.randint', return_value=255):
+        with patch('src.battle.hero_random.randint', return_value=255):
             self.assertFalse(battle.battle_run(cmd_menu, player, battle))
         cmd_menu.game.battle_ctrl.enemy_move.assert_called_once_with(battle)
 

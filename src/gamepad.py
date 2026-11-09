@@ -4,7 +4,9 @@ A controller doesn't get a code path of its own: it presses keyboard keys. Every
 (src/waiting.py ``poll_virtual_joypad`` before the event queue is read, ``with_virtual_keys`` wherever
 ``key.get_pressed()`` is, the same two hooks auto-grind's virtual joypad uses, src/virtual_joypad.py). Each poll it
 
-- finds the controller to read: the first one plugged in, opened again whenever controllers are plugged in or out
+- finds the controller to read: the first one plugged in (and, for co-op's player 2, the second: ``Gamepads``, whose
+  buttons press player 2's keys, src/controls.py PLAYER_TWO_ACTIONS), opened again whenever controllers are plugged in
+  or out
   (``check_devices``, which only compares ``pygame.joystick.get_count()`` when nothing changed, so with no controller
   a poll costs one call);
 - reads its state (``PadState``: the buttons down, named the way SDL's GameController API names them, and the left
@@ -29,7 +31,7 @@ from collections.abc import Iterable
 from typing import Any, NamedTuple, Protocol
 
 import pygame
-from pygame import KEYDOWN, KEYUP, K_DOWN, K_LEFT, K_RIGHT, K_UP
+from pygame import KEYDOWN, KEYUP, K_DOWN, K_KP2, K_KP4, K_KP6, K_KP8, K_LEFT, K_RIGHT, K_UP
 
 from src import controls
 from src.waiting import set_gamepad, step_game_speed
@@ -64,8 +66,10 @@ def d_pad() -> tuple[tuple[str, str], ...]:
     return tuple((button, direction) for direction in DIRECTIONS if (button := pad.get(direction)))
 
 
-def button_bindings(buttons: Iterable[str]) -> dict[int, int]:
-    """The key (and its modifiers) each action of these pad buttons presses: its first key."""
+def button_bindings(buttons: Iterable[str], player: int = controls.PLAYER_ONE) -> dict[int, int]:
+    """The key (and its modifiers) each action of these pad buttons presses: its first key. Player 2's controller
+    (co-op) only has the NES buttons, laid out as player 1's, and presses player 2's keys for them
+    (controls.PLAYER_TWO_ACTIONS)."""
     pressed: dict[int, int] = {}
     held = set(buttons)
     pad = controls.current_controls().pad
@@ -73,7 +77,12 @@ def button_bindings(buttons: Iterable[str]) -> dict[int, int]:
         button = pad.get(action.name)
         if action.name in DIRECTIONS or action.name == NEXT_SPEED or button is None or button not in held:
             continue
-        binding = controls.first_binding(action.name)
+        name = action.name
+        if player == controls.PLAYER_TWO:
+            if name not in controls.PLAYER_TWO_ACTIONS:
+                continue
+            name = controls.PLAYER_TWO_ACTIONS[name]
+        binding = controls.first_binding(name)
         if binding is not None:
             pressed.setdefault(binding.key, binding.mod)
     return pressed
@@ -91,13 +100,18 @@ POLL_WAIT_MS = 10  # how often read_button looks at the pad
 TRIGGER_PRESS = 0.5
 
 
-def direction_key(direction: str) -> int:
-    """The key a direction presses: its first key (an NES direction always has one, src/controls.py)."""
+def direction_key(direction: str, player: int = controls.PLAYER_ONE) -> int:
+    """The key a direction presses: its first key (an NES direction always has one, src/controls.py), player 2's own
+    for player 2's controller."""
+    if player == controls.PLAYER_TWO:
+        binding = controls.first_binding(controls.PLAYER_TWO_ACTIONS[direction])
+        return binding.key if binding is not None else PLAYER_TWO_DIRECTION_KEYS[direction]
     binding = controls.first_binding(direction)
     return binding.key if binding is not None else DEFAULT_DIRECTION_KEYS[direction]
 
 
 DEFAULT_DIRECTION_KEYS = {UP: K_UP, DOWN: K_DOWN, LEFT: K_LEFT, RIGHT: K_RIGHT}
+PLAYER_TWO_DIRECTION_KEYS = {UP: K_KP8, DOWN: K_KP2, LEFT: K_KP4, RIGHT: K_KP6}
 
 
 class PadState(NamedTuple):
@@ -153,10 +167,13 @@ class PadBackend(Protocol):
 
 
 class Gamepad:
-    """The player's controller (see the module docstring)."""
+    """The player's controller (see the module docstring). ``player`` 2's (co-op) is the second controller plugged in
+    (``slot`` 1), and presses player 2's keys."""
 
-    def __init__(self, backend: PadBackend) -> None:
+    def __init__(self, backend: PadBackend, player: int = controls.PLAYER_ONE, slot: int = 0) -> None:
         self.backend = backend
+        self.player = player
+        self.slot = slot
         self.device: PadDevice | None = None
         self.device_count = 0
         self.held: set[int] = set()
@@ -203,8 +220,15 @@ class Gamepad:
             self.press(set())
             self.direction = None
             self.speed_pressed = False
-        if count:
-            self.device = self.backend.open_first()
+        if count > self.slot:
+            self.device = self.open_device()
+
+    def open_device(self) -> PadDevice | None:
+        """This slot's controller: the first one, or the slot's in order (open_nth) for player 2's."""
+        if self.slot == 0:
+            return self.backend.open_first()
+        open_nth = getattr(self.backend, 'open_nth', None)
+        return open_nth(self.slot) if open_nth is not None else None
 
     def update(self, state: PadState | None) -> None:
         """Press and let go of the keys for the controller's state (None: no controller, nothing down)."""
@@ -216,17 +240,17 @@ class Gamepad:
         self.direction = pad_direction(state, self.direction)
         speed_button = controls.current_controls().pad.get(NEXT_SPEED)
         speed_pressed = speed_button is not None and speed_button in state.buttons
-        if speed_pressed and not self.speed_pressed:
+        if speed_pressed and not self.speed_pressed and self.player == controls.PLAYER_ONE:
             step_game_speed()
         self.speed_pressed = speed_pressed
-        bindings = button_bindings(state.buttons)
+        bindings = button_bindings(state.buttons, self.player)
         self.press(self.pad_keys(state, bindings), bindings)
 
     def pad_keys(self, state: PadState, bindings: dict[int, int] | None = None) -> set[int]:
         """The keys the pad holds down: its buttons' actions' and its one direction's."""
-        keys = set(button_bindings(state.buttons) if bindings is None else bindings)
+        keys = set(button_bindings(state.buttons, self.player) if bindings is None else bindings)
         if self.direction is not None:
-            keys.add(direction_key(self.direction))
+            keys.add(direction_key(self.direction, self.player))
         return keys
 
     def read_button(self, timeout_ms: int) -> str | None:
@@ -387,29 +411,74 @@ class SdlBackend:
         return pygame.joystick.get_count()
 
     def open_first(self) -> PadDevice | None:
+        return self.open_nth(0)
+
+    def open_nth(self, slot: int) -> PadDevice | None:
+        """The controller in this place among those that can be opened (0 the first, 1 the second: player 2's)."""
         controller = sdl_controller_module()
+        found = 0
         for index in range(self.count()):
             try:
                 if controller is not None and controller.is_controller(index):
-                    return ControllerDevice(controller.Controller(index))
-                joystick = pygame.joystick.Joystick(index)
-                joystick.init()
-                return JoystickDevice(joystick)
+                    device: PadDevice = ControllerDevice(controller.Controller(index))
+                else:
+                    joystick = pygame.joystick.Joystick(index)
+                    joystick.init()
+                    device = JoystickDevice(joystick)
             except pygame.error:
                 continue
+            if found == slot:
+                return device
+            device.close()
+            found += 1
         return None
 
 
-_gamepad: Gamepad | None = None
+class Gamepads:
+    """Player 1's controller and player 2's (co-op), read together: polled one after the other, their keys held
+    together (what src/waiting.py reads of a gamepad)."""
+
+    def __init__(self, *pads: Any) -> None:
+        self.pads = list(pads)
+
+    def add(self, pad: Any) -> None:
+        """Read another source of keys with them: anything with ``poll``, ``held`` and ``disconnect`` (network play's
+        player 2, src/netplay.py RemoteJoypad)."""
+        self.pads.append(pad)
+
+    @property
+    def held(self) -> set[int]:
+        return set().union(*(pad.held for pad in self.pads))
+
+    def poll(self) -> None:
+        for pad in self.pads:
+            pad.poll()
+
+    def connect(self) -> None:
+        set_gamepad(self)
+
+    def disconnect(self) -> None:
+        set_gamepad(None)
+        for pad in self.pads:
+            pad.disconnect()
+
+
+_gamepads: Gamepads | None = None
+
+
+def connected_gamepads() -> Gamepads | None:
+    """The controllers the game reads (connect_gamepad), if it has connected them."""
+    return _gamepads
 
 
 def connect_gamepad() -> Gamepad:
-    """Read the player's controller from now on (the game calls this once, at the start). Plugged in or not: one
-    plugged in later is found then."""
-    global _gamepad
-    if _gamepad is None:
-        _gamepad = Gamepad(SdlBackend())
-    _gamepad.connect()
-    gamepad = _gamepad
+    """Read the players' controllers from now on (the game calls this once, at the start): the first one plugged in
+    is player 1's, the second player 2's. Plugged in or not: one plugged in later is found then. Returns player 1's."""
+    global _gamepads
+    if _gamepads is None:
+        backend = SdlBackend()
+        _gamepads = Gamepads(Gamepad(backend), Gamepad(backend, player=controls.PLAYER_TWO, slot=1))
+    _gamepads.connect()
+    gamepad = _gamepads.pads[0]
     controls.set_pad_reader(gamepad.read_button, lambda: gamepad.device is not None)
-    return _gamepad
+    return gamepad

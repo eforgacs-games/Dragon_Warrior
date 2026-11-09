@@ -6,7 +6,8 @@ rewind (src/save_state.py), so loading either puts the counts back as they were 
 so does a log saved before the counts were kept.
 
 They're always counted, whatever the STATS PAGE option says (it only decides whether P shows them), so turning the page
-on shows everything done so far. Each is counted where it happens, in one line:
+on shows everything done so far. The play time is ticked by PlayClock; everything else is counted from the game's
+events (src/game_events.py), each announced in one place, where it happens:
 
 - play time: PlayClock ticks it (tick) whenever any of the game's loops passes a frame or a wait polls (src/waiting.py
   frame_passed: the map, fights, dialogs, menus, shops), so everything played counts. It's real time, the same at any
@@ -15,23 +16,25 @@ on shows everything done so far. Each is counted where it happens, in one line:
   window being dragged doesn't add hours. The clock only runs once Game.main has started play (not on the title
   screen), and not while the game is paused (START) or while one of the pages the map's keys open is up (the options
   overlay, the dungeon map, the message log, the stats page, the quest journal, the help: PlayClock.stopped);
-- steps: StepTriggers.count_step (src/step_triggers.py), every step that ends on a new block;
-- fights won, fled and lost: BattleController.fight_enemy. Fled is the hero running away; an enemy that runs away is
-  none of the three. A fight won counts its enemy as a monster defeated, by name; the Dragonlord's two forms are one
-  fight, counted once, as the Dragonlord;
-- deaths: HeroDeath.handle_death (src/hero_death.py), in a fight or on the map (a swamp or barrier step);
-- gold earned: a won fight's gold (Battle.enemy_defeated), a treasure chest's (CommandMenu.take_gold) and what shops
-  pay for what the hero sells or trades in (data/text/dialog_lookup_table.py); gold spent: what shops and inns are
-  paid. The gold lost on dying isn't spent;
-- chests opened: CommandMenu.open_chest, every chest taken, an empty one too.
+- steps: StepTaken, from StepTriggers.count_step (src/step_triggers.py), every step that ends on a new block;
+- fights won, fled and lost: FightWon, RanAway and FightLost, from BattleController.fight_enemy. Fled is the hero
+  running away; an enemy that runs away is none of the three. A fight won counts its enemy as a monster defeated, by
+  name; the Dragonlord's two forms are one fight, counted once, as the Dragonlord;
+- deaths: HeroDied, from HeroDeath.handle_death (src/hero_death.py), in a fight or on the map (a swamp or barrier step);
+- gold earned (GoldEarned): a won fight's gold (Battle.enemy_defeated), a treasure chest's (CommandMenu.take_gold) and
+  what shops pay for what the hero sells or trades in (data/text/dialog_lookup_table.py); gold spent (GoldSpent): what
+  shops and inns are paid. The gold lost on dying isn't spent;
+- chests opened: ChestOpened, from CommandMenu.open_chest, every chest taken, an empty one too.
 """
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field, fields
 from typing import Any
 
 from pygame.time import get_ticks
 
+from src.game_events import (ChestOpened, EventBus, FightLost, FightWon, GoldEarned, GoldSpent, HeroDied, RanAway,
+                             StepTaken)
 from src.waiting import set_frame_listener
 
 SAVE_KEY = 'PlayStats'
@@ -141,6 +144,19 @@ class PlayClock:
             yield
         finally:
             self.running = was_running
+
+
+def subscribe_play_stats(events: EventBus, current: Callable[[], PlayStats]) -> None:
+    """Count the game's events in ``current()``, the stats there are as each event happens: loading a log or a state
+    replaces the game's PlayStats, and the new ones count from then on, with nothing to subscribe again."""
+    events.subscribe(StepTaken, lambda _event: current().take_step())
+    events.subscribe(FightWon, lambda event: current().won_fight(event.enemy_name))
+    events.subscribe(RanAway, lambda _event: current().ran_away())
+    events.subscribe(FightLost, lambda _event: current().lost_fight())
+    events.subscribe(HeroDied, lambda _event: current().died())
+    events.subscribe(GoldEarned, lambda event: current().earn_gold(event.amount))
+    events.subscribe(GoldSpent, lambda event: current().spend_gold(event.amount))
+    events.subscribe(ChestOpened, lambda _event: current().open_chest())
 
 
 def counter_names() -> tuple[str, ...]:

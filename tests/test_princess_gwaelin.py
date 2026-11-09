@@ -214,15 +214,16 @@ class TestPrincessGwaelin(TestCase):
         self.game.story_flags.gwaelin_returned = True
         gwaelin_dialog = self.dialog_lookup.lookup_table['TantegelThroneRoom']['PRINCESS_GWAELIN']['dialog']
         self.assertEqual(gwaelin_dialog, (self.dialog_lookup.princess_gwaelin_throne_room,))
-        with patch('data.text.dialog_lookup_table.random.randint', return_value=0):
+        # NES PrincessDialog: bits 5-6 of RandNumUB (AND #$60); the other bits don't matter
+        with patch('data.text.dialog_lookup_table.world_random.randint', return_value=0x9F):
             self.assertEqual(self.spoken_lines(self.dialog_lookup.princess_gwaelin_throne_room),
                              ["Even when we two are parted by great distances, I shall be with thee."])
-        with patch('data.text.dialog_lookup_table.random.randint', return_value=3):
+        with patch('data.text.dialog_lookup_table.world_random.randint', return_value=0x60):
             self.assertEqual(self.spoken_lines(self.dialog_lookup.princess_gwaelin_throne_room),
                              ["I love thee, Edward."])
-        for random_bits in (1, 2):
-            with self.subTest(random_bits=random_bits), \
-                    patch('data.text.dialog_lookup_table.random.randint', return_value=random_bits), \
+        for random_byte in (0x20, 0x40):
+            with self.subTest(random_byte=random_byte), \
+                    patch('data.text.dialog_lookup_table.world_random.randint', return_value=random_byte), \
                     patch.object(self.dialog_lookup, 'dost_thou_love_me') as dost_thou_love_me:
                 self.dialog_lookup.princess_gwaelin_throne_room()
                 dost_thou_love_me.assert_called_once()

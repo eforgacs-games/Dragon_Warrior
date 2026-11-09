@@ -220,7 +220,7 @@ class TestRoamingNPCMovement(TestCase):
         self.place(player, player.rect.y // self.tile_size, player.rect.x // self.tile_size)
         player_tile = (player.row, player.column)
         steps = 0
-        with patch('src.movement.random', rng):
+        with patch('src.movement.world_random', rng):
             for _ in range(ROUNDS * TURNS_PER_CYCLE):
                 before = {npc: (npc.row, npc.column) for npc in npcs}
                 taken = set(before.values()) | {(npc.row, npc.column) for npc in current_map.fixed_characters}

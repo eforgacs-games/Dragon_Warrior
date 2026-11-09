@@ -5,7 +5,6 @@ controller holds a reference to the game (MovementGame) and reads what it shares
 player, the map, the camera) from it each time, since the game replaces some of them (a map change makes a new map).
 Where an NPC may step, as far as the map goes, is src/npc_movement.py; when the NPCs move is src/npc_schedule.py.
 """
-import random
 from typing import TYPE_CHECKING, Any, Protocol
 
 from pygame import key
@@ -14,7 +13,7 @@ from src.calculation import Calculation, get_tile_id_by_coordinates
 from src.camera import Camera
 from src.common import B_BUTTON_KEYS, DOWN_KEYS, LEFT_KEYS, RIGHT_KEYS, UP_KEYS, is_facing_down, \
     is_facing_laterally, is_facing_left, is_facing_medially, is_facing_right, is_facing_up
-from src.direction import Direction
+from src.direction import Direction, nes_direction
 from src.directories import Directories
 from src.game_functions import set_character_position
 from src.game_state import GameState
@@ -22,6 +21,7 @@ from src.map_hotkeys import MAP_REQUESTS
 from src.npc_movement import npc_may_step_onto, step
 from src.npc_schedule import NPCSchedule, POP_UP_FRAME
 from src.player.player import Player
+from src.random_streams import world_random
 from src.sound import Sound
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
@@ -310,7 +310,7 @@ class MovementController:
             self.player.is_moving = True
             self.running_step = running
         # not sure if setting the player sprites to dirty makes a difference
-        self.current_map.player_sprites.dirty = 1
+        self.player.dirty = 1
         if is_facing_medially(self.player):
             self.move_medially(self.player)
             on_a_tile = self.camera.pos[1] % self.tile_size == 0
@@ -319,7 +319,7 @@ class MovementController:
             on_a_tile = self.camera.pos[0] % self.tile_size == 0
         else:
             on_a_tile = True
-        self.current_map.player_sprites.dirty = 1
+        self.player.dirty = 1
         if not on_a_tile:
             return
         if self.player.bumped:
@@ -453,7 +453,7 @@ class MovementController:
                 # this causes the fade out to happen a square before the player touches a staircase
                 next_cam_pos_y = curr_cam_pos_y + delta_y
                 # character.row += -delta_y // 2
-        if character.identifier == 'HERO' and self.game_state.enable_movement:
+        if character is self.player and self.game_state.enable_movement:
             self.camera.pos = self.move_and_handle_sides_collision(next_cam_pos_x, next_cam_pos_y)
 
     @staticmethod
@@ -475,9 +475,18 @@ class MovementController:
     def character_in_path(self, character: Player | RoamingCharacter | FixedCharacter) -> bool:
         """Whether the tile in front of a character is taken by someone else: where they stand, or the origin and
         destination of a step they're taking (NES: an NPC can't move onto the player's position or next position, or
-        onto another NPC's)."""
+        onto another NPC's). The party's second hero is someone else to an NPC, not to the first hero."""
         next_coordinates = step(character.row, character.column, character.direction_value)
         others = [*self.current_map.fixed_characters, *self.current_map.roaming_characters, self.player]
+        follower = getattr(self.game, 'follower', None)
+        companion = follower.on_map() if follower is not None else None
+        if companion is not None and character is not self.player:
+            # The party's second hero (src/follower.py) blocks the NPCs, not the first hero, who may step onto them
+            others.append(companion)
+        heroes_on = getattr(self.game, 'heroes_on', None)
+        if heroes_on is not None and follower is not None and follower.roaming_apart():
+            # Free roam co-op: the other hero on this map blocks everyone (src/sessions.py)
+            others += [hero for hero in heroes_on(self.current_map) if hero not in others]
         for other in others:
             if other is character:
                 continue
@@ -536,7 +545,7 @@ class MovementController:
         self.bump(character)
 
     def bump(self, character):
-        if character.identifier == 'HERO':
+        if str(character.identifier).startswith('HERO'):  # a hero, not an NPC (free roam: each session's own)
             # NES CheckCollision (DirectionBlocked) plays SFX_WALL_BUMP on every blocked step. move_player only
             # tries a step every 16 frames while the hero is held against something, so that's how often it plays.
             if character.current_tile not in ('BRICK_STAIR_UP', 'BRICK_STAIR_DOWN', 'GRASS_STAIR_DOWN'):
@@ -573,7 +582,10 @@ class MovementController:
     def update_sprites(self) -> None:
         """NES DoSprites: the walking animation and the roaming NPCs."""
         self.npc_schedule.start_sprites()
-        if self.game_state.enable_roaming and self.current_map.roaming_characters:
+        moves_npcs = getattr(self.game, 'moves_npcs', None)
+        if self.game_state.enable_roaming and self.current_map.roaming_characters and (
+                moves_npcs is None or moves_npcs(self.current_map) is True):
+            # On a map two heroes share (free roam co-op), the NPCs move once a frame, in the first's session
             # NES UpdateNPCs1: no NPC starts a new step once a pause or the command window has been asked for
             self.move_roaming_characters(start_new_steps=not self.freeze_pending)
             self.update_roaming_character_positions()
@@ -616,9 +628,9 @@ class MovementController:
                 self.continue_npc_step(roaming_character)
 
     def start_npc_step(self, roaming_character: RoamingCharacter) -> None:
-        """NES SetNPCDir and the checks after it: turn to a random direction, and take the first pixel of a step that
-        way if nothing is in the way (move checks it)."""
-        roaming_character.direction_value = random.choice(list(map(int, Direction)))
+        """NES SetNPCDir and the checks after it: turn to the direction in bits 5-6 of RandNumUB (AND #$60), and take
+        the first pixel of a step that way if nothing is in the way (move checks it)."""
+        roaming_character.direction_value = nes_direction((world_random.randint(0, 255) & 0x60) >> 5)
         self.begin_npc_step(roaming_character)
 
     def begin_npc_step(self, roaming_character: RoamingCharacter) -> bool:
@@ -643,7 +655,7 @@ class MovementController:
         hero's path: it stands still for at least 64 frames (about a second) after arriving."""
         sideways = [direction for direction in map(int, Direction) if direction % 2 != hero_direction % 2]
         facing = roaming_character.direction_value
-        for direction in [*random.sample(sideways, len(sideways)), hero_direction]:
+        for direction in [*world_random.sample(sideways, len(sideways)), hero_direction]:
             roaming_character.direction_value = direction
             if self.begin_npc_step(roaming_character):
                 roaming_character.turns_to_rest = 1

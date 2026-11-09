@@ -134,8 +134,8 @@ class TestCommandMenu(TestCase):
             stack.enter_context(patch.object(cmd_menu, 'set_tile_by_coordinates'))
             show_text = stack.enter_context(patch.object(cmd_menu, 'show_text_in_dialog_box'))
             if roll is not None:
-                stack.enter_context(patch('src.menu.random.randint', return_value=roll))
-                stack.enter_context(patch('src.items.random.randint', return_value=roll))
+                stack.enter_context(patch('src.menu.hero_random.randint', return_value=roll))
+                stack.enter_context(patch('src.items.hero_random.randint', return_value=roll))
             cmd_menu.take()
         return [call.args[0] for call in show_text.call_args_list]
 
@@ -320,7 +320,7 @@ class TestCommandMenu(TestCase):
         battle = MagicMock(no_op=False)
         battle.enemy = enemy
         self.game.cmd_menu.current_battle = battle
-        with patch('src.menu.random.randint', return_value=roll), \
+        with patch('src.menu.hero_random.randint', return_value=roll), \
                 patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line:
             self.game.cmd_menu.sleep()
         return battle, [c.args[0] for c in show_line.call_args_list]
@@ -367,7 +367,7 @@ class TestCommandMenu(TestCase):
         return battle
 
     def cast(self, spell, rolls):
-        with patch('src.menu.random.randint', side_effect=rolls) as randint, \
+        with patch('src.menu.hero_random.randint', side_effect=rolls) as randint, \
                 patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line, \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:
             getattr(self.game.cmd_menu, spell)()
@@ -637,7 +637,7 @@ class TestCommandMenu(TestCase):
                 self.assertEqual([c.args[0] for c in show_line.call_args_list], ['That cannot be used in battle.'])
 
     def use_in_battle(self, item_name, rolls=()):
-        with patch('src.menu.random.randint', side_effect=list(rolls)), \
+        with patch('src.menu.hero_random.randint', side_effect=list(rolls)), \
                 patch('src.music_player.mixer'), \
                 patch.object(self.game.cmd_menu, 'show_line_in_dialog_box') as show_line, \
                 patch.object(self.game.cmd_menu, 'show_text_in_dialog_box') as show_text:

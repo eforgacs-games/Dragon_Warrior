@@ -19,7 +19,7 @@ from src.maps_functions import get_center_point
 from src.npc_schedule import FRAMES_PER_CYCLE, FRAMES_PER_TURN
 from src.sprites.fixed_character import FixedCharacter
 from src.sprites.roaming_character import RoamingCharacter
-from tests.helpers import new_game
+from tests.helpers import new_game, npc_direction_roll
 
 W, B = 1, 3  # WALL, BRICK
 
@@ -117,7 +117,7 @@ class MakeWayTestCase(TestCase):
         self.check_nobody_overlaps()
 
     def frames(self, count, held=(), random_direction=Direction.LEFT.value):
-        with patch('src.movement.random.choice', return_value=random_direction):
+        with patch('src.movement.world_random.randint', return_value=npc_direction_roll(random_direction)):
             for _ in range(count):
                 self.frame(held=held)
 

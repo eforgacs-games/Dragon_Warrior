@@ -24,11 +24,16 @@ gamepad (src/gamepad.py) plugs in at the same two places, polled just before the
 the game, and auto-grind, as the player's own key presses.
 
 Every loop passes through here each frame (the map's FrameClock.tick, the other loops' get_events, and every wait), so
-it's also where the play time (src/play_stats.py PlayClock) is told that time has gone by: the frame listener
+it's also where the play time (src/play_stats.py PlayClock) and the NES's random number (src/random_streams.py, which
+steps every frame as the NES's GetJoypadStatus steps it) are told that time has gone by: the frame listeners
 (set_frame_listener).
 
-This module imports nothing from ``src`` but src/controls.py and src/zoom.py (which import nothing from ``src`` but
-src/display_window.py), so any module can use it without an import cycle.
+This module imports nothing from ``src`` but src/controls.py, src/tasks.py and src/zoom.py (which import nothing from
+``src`` but src/display_window.py), so any module can use it without an import cycle.
+
+Inside a task (src/tasks.py: free roam co-op, a hero's play running a frame at a time beside the other's), ``wait``
+hands its frames back to the scheduler instead of sleeping, ``get_events`` returns the task's own events, and
+``check_for_quit`` leaves the window's events to whoever runs the tasks. Outside any task, nothing here changes.
 
 The selection windows don't speed up (#440): their cursor (src/cursor.py: the blink, the held button's retrigger, the
 "let go first" of a button held as a window opens) and their loops (src/selection.py next_frame) run on the menu
@@ -45,6 +50,7 @@ from typing import Any, NamedTuple, Protocol, override
 
 from pygame import KEYDOWN, QUIT, display, event, key, quit as pygame_quit, time
 
+from src.tasks import current_task, next_task_frame
 from src.controls import NEXT_SPEED_ACTION, SPEED_ACTIONS, action_keys, actions_for_event, controls_version
 from src.zoom import handle_zoom_event
 
@@ -105,7 +111,7 @@ _rounding_carry = 0.0  # real milliseconds that rounding waits to whole millisec
 # settings (src/settings.py)
 _speed_listener: Callable[[int], None] | None = None
 # Called whenever a loop passes a frame or a wait polls (frame_passed): the play time's clock (src/play_stats.py)
-_frame_listener: Callable[[], None] | None = None
+_frame_listeners: dict[str, Callable[[], None]] = {}
 # The options overlay's GAME SPEED switch (GAME_SPEED_KEYS, src/game_options.py): off, keys 1 to 5 do nothing
 # (they are still taken out of the event loops, so they never count as "any key"). options_overlay.apply_option sets it.
 _speed_keys_enabled = True
@@ -138,10 +144,14 @@ _virtual_joypad: VirtualJoypadHook | None = None  # the connected virtual joypad
 
 
 class GamepadHook(Protocol):
-    """What this module needs of a gamepad (src/gamepad.py Gamepad)."""
-    held: set[int]
+    """What this module needs of a gamepad (src/gamepad.py Gamepad, or Gamepads for both players')."""
 
-    def poll(self) -> None: ...
+    @property
+    def held(self) -> set[int]:
+        """The keys it holds down."""
+
+    def poll(self) -> None:
+        """Post the presses due since the last poll."""
 
 
 _gamepad: GamepadHook | None = None  # the player's gamepad, if the game has connected one (src/gamepad.py)
@@ -173,7 +183,10 @@ def virtual_joypad() -> VirtualJoypadHook | None:
 def poll_virtual_joypad(context: str = WINDOW_CONTEXT) -> None:
     """Let the connected virtual joypad post the presses that are due on the game clock, and look at the keys the
     player pressed, before the caller reads the event queue. ``context`` says who is reading. The gamepad, if one is
-    connected, posts its presses first, so the virtual joypad sees them as the player's."""
+    connected, posts its presses first, so the virtual joypad sees them as the player's. Inside a task (src/tasks.py)
+    nothing is polled: whoever runs the tasks polls once a frame and gives the tasks the events."""
+    if current_task() is not None:
+        return
     if _gamepad is not None:
         _gamepad.poll()
     if _virtual_joypad is not None:
@@ -241,16 +254,19 @@ def set_speed_listener(listener: Callable[[int], None] | None) -> None:
     _speed_listener = listener
 
 
-def set_frame_listener(listener: Callable[[], None] | None) -> None:
-    """Have listener called whenever a loop passes a frame or a wait polls (None for nothing)."""
-    global _frame_listener
-    _frame_listener = listener
+def set_frame_listener(listener: Callable[[], None] | None, name: str = 'play time') -> None:
+    """Have listener called whenever a loop passes a frame or a wait polls, in place of the last one set under this
+    name (None for none)."""
+    if listener is None:
+        _frame_listeners.pop(name, None)
+    else:
+        _frame_listeners[name] = listener
 
 
 def frame_passed() -> None:
-    """Tell the frame listener that time has gone by in one of the game's loops."""
-    if _frame_listener is not None:
-        _frame_listener()
+    """Tell the frame listeners that time has gone by in one of the game's loops."""
+    for listener in tuple(_frame_listeners.values()):
+        listener()
 
 
 def set_speed_keys_enabled(enabled: bool) -> None:
@@ -404,6 +420,10 @@ def get_events(*args: Any, quit_on_close: bool = False, **kwargs: Any) -> list[e
     The two loops that read the queue themselves on purpose: Game.read_events (the map) keeps the speed keys, which
     the map's hotkeys announce (SPEED_CHANGED), and polls the virtual joypad for the map; ControlsScreen.read_key
     reads the speed keys as keys to bind, and skips the gamepad's key events."""
+    task = current_task()
+    if task is not None:
+        # A task's events are its own, given it each frame by whoever runs the tasks (src/tasks.py)
+        return task.take_events()
     frame_passed()
     poll_virtual_joypad()
     events = []
@@ -413,6 +433,17 @@ def get_events(*args: Any, quit_on_close: bool = False, **kwargs: Any) -> list[e
         if not handle_speed_key(current_event) and not handle_zoom_event(current_event):
             events.append(current_event)
     return events
+
+
+def queued_key_presses() -> list[event.Event]:
+    """Take the key presses queued so far off the queue (inside a task, off the task's own events: src/tasks.py), for
+    a window that drops what was pressed before it opened."""
+    task = current_task()
+    if task is not None:
+        presses = [current_event for current_event in task.events if current_event.type == KEYDOWN]
+        task.events = [current_event for current_event in task.events if current_event.type != KEYDOWN]
+        return presses
+    return event.get(KEYDOWN)
 
 
 def poll_speed_keys() -> None:
@@ -481,7 +512,9 @@ def clear_events_keeping_quit() -> None:
 def check_for_quit() -> None:
     """Quit if the window has been closed, and change the game speed if 1 to 5 is held. Nothing is taken off the
     queue: ``event.peek`` only looks (and pumps), so other events stay queued, and tests that script ``event.get``
-    aren't fed this check's calls."""
+    aren't fed this check's calls. Inside a task (src/tasks.py) whoever runs the tasks does this, once a frame."""
+    if current_task() is not None:
+        return
     frame_passed()
     if display.get_init():
         if event.peek(QUIT):
@@ -500,6 +533,11 @@ def wait(milliseconds: float, config: dict | None = None) -> None:
     if config is not None and config.get('NO_WAIT'):
         return
     end = game_ticks() + milliseconds
+    if current_task() is not None:
+        # Inside a task (src/tasks.py): the frames go to the other tasks until the game clock is past the end
+        while game_ticks() < end:
+            next_task_frame()
+        return
     slept = 0.0  # game milliseconds the slices slept add up to
     while True:
         check_for_quit()

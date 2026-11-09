@@ -1,4 +1,3 @@
-import random
 import unittest
 from collections import Counter
 from unittest.mock import patch
@@ -14,6 +13,7 @@ from src.encounters import (
 )
 from src.enemy_lookup import enemy_string_lookup
 from src.maps import map_lookup
+from src.random_streams import hero_random, seed_all
 from tests.helpers import new_game
 
 # The NES data, copied byte for byte from Bank03 of the nmikstas disassembly.
@@ -199,22 +199,18 @@ class TestFightChance(unittest.TestCase):
         for tile in ('TOWN', 'CASTLE', 'CAVE'):
             with self.subTest(tile=tile):
                 self.assertIsNone(fight_mask(tile, 0, 0))
-                self.assertFalse(any(step_starts_fight('Alefgard', tile, 20, 20) for _ in range(200)))
+                self.assertFalse(any(step_starts_fight('Alefgard', tile, 20, 20, roll) for roll in range(256)))
 
     def test_parity_uses_nes_coordinates(self):
-        # Alefgard's layout is offset by (8, 7), an odd sum, so layout (column + row) even is NES (x + y) odd.
-        with patch('src.encounters.random.randint', return_value=1) as randint:
-            step_starts_fight('Alefgard', 'GRASS', 20, 20)
-            self.assertEqual(randint.call_args.args, (0, 0x0F))
-            step_starts_fight('Alefgard', 'GRASS', 20, 21)
-            self.assertEqual(randint.call_args.args, (0, 0x1F))
-            # Garin's Grave is offset by (1, 1)
-            step_starts_fight('GarinsGraveB1', 'TREASURE_BOX', 20, 20)
-            self.assertEqual(randint.call_args.args, (0, 0x1F))
+        # Alefgard's layout is offset by (8, 7), an odd sum, so layout (column + row) even is NES (x + y) odd. A roll
+        # of $10 is a fight with the mask $0F (NormFightChance) but not with $1F (HighFightChance).
+        self.assertTrue(step_starts_fight('Alefgard', 'GRASS', 20, 20, 0x10))
+        self.assertFalse(step_starts_fight('Alefgard', 'GRASS', 20, 21, 0x10))
+        # Garin's Grave is offset by (1, 1)
+        self.assertFalse(step_starts_fight('GarinsGraveB1', 'TREASURE_BOX', 20, 20, 0x10))
 
-    def test_seeded_fight_rate_per_block(self):
-        random.seed(230)
-        trials = 64000
+    def test_fight_rate_per_block(self):
+        # Of the 256 values the step's RandNumUB can take, the share that starts a fight
         # (map, tile, column, row, expected chance)
         for map_identifier, tile, column, row, expected in (
                 ('Alefgard', 'SAND', 20, 20, 1 / 8),
@@ -228,48 +224,48 @@ class TestFightChance(unittest.TestCase):
                 ('CharlockB1', 'BARRIER', 10, 10, 1 / 16),
         ):
             with self.subTest(map=map_identifier, tile=tile, position=(column, row)):
-                fights = sum(step_starts_fight(map_identifier, tile, column, row) for _ in range(trials))
-                self.assertAlmostEqual(fights / trials, expected, delta=expected * 0.15)
+                fights = sum(step_starts_fight(map_identifier, tile, column, row, roll) for roll in range(256))
+                self.assertEqual(expected, fights / 256)
 
 
 class TestZoneZero(unittest.TestCase):
 
     def test_zone_zero_check(self):
         # HighFightModifier (hills: RandNumUB AND 3) and NormFightModifier (RandNumUB AND 1)
-        with patch('src.encounters.random.randint', return_value=0) as randint:
+        with patch('src.encounters.hero_random.randint', return_value=0) as randint:
             self.assertTrue(passes_zone_zero_check('HILLS'))
             self.assertEqual(randint.call_args.args, (0, 3))
             self.assertTrue(passes_zone_zero_check('GRASS'))
             self.assertEqual(randint.call_args.args, (0, 1))
-        with patch('src.encounters.random.randint', return_value=1):
+        with patch('src.encounters.hero_random.randint', return_value=1):
             self.assertFalse(passes_zone_zero_check('HILLS'))
             self.assertFalse(passes_zone_zero_check('GRASS'))
 
     def test_zone_zero_rate_near_tantegel(self):
         # Two zone-0 squares: NES zones (2, 2) and (3, 2). Grass at even/odd parity: 1/16 * 1/2 = 1/32.
-        random.seed(43)
+        seed_all(43)
         trials = 64000
         column, row = 40 + 8, 35 + 7  # NES (40, 35): zone (2, 2), x + y odd
         self.assertEqual(encounter_group('Alefgard', column, row), 0)
-        fights = sum(roll_encounter('Alefgard', 'GRASS', column, row) is not None for _ in range(trials))
+        fights = sum(roll_encounter('Alefgard', 'GRASS', column, row, hero_random.randint(0, 255)) is not None
+                     for _ in range(trials))
         self.assertAlmostEqual(fights / trials, 1 / 32, delta=1 / 32 * 0.15)
-        fights = sum(roll_encounter('Alefgard', 'HILLS', column, row) is not None for _ in range(trials))
+        fights = sum(roll_encounter('Alefgard', 'HILLS', column, row, hero_random.randint(0, 255)) is not None
+                     for _ in range(trials))
         self.assertAlmostEqual(fights / trials, 1 / 32, delta=1 / 32 * 0.15)
 
     def test_other_zones_skip_the_check(self):
         column, row = 60 + 8, 35 + 7  # NES (60, 35): zone (4, 2), row $02
-        with patch('src.encounters.random.randint', return_value=0) as randint, \
+        with patch('src.encounters.hero_random.randint', return_value=0) as randint, \
                 patch.object(encounters, 'passes_zone_zero_check') as zone_zero:
-            self.assertEqual(roll_encounter('Alefgard', 'GRASS', column, row), ENEMY_GROUPS[2])
+            self.assertEqual(roll_encounter('Alefgard', 'GRASS', column, row, 0), ENEMY_GROUPS[2])
         zone_zero.assert_not_called()
-        randint.assert_called_once()
+        randint.assert_not_called()  # the step's roll was drawn as the step's checks began
 
     def test_no_fight_when_the_step_roll_fails(self):
-        with patch('src.encounters.random.randint', return_value=1):
-            self.assertIsNone(roll_encounter('GarinsGraveB2', 'BRICK', 5, 5))
-        with patch('src.encounters.random.randint', return_value=0):
-            self.assertEqual(roll_encounter('GarinsGraveB2', 'BRICK', 5, 5), ENEMY_GROUPS[7])
-            self.assertIsNone(roll_encounter('ErdricksCaveB1', 'BRICK', 5, 5))
+        self.assertIsNone(roll_encounter('GarinsGraveB2', 'BRICK', 5, 5, 1))
+        self.assertEqual(roll_encounter('GarinsGraveB2', 'BRICK', 5, 5, 0), ENEMY_GROUPS[7])
+        self.assertIsNone(roll_encounter('ErdricksCaveB1', 'BRICK', 5, 5, 0))
 
 
 class TestPickEnemy(unittest.TestCase):
@@ -277,13 +273,13 @@ class TestPickEnemy(unittest.TestCase):
     def test_rerolls_slots_five_to_seven(self):
         # GetEnemyInRow: RandNumUB AND 7, again while >= 5
         group = ENEMY_GROUPS[0x13]
-        with patch('src.encounters.random.randint', side_effect=[7, 5, 6, 3]) as randint:
+        with patch('src.encounters.hero_random.randint', side_effect=[7, 5, 6, 3]) as randint:
             self.assertEqual(pick_enemy(group), group[3])
         self.assertEqual(randint.call_count, 4)
         self.assertEqual(randint.call_args.args, (0, 7))
 
     def test_each_slot_equally_likely(self):
-        random.seed(5)
+        seed_all(5)
         trials = 50000
         counts = Counter(pick_enemy(ENEMY_GROUPS[0x13]) for _ in range(trials))
         # Ghost, Magician, Scorpion: 1 slot each; Druin: 2 slots
@@ -322,7 +318,7 @@ class TestHandleBattles(unittest.TestCase):
         self.game.tiles_moved_since_spawn += 1
 
     def fight_roll(self):
-        with patch('src.encounters.random.randint', return_value=0) as randint, \
+        with patch('src.encounters.hero_random.randint', return_value=0) as randint, \
                 patch.object(self.game.battle_ctrl, 'run_battle') as run_battle:
             self.game.field_encounters.handle_battles()
             while self.game.movement.hill_pause_frames:  # on a hill, the roll comes after the pause
@@ -337,8 +333,27 @@ class TestHandleBattles(unittest.TestCase):
                          'HILLS')
         randint, run_battle = self.fight_roll()
         run_battle.assert_called_once_with(ENEMY_GROUPS[0])
-        # the step roll (1 in 8 on hills), then zone 0's extra roll (1 in 4 on hills)
-        self.assertEqual([c.args for c in randint.call_args_list], [(0, 7), (0, 3)])
+        # CheckBlockDmg's UpdateRandNum as the step's checks begin (ANDed with 7 on hills after the pause), then zone
+        # 0's extra roll (1 in 4 on hills)
+        self.assertEqual([c.args for c in randint.call_args_list], [(0, 255), (0, 3)])
+
+    def test_every_step_draws_its_roll_whatever_the_block(self):
+        # NES CheckBlockDmg starts with UpdateRandNum on every step, in a town too
+        self.step_onto('Brecconary', 15, 15)
+        randint, run_battle = self.fight_roll()
+        self.assertEqual([(0, 255)], [c.args for c in randint.call_args_list])
+        run_battle.assert_not_called()
+
+    def test_the_hills_roll_is_the_one_drawn_before_the_pause(self):
+        # NES ChkBlkSand: the three WaitForNMI don't read the joypad, so RandNumUB is still the step's after them
+        self.step_onto('Alefgard', 37, 62)
+        with patch('src.field_encounters.hero_random.randint', return_value=1), \
+                patch.object(self.game.battle_ctrl, 'run_battle') as run_battle:
+            self.game.field_encounters.handle_battles()
+            self.assertEqual(1, self.game.step_roll)
+            while self.game.movement.hill_pause_frames:
+                self.game.movement.hill_pause_frame()
+        run_battle.assert_not_called()  # 1 AND 7 isn't 0
 
     def test_one_check_per_step(self):
         self.step_onto('GarinsGraveB2', 3, 12)
@@ -409,7 +424,7 @@ class TestHandleBattles(unittest.TestCase):
         self.step_onto('GarinsGraveB2', 3, 12)
         self.assertIn((3, 12), self.game.current_map.staircases)
         self.game.tiles_moved_since_spawn = self.game.last_amount_of_tiles_moved + 5  # past a new map's wait for stairs
-        with patch('src.encounters.random.randint', return_value=0), \
+        with patch('src.encounters.hero_random.randint', return_value=0), \
                 patch.object(self.game.battle_ctrl, 'run_battle', return_value=outcome) as run_battle:
             self.game.field_encounters.handle_battles()
         run_battle.assert_called_once()

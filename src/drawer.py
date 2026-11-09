@@ -107,6 +107,12 @@ class Drawer:
         map or background, a tile added or replaced, the palette (low HP, the bad ending) or the roofs."""
         return self.background is big_map and self._drawn_in_full == drawn_tiles_state(current_map, self.background)
 
+    def forget_drawn_in_full(self) -> None:
+        """Have the next first frame (loop_count 1) draw every tile again, even on the same map and tiles: a snapshot
+        put back on the map on screen (the rewind, src/save_state.py) moves the hero and the NPCs anywhere at once, so
+        the frames they were last drawn in stay on the background where only the tiles under them now are redrawn."""
+        self._drawn_in_full = None
+
     def get_enemy_image(self, enemy_name):
         """The enemy's scaled image and its top-left position on the screen."""
         enemy_path = f'{self.directories.IMAGES_ENEMIES_DIR}/{enemy_name.replace(" ", "")}.png'
@@ -157,7 +163,7 @@ class Drawer:
         for identifier, character_dict in current_map.characters.items():
             character = character_dict['character']
             # NES $B957: an NPC on the other side of the cover from the hero isn't drawn
-            if identifier == 'HERO' or not current_map.is_hidden_by_cover(character.row, character.column):
+            if identifier.startswith('HERO') or not current_map.is_hidden_by_cover(character.row, character.column):
                 foreground_rects.append(character_dict['character_sprites'].draw(background)[0])
             self.handle_sprite_animation(enable_animate, character_dict)
 
@@ -328,6 +334,11 @@ class Drawer:
         left_throne_room = game.story_flags.left_throne_room
         if events is None:
             events = game.events
+        # The party's second hero (src/follower.py), put on a new map before it's drawn
+        follower = getattr(game, 'follower', None)
+        if follower is not None:
+            follower.sync()
+        companion = follower.on_map() if follower is not None else None
 
         # In the WIDE view (src/view.py) the map is drawn across the whole display, and the screen is its middle
         view, view_x = full_screen(screen), screen_origin_x(screen)
@@ -403,8 +414,16 @@ class Drawer:
         # Every character is drawn onto the background each frame, on screen or not, so the tiles under every character
         # are redrawn each frame too, on screen or not. Otherwise a character off screen leaves its old frames on the
         # background, and they show up as a ghost once the camera scrolls over them (#98).
-        block_corners_to_draw = block_corners_under_rects([player_check_rect] + fixed_character_rects + all_roaming_rects,
-                                              tile_size)
+        companion_rects = []
+        if companion is not None:
+            # Under the second hero and where they were last frame, and the block types there
+            companion_rects.append(get_surrounding_rect(companion, tile_size))
+            tile_types_to_draw += replace_characters_with_underlying_tiles(
+                convert_numeric_tile_list_to_unique_tile_values(
+                    current_map, tile_values_under_rect(companion_rects[0], current_map.layout, tile_size)),
+                current_map.character_key)
+        block_corners_to_draw = block_corners_under_rects([player_check_rect] + fixed_character_rects + all_roaming_rects
+                                                          + companion_rects, tile_size)
         tile_types_set = set(tile_types_to_draw)
         cover_cells_to_draw = set()
         for tile, tile_dict in current_map.floor_tile_key.items():

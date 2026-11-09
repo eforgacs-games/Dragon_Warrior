@@ -119,41 +119,41 @@ msgstr ""
 "How may we be of service to thee this day?"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Descendant of Erdrick, listen now to my words."
 msgstr "Scion of the bloodline of Erdrick, hero of legend! Long have I awaited thy coming!"
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "It is told that in ages past Erdrick fought demons with a Ball of Light."
 msgstr "In days of yore, thy revered ancestor did receive of the Almighty Goddess the Sphere of Light, and by its power was our world rid of the menace which did beset it."
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then came the Dragonlord who stole the precious globe and hid it in the darkness."
 msgstr "Yet, alas, there did arise a new threat--the Dragonlord. With his cunning, he did steal away the Sphere of Light from us, plunging the land into darkness once more."
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Now, {}, thou must help us recover the Ball of Light and restore peace to our land."
 msgstr "So I say unto thee, {}, vanquish the accursed Dragonlord, and reclaim the Sphere of Light!"
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "The Dragonlord must be defeated."
 msgstr "The accursed Dragonlord must be vanquished."
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."
 msgstr "In the chests o'er yonder wilt thou find items to aid thee on thy quest. Take what thou wilt, with my blessing."
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Then speak with the guards, for they have much knowledge that may aid thee."
 msgstr "Partake thee also of the wisdom of those loyal subjects gathered here. Their knowledge will serve thee as well as any shield."
 
 #. official: map.3.0.0
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "May the light shine upon thee, {}."
 msgstr "May the Goddess guide thee to victory, brave {}!"
 
@@ -943,37 +943,37 @@ msgid "Tablet"
 msgstr "Stone Tablet"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "The tablet reads as follows:"
 msgstr "The following message is etched into its surface:"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "I am Erdrick and thou art my descendant."
 msgstr "I am Erdrick. Hear me well, bearer of my blood, heir to my destiny..."
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
 msgstr "If you would reach the evil island visible from Tantegel's shore, you will require the three sacred artefacts."
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
 msgstr "I gathered them, crossed to that accursed isle, and destroyed the source of all evil."
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Now I have entrusted the three items to three worthy keepers."
 msgstr "Before my passing, I entrusted the three objects to three great sages."
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
 msgstr "If the fates have been kind, their descendants guard them still. Seek them out!"
 
 #. official: map.18.0.0
-#: src/menu.py
+#: src/records.py
 msgid "When a new evil arises, find the three items, then fight!"
 msgstr "When evil rules the ill-starred isle once more, gather the hallowed triad, and strike a blow for the cause of light."
 
@@ -3213,6 +3213,7 @@ msgstr "Find the hidden staircase in the Dragonlord's Castle."
 msgid "Search behind the Dragonlord's throne."
 msgstr "Search behind the Dragonlord's throne."
 
+#: src/achievements.py
 #: src/quest_journal.py
 msgid "Defeat the Dragonlord."
 msgstr "Defeat the Dragonlord."
@@ -3563,6 +3564,7 @@ msgid "{} (hold): Rewind"
 msgstr "{} (hold): Rewind"
 
 #: src/controls_screen.py
+#: src/records.py
 msgid "JOURNAL"
 msgstr "JOURNAL"
 
@@ -3596,6 +3598,7 @@ msgid "NO MESSAGES YET"
 msgstr "NO MESSAGES YET"
 
 #: src/message_log.py
+#: src/records.py
 msgid "KING LORIK"
 msgstr "KING"
 
@@ -3627,6 +3630,7 @@ msgstr "WOMAN"
 msgid "WISE MAN"
 msgstr "WISE MAN"
 
+#: src/achievements.py
 #: src/message_log.py
 msgid "DRAGONLORD"
 msgstr "DRAGONLORD"
@@ -3700,3 +3704,405 @@ msgstr "CHESTS OPENED"
 #: src/stats_screen.py
 msgid "MONSTERS DEFEATED"
 msgstr "MONSTERS DEFEATED"
+
+#: src/auto_grind.py
+msgid "Auto-grind: not in this fight"
+msgstr "Auto-grind: not in this fight"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: MP too low to heal"
+msgstr "Auto-grind stopped: MP too low to heal"
+
+#: src/options_overlay.py
+msgid "DANGER"
+msgstr "DANGER"
+
+#: src/options_overlay.py
+msgid "AUTO-HEAL"
+msgstr "AUTO-HEAL"
+
+#: src/options_overlay.py
+msgid "KEEP 1 HEAL"
+msgstr "KEEP 1 HEAL"
+
+#: src/auto_grind.py
+msgid "Auto-grind: off to the inn"
+msgstr "Auto-grind: off to the inn"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: no inn to go to"
+msgstr "Auto-grind stopped: no inn to go to"
+
+#: src/auto_grind.py
+msgid "Auto-grind stopped: lost the way"
+msgstr "Auto-grind stopped: lost the way"
+
+#: src/inn_trip.py
+msgid "Auto-grind: back to grinding"
+msgstr "Auto-grind: back to grinding"
+
+#: src/options_overlay.py
+msgid "AUTO-INN"
+msgstr "AUTO-INN"
+
+#: src/quest_journal.py
+msgid "{} said:"
+msgstr "{} said:"
+
+#: src/quest_journal.py
+msgid "{} in {}"
+msgstr "{} in {}"
+
+#: src/quest_journal.py
+msgid "An old man"
+msgstr "An old man"
+
+#: src/quest_journal.py
+msgid "King Lorik"
+msgstr "His Majesty the King"
+
+#: src/quest_journal.py
+msgid "A guard"
+msgstr "A guard"
+
+#: src/quest_journal.py
+msgid "A soldier"
+msgstr "A soldier"
+
+#: src/quest_journal.py
+msgid "A wizard"
+msgstr "A wizard"
+
+#: src/quest_journal.py
+msgid "A merchant"
+msgstr "A merchant"
+
+#: src/quest_journal.py
+msgid "A man"
+msgstr "A man"
+
+#: src/quest_journal.py
+msgid "A woman"
+msgstr "A woman"
+
+#: src/quest_journal.py
+msgid "Tantegel Castle"
+msgstr "Tantegel Castle"
+
+#: src/quest_journal.py
+msgid "Brecconary"
+msgstr "the town of Tantegel"
+
+#: src/quest_journal.py
+msgid "Garinham"
+msgstr "Galenholm"
+
+#: src/quest_journal.py
+msgid "Kol"
+msgstr "Kol"
+
+#: src/quest_journal.py
+msgid "Rimuldar"
+msgstr "Rimuldar"
+
+#: src/quest_journal.py
+msgid "Cantlin"
+msgstr "Cantlin"
+
+#: src/quest_journal.py
+msgid "a shrine"
+msgstr "a shrine"
+
+#: src/records.py
+msgid "GOALS"
+msgstr "GOALS"
+
+#: src/records.py
+msgid "ERDRICK'S TABLET"
+msgstr "ERDRICK'S TABLET"
+
+#: src/options_overlay.py
+msgid "RANDOMNESS"
+msgstr "RANDOMNESS"
+
+#: src/options_overlay.py
+msgid "SEEDED"
+msgstr "SEEDED"
+
+#: src/achievements.py
+#: src/options_overlay.py
+msgid "ACHIEVEMENTS"
+msgstr "ACHIEVEMENTS"
+
+#: src/controls_screen.py
+msgid "TROPHIES"
+msgstr "TROPHIES"
+
+#: src/achievements.py
+msgid "ACHIEVEMENT"
+msgstr "ACHIEVEMENT"
+
+#: src/achievements.py
+msgid "UNLOCKED"
+msgstr "UNLOCKED"
+
+#: src/achievements.py
+msgid "FIRST VICTORY"
+msgstr "FIRST VICTORY"
+
+#: src/achievements.py
+msgid "Win a fight."
+msgstr "Win a battle."
+
+#: src/achievements.py
+msgid "STONE GUARDIAN"
+msgstr "STONE GUARDIAN"
+
+#: src/achievements.py
+msgid "Defeat the Golem."
+msgstr "Defeat the golem."
+
+#: src/achievements.py
+msgid "DRAGON'S LAIR"
+msgstr "DRAGON'S LAIR"
+
+#: src/achievements.py
+msgid "Defeat the Green Dragon."
+msgstr "Defeat the green dragon."
+
+#: src/achievements.py
+msgid "HOMECOMING"
+msgstr "HOMECOMING"
+
+#: src/achievements.py
+msgid "Bring Princess Gwaelin home."
+msgstr "Bring Princess Gwaelin home."
+
+#: src/achievements.py
+msgid "CURSED"
+msgstr "CURSED"
+
+#: src/achievements.py
+msgid "Find the Death Necklace."
+msgstr "Find the Choker."
+
+#: src/achievements.py
+msgid "RAINBOW BRIDGE"
+msgstr "RAINBOW BRIDGE"
+
+#: src/achievements.py
+msgid "Make the Rainbow Bridge."
+msgstr "Make the rainbow bridge."
+
+#: src/achievements.py
+msgid "ERDRICK'S HEIR"
+msgstr "ERDRICK'S HEIR"
+
+#: src/achievements.py
+msgid "Wear Erdrick's Armor and wield Erdrick's Sword."
+msgstr "Wear Erdrick's Armour and wield Erdrick's Sword."
+
+#: src/achievements.py
+msgid "UNDYING"
+msgstr "UNDYING"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord without dying."
+msgstr "Defeat the Dragonlord without dying."
+
+#: src/achievements.py
+msgid "UNDERDOG"
+msgstr "UNDERDOG"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord at level 20 or lower."
+msgstr "Defeat the Dragonlord at level 20 or lower."
+
+#: src/achievements.py
+msgid "SWIFT"
+msgstr "SWIFT"
+
+#: src/achievements.py
+msgid "Defeat the Dragonlord in under two hours of play."
+msgstr "Defeat the Dragonlord in under two hours of play."
+
+#: src/achievements.py
+msgid "MONSTER HUNTER"
+msgstr "MONSTER HUNTER"
+
+#: src/achievements.py
+msgid "Defeat every kind of monster."
+msgstr "Defeat every kind of monster."
+
+#: src/achievements.py
+msgid "QUICKSILVER"
+msgstr "QUICKSILVER"
+
+#: src/achievements.py
+msgid "Defeat a Metal Slime."
+msgstr "Defeat a metal slime."
+
+#: src/achievements.py
+msgid "LEVEL 10"
+msgstr "LEVEL 10"
+
+#: src/achievements.py
+msgid "Reach level 10."
+msgstr "Reach level 10."
+
+#: src/achievements.py
+msgid "LEVEL 20"
+msgstr "LEVEL 20"
+
+#: src/achievements.py
+msgid "Reach level 20."
+msgstr "Reach level 20."
+
+#: src/achievements.py
+msgid "LEVEL 30"
+msgstr "LEVEL 30"
+
+#: src/achievements.py
+msgid "Reach the highest level."
+msgstr "Reach the highest level."
+
+#: src/achievements.py
+msgid "CENTURION"
+msgstr "CENTURION"
+
+#: src/achievements.py
+msgid "Win 100 fights."
+msgstr "Win 100 battles."
+
+#: src/achievements.py
+msgid "DISCRETION"
+msgstr "DISCRETION"
+
+#: src/achievements.py
+msgid "Run away from 50 fights."
+msgstr "Run away from 50 battles."
+
+#: src/achievements.py
+msgid "WANDERER"
+msgstr "WANDERER"
+
+#: src/achievements.py
+msgid "Take 10000 steps."
+msgstr "Take 10000 steps."
+
+#: src/achievements.py
+msgid "RICHES"
+msgstr "RICHES"
+
+#: src/achievements.py
+msgid "Carry 65535 gold."
+msgstr "Carry 65535 gold coins."
+
+#: src/achievements.py
+msgid "THOU ART DEAD"
+msgstr "THOU ART DEAD"
+
+#: src/achievements.py
+msgid "Die for the first time."
+msgstr "Die for the first time."
+
+#: src/title_menu.py
+msgid "Now the second hero's name.\n"
+msgstr "Now the second hero's name.\n"
+
+#: src/options_overlay.py
+msgid "HEROES"
+msgstr "HEROES"
+
+#: src/options_overlay.py
+msgid "1 (NES)"
+msgstr "1 (NES)"
+
+#: src/options_overlay.py
+msgid "2"
+msgstr "2"
+
+#: src/battle_controller.py
+msgid "Command for {}?\n"
+msgstr "What will {} do?\n"
+
+#: src/battle_controller.py
+msgid "{} is still asleep.\n"
+msgstr "{} is asleep...\n"
+
+#: src/battle_controller.py
+msgid "{} is asleep.\n"
+msgstr "{} falls asleep!\n"
+
+#: data/text/dialog_lookup_table.py
+#: src/battle_controller.py
+msgid "{} hath fallen.\n"
+msgstr "{} has been defeated!\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Point decreased by {}.\n"
+msgstr "{} takes {} point of damage!\n"
+
+#: src/hero_damage.py
+msgid "{}'s Hit Points decreased by {}.\n"
+msgstr "{} takes {} points of damage!\n"
+
+#: src/controls_screen.py
+msgid "P2 A"
+msgstr "P2 A"
+
+#: src/controls_screen.py
+msgid "P2 B"
+msgstr "P2 B"
+
+#: src/controls_screen.py
+msgid "P2 START"
+msgstr "P2 START"
+
+#: src/controls_screen.py
+msgid "P2 SELECT"
+msgstr "P2 SELECT"
+
+#: src/controls_screen.py
+msgid "P2 UP"
+msgstr "P2 UP"
+
+#: src/controls_screen.py
+msgid "P2 DOWN"
+msgstr "P2 DOWN"
+
+#: src/controls_screen.py
+msgid "P2 LEFT"
+msgstr "P2 LEFT"
+
+#: src/controls_screen.py
+msgid "P2 RIGHT"
+msgstr "P2 RIGHT"
+
+#: data/text/dialog_lookup_table.py
+msgid "Who will it be?"
+msgstr "Who will it be?"
+
+#: src/options_overlay.py
+msgid "FALLEN HEROES"
+msgstr "FALLEN HEROES"
+
+#: src/options_overlay.py
+msgid "INN"
+msgstr "INN"
+
+#: src/options_overlay.py
+msgid "GET UP"
+msgstr "GET UP"
+
+#: src/options_overlay.py
+msgid "CO-OP"
+msgstr "CO-OP"
+
+#: src/options_overlay.py
+msgid "PARTY"
+msgstr "PARTY"
+
+#: src/options_overlay.py
+msgid "FREE ROAM"
+msgstr "FREE ROAM"

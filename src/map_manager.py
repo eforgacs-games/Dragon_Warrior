@@ -147,16 +147,23 @@ class MapManager:
         sound going up or down stairs."""
         self.game_state.pause_all_movement()
         self.last_map = self.current_map
-        self.current_map = next_map
-        self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
-        self.apply_rainbow_bridge()
-        if isinstance(self.current_map, maps.CharlockB1) and self.game.story_flags.charlock_stairs_revealed:
-            # NES GetBlockID: once F_PSG_FOUND is set, the block behind the throne reads as stairs down for good
-            self.current_map.reveal_hidden_staircase()
-        self.apply_chest_history()
-        self.place_princess_gwaelin()
-        if self.game.story_flags.dragonlord_defeated:
-            self.current_map.apply_dragonlord_defeated()
+        hero_key = self.game.current_session.hero_key
+        leaving = self.last_map
+        if leaving is not None and self.game.map_shared_with(leaving.identifier) is leaving:
+            # Free roam co-op: the other hero stays on the map this hero leaves, without them (src/sessions.py)
+            leaving.characters.pop(hero_key, None)
+        shared = self.game.map_shared_with(next_map.identifier)
+        self.current_map = next_map if shared is None else shared
+        if shared is None:
+            self.current_map.layout = self.layouts.map_layout_lookup[self.current_map.__class__.__name__]
+            self.apply_rainbow_bridge()
+            if isinstance(self.current_map, maps.CharlockB1) and self.game.story_flags.charlock_stairs_revealed:
+                # NES GetBlockID: once F_PSG_FOUND is set, the block behind the throne reads as stairs down for good
+                self.current_map.reveal_hidden_staircase()
+            self.apply_chest_history()
+            self.place_princess_gwaelin()
+            if self.game.story_flags.dragonlord_defeated:
+                self.current_map.apply_dragonlord_defeated()
         if fade_out_first:
             # NES ScreenFadeOut ($A743) -> PalFadeOut, for MapChngWithSound and MapChngFadeNoSound
             screen_fade(fade_out=True, screen=self.screen, config=self.game_state.config)
@@ -165,7 +172,8 @@ class MapManager:
         if stairs_sound:
             self.sound.play_sound(self.directories.stairs_sfx)  # SFX_STAIRS
         self.set_big_map()
-        self.set_roaming_character_positions()
+        if shared is None:
+            self.set_roaming_character_positions()
         is_warp = destination_coordinates is not None
         came_up_stairs = False
         if is_warp:
@@ -185,7 +193,12 @@ class MapManager:
                 self.current_map.layout[row][column])
         elif destination_coordinates:
             self.set_underlying_tiles_on_map_change(destination_coordinates)
-        self.current_map.load_map(self.player, destination_coordinates, self.tile_size)
+        if shared is None:
+            self.current_map.load_map(self.player, destination_coordinates, self.tile_size, hero_key)
+        else:
+            # The other hero is on this map (free roam co-op): join it as it is (src/sessions.py)
+            self.current_map.join_map(self.player, destination_coordinates or self.current_map.initial_coordinates,
+                                      self.tile_size, hero_key)
         if not self.current_map.is_dark:
             self.game_state.reset_light()
         if direction is not None:

@@ -164,7 +164,7 @@ class TestOnePressATurn(unittest.TestCase):
         battle = self.fight('Magician')
         controller_random = MagicMock()
         controller_random.randint.side_effect = lambda low, _high: low  # the spell is cast, for its least damage
-        with patch('src.battle_controller.random', controller_random):
+        with patch('src.battle_controller.hero_random', controller_random):
             events = self.play_turn(battle, 'Fight')
         self.assertEqual(self.buttons(events), ['command'], events)
         lines = self.lines(events)
@@ -177,7 +177,7 @@ class TestOnePressATurn(unittest.TestCase):
         battle = self.fight('Slime')
         battle.enemy.refresh_pattern = lambda: None
         battle.enemy.pattern = [(100, Spell.SLEEP, True), 'ATTACK']
-        with patch('src.battle_controller.random.randint', side_effect=lambda low, _high: low):
+        with patch('src.battle_controller.hero_random.randint', side_effect=lambda low, _high: low):
             self.game.battle_ctrl.enemy_move(battle)
         self.assertEqual(self.buttons(self.events), [], self.events)
         self.assertEqual(self.lines(self.events), ['Slime chants the spell of SLEEP.', 'Thou art asleep.\n',

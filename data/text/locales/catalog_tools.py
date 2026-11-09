@@ -99,7 +99,8 @@ def unextractable_gettext_calls(root: Path = ROOT) -> list[str]:
 def dynamic_messages() -> dict[str, list[str]]:
     """Text that reaches _() through a variable: item, spell and enemy names, the text of the generated windows
     that are drawn translated (src/translated_window.py), the options screen's and the options overlay's text, the
-    shop stat preview's labels, the dungeon map's text and the stats page's."""
+    shop stat preview's labels, the dungeon map's text, the stats page's and the achievements'."""
+    from src.achievements import achievement_texts
     from src.dungeon_map import overlay_texts as dungeon_map_texts
     from src.enemy_lookup import enemy_string_lookup
     from src.items import armor, shields, tools, weapons
@@ -109,6 +110,7 @@ def dynamic_messages() -> dict[str, list[str]]:
     from src.options_screen import MESSAGE_SPEED_OPTIONS
     from src.shop_preview import preview_texts
     from src.quest_journal import journal_texts
+    from src.records import record_texts
     from src.stats_screen import screen_texts as stats_texts
     from src.spells import Spell
     from src.translated_window import layout_texts
@@ -137,6 +139,8 @@ def dynamic_messages() -> dict[str, list[str]]:
         messages.setdefault(text, []).append('src/shop_preview.py')
     for text in journal_texts():
         messages.setdefault(text, []).append('src/quest_journal.py')
+    for text in record_texts():
+        messages.setdefault(text, []).append('src/records.py')
     for text in dungeon_map_texts():
         messages.setdefault(text, []).append('src/dungeon_map.py')
     for text in screen_texts():
@@ -148,6 +152,9 @@ def dynamic_messages() -> dict[str, list[str]]:
     for text in stats_texts():
         if 'src/stats_screen.py' not in messages.get(text, []):
             messages.setdefault(text, []).append('src/stats_screen.py')
+    for text in achievement_texts():
+        if 'src/achievements.py' not in messages.get(text, []):
+            messages.setdefault(text, []).append('src/achievements.py')
     return messages
 
 

@@ -10,7 +10,9 @@ from pygame import display
 
 from src.common import A_OR_START_KEYS
 from src.direction import Direction
+from src.game_events import HeroDied
 from src.maps import map_lookup
+from src.party import carries_gwaelin, heroes, other_hero_standing
 from src.waiting import clear_events_keeping_quit
 
 if TYPE_CHECKING:
@@ -26,10 +28,16 @@ class HeroDeath:
     def handle_death(self) -> None:
         game = self.game
         player = game.player
+        if player.current_hp <= 0 and other_hero_standing(game, player):
+            # A party's first hero who has fallen (src/party.py): the other is standing, so it isn't the end. They stay
+            # down, leading the party on the map, until an inn.
+            player.current_hp = 0
+            player.is_dead = True
+            return
         if player.current_hp <= 0:
             player.current_hp = 0
             player.is_dead = True
-            game.play_stats.died()
+            game.event_bus.emit(HeroDied())
             game.auto_grind.hero_died()
             game.load_window_palette()  # 0 HP is always low
             if game.battle_ctrl.launch_battle and not game.game_state.config["NO_BATTLES"]:
@@ -57,8 +65,10 @@ class HeroDeath:
     def set_post_death_attributes(self) -> None:
         game = self.game
         player = game.player
-        # NES DeathText: dying clears F_GOT_GWAELIN, so Gwaelin is back in the Swamp Cave (F_RTN_GWAELIN is untouched)
-        game.story_flags.carrying_gwaelin = False
+        # NES DeathText: dying clears F_GOT_GWAELIN, so Gwaelin is back in the Swamp Cave (F_RTN_GWAELIN is untouched);
+        # while the heroes roam apart, only if the hero who died carried her (src/party.py)
+        if carries_gwaelin(game, player):
+            game.story_flags.carrying_gwaelin = False
         game.repel_timer = 0  # NES StartAtThroneRoom (SetStartPos) clears RepelTimer
         player.gold = player.gold // 2
         # NES StartAtThroneRoom sets HP before MapChngNoSound fades the throne room in, so the fade's palette load
@@ -66,11 +76,15 @@ class HeroDeath:
         # are in red windows; anyone else comes back with full HP and white windows. DeathText sets ThisStrtStat to
         # STRT_FULL_HP, so StartAtThroneRoom (LCB78-LCB87) fills MP as well as HP; for a cursed hero it sets HP to 1
         # and skips that step (LCB71-LCB75), so MP stays as it was.
-        if player.is_cursed:
-            player.current_hp = 1
-        else:
-            player.current_hp = player.max_hp
-            player.current_mp = player.max_mp
+        # A party (src/party.py): the second hero comes back with the first, the same way
+        for hero in heroes(game):
+            if hero is not player:
+                hero.is_dead = False  # the first hero's is cleared once the throne room is loaded
+            if hero.is_cursed:
+                hero.current_hp = 1
+            else:
+                hero.current_hp = hero.max_hp
+                hero.current_mp = hero.max_mp
         game.load_window_palette()
         # NES DeathText -> StartAtThroneRoom (LEDDE): the screen cuts to black and the throne room fades in once
         next_map = map_lookup['TantegelThroneRoom'](game.config)

@@ -55,7 +55,7 @@ class TestBattleMethods(unittest.TestCase):
         enemy.gold = 5
 
         # NES CalcPlyrGold: 5 * (192 + 63) // 256 = 4 on the highest roll
-        with patch('src.battle.random.randint', return_value=63):
+        with patch('src.battle.hero_random.randint', return_value=63):
             self.battle.enemy_defeated(cmd_menu, screen, player, enemy)
         self.assertEqual(player.total_experience, 10)
         self.assertEqual(player.gold, 4)
@@ -87,7 +87,7 @@ class TestBattleMethods(unittest.TestCase):
         enemy = Mock(xp=1, gold=2)
         enemy.name = 'Slime'
         with patch.object(battle, 'make_enemy_image_disappear'), patch.object(battle, 'check_player_level_up'), \
-                patch('src.battle.random.randint', return_value=63):
+                patch('src.battle.hero_random.randint', return_value=63):
             battle.enemy_defeated(cmd_menu, Mock(), player, enemy)
         self.assertEqual(cmd_menu.show_line_in_dialog_box.call_args_list[-1].args[0],
                          "Thy Experience\nincreases by 1.\nThy GOLD\nincreases by 1.\n")
@@ -227,7 +227,7 @@ class TestBattleMethods(unittest.TestCase):
         player = Mock(attack_power=attack_power)
         enemy = Mock(defense=enemy_defense)
         enemy.name = enemy_name
-        with patch('src.battle.random.randint', side_effect=rolls):
+        with patch('src.battle.hero_random.randint', side_effect=rolls):
             return self.battle.calculate_attack_damage(Mock(), player, enemy)
 
     def test_player_normal_attack_range(self):
@@ -269,7 +269,7 @@ class TestBattleMethods(unittest.TestCase):
         current_battle.enemy.defense = 255
         current_battle.no_op = False
 
-        with patch('src.battle.random.randint', return_value=255):
+        with patch('src.battle.hero_random.randint', return_value=255):
             result = self.battle.battle_run(cmd_menu, player, current_battle)
 
         self.assertFalse(result)
@@ -284,7 +284,7 @@ class TestBattleMethods(unittest.TestCase):
         current_battle.enemy.is_asleep = False
         current_battle.enemy.defense = 255
 
-        with patch('src.battle.random.randint', return_value=255):
+        with patch('src.battle.hero_random.randint', return_value=255):
             result = self.battle.battle_run(cmd_menu, player, current_battle)
 
         self.assertTrue(result)
@@ -300,7 +300,7 @@ class TestBattleMethods(unittest.TestCase):
         current_battle.enemy.is_asleep = False
         current_battle.enemy.defense = 1
 
-        with patch('src.battle.random.randint', return_value=1):
+        with patch('src.battle.hero_random.randint', return_value=1):
             result = self.battle.battle_run(cmd_menu, player, current_battle)
 
         self.assertTrue(result)
@@ -411,7 +411,7 @@ class TestCalculateEnemyAttackDamage(unittest.TestCase):
     def damage(self, attack, defense_power, random_number):
         player = Mock(defense_power=defense_power)
         enemy = Mock(attack=attack)
-        with patch('src.battle.random.randint', return_value=random_number):
+        with patch('src.battle.hero_random.randint', return_value=random_number):
             return calculate_enemy_attack_damage(player, enemy)
 
     def test_normal_attack_range(self):
@@ -443,7 +443,7 @@ class TestRandomizeEnemyHp(unittest.TestCase):
     """Starting enemy HP, per the NES ModEnHitPoints routine."""
 
     def hp(self, enemy_class, roll):
-        with patch('src.battle.random.randint', return_value=roll):
+        with patch('src.battle.hero_random.randint', return_value=roll):
             return randomize_enemy_hp(enemy_class())
 
     def test_hp_is_75_to_100_percent_of_listed(self):
@@ -459,7 +459,7 @@ class TestRandomizeEnemyHp(unittest.TestCase):
     def test_battle_uses_randomized_hp(self):
         config = {'LANGUAGE': 'English', 'TILE_SIZE': 32, 'MUSIC_ENABLED': False,
                   'SOUNDTRACK': 'NES', 'SOUND_ENABLED': False}
-        with patch('src.battle.random.randint', return_value=255):
+        with patch('src.battle.hero_random.randint', return_value=255):
             battle = Battle(config, 'Golem', Mock())
         self.assertEqual(battle.enemy.hp, 53)
         self.assertEqual(battle.enemy.max_hp, 70)
@@ -482,11 +482,11 @@ class TestHeroAttackFormulas(unittest.TestCase):
     def test_weak_attack_is_bit_zero_of_a_random_byte(self):
         # base = 10 - 18 // 2 = 1 (< 2): 0 or 1 damage
         for roll in range(256):
-            with patch('src.battle.random.randint', return_value=roll):
+            with patch('src.battle.hero_random.randint', return_value=roll):
                 self.assertEqual(player_hit_damage(10, 18), roll & 1)
 
     def test_negative_base_is_a_weak_attack(self):
-        with patch('src.battle.random.randint', return_value=1):
+        with patch('src.battle.hero_random.randint', return_value=1):
             self.assertEqual(player_hit_damage(10, 255), 1)
 
     def test_normal_attack_table(self):
@@ -498,7 +498,7 @@ class TestHeroAttackFormulas(unittest.TestCase):
 
     def test_low_normal_attack_can_do_zero_damage(self):
         # base 2 and 3 can round down to 0, which is a miss ("The attack failed...")
-        with patch('src.battle.random.randint', return_value=0):
+        with patch('src.battle.hero_random.randint', return_value=0):
             self.assertEqual(player_hit_damage(7, 10), 0)
 
 
@@ -551,7 +551,7 @@ class TestEnemyAttackFormulas(unittest.TestCase):
     """NES EnCalcHitDmg: the defense halving happens first, then attack / 2 + 1 decides weak or normal."""
 
     def damage(self, attack, defense_power, roll):
-        with patch('src.battle.random.randint', return_value=roll):
+        with patch('src.battle.hero_random.randint', return_value=roll):
             return calculate_enemy_attack_damage(Mock(defense_power=defense_power), Mock(attack=attack))
 
     def test_table(self):
@@ -593,13 +593,13 @@ class TestVictoryRewards(unittest.TestCase):
         for base, roll, expected in ((1, 0, 0), (1, 63, 0), (2, 0, 1), (5, 0, 3), (5, 255, 4), (120, 0, 90),
                                      (120, 63, 119), (255, 64, 191)):
             with self.subTest(base=base, roll=roll):
-                with patch('src.battle.random.randint', return_value=roll & 0x3F):
+                with patch('src.battle.hero_random.randint', return_value=roll & 0x3F):
                     self.assertEqual(randomize_enemy_gold(base), expected)
 
     def win(self, player, xp, gold, roll=0):
         enemy = Mock(xp=xp, gold=gold)
         enemy.name = 'Slime'
-        with patch('src.battle.random.randint', return_value=roll), patch('src.battle.display'):
+        with patch('src.battle.hero_random.randint', return_value=roll), patch('src.battle.display'):
             self.battle.enemy_defeated(self.cmd_menu, Mock(), player, enemy)
 
     def test_experience_is_exact_and_gold_varies(self):

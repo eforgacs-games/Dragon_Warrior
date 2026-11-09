@@ -27,6 +27,7 @@ from src.game_functions import MENU_BACK, GameFunctions
 from src.menu_functions import NameSelection
 from src.game_options import DEFAULT_OPTIONS, MESSAGE_SPEED, apply_options
 from src.options_screen import OptionsScreen
+from src.party import new_hero, starts_as_party
 from src.player.player import Player
 from src.player.player_stats import get_level_by_experience
 from src.save_state import StateError, remove_snapshots_of_log, restore_snapshot
@@ -120,8 +121,9 @@ class TitleMenu:
         return entries[selection]()
 
     def begin_new_quest(self) -> object:
-        """BEGIN A NEW QUEST: an adventure log, the name, then the options. B in the log window, or Escape in the
-        name entry, cancels it, back to the title menu with nothing saved."""
+        """BEGIN A NEW QUEST: an adventure log, the name (and with HEROES on 2 the second hero's, src/party.py), then
+        the options. B in the log window, or Escape in a name entry, cancels it, back to the title menu with nothing
+        saved."""
         log_window = self.select_adventure_log(self.screen)
         if log_window is BACK_TO_TITLE_MENU:
             return BACK_TO_TITLE_MENU
@@ -130,9 +132,17 @@ class TitleMenu:
         name = name_selection.select_name(menu_ticks(), self.screen, self.game.cmd_menu)
         if name is None:
             return BACK_TO_TITLE_MENU
+        companion_name = None
+        if starts_as_party(self.config):
+            # The second hero's name, on the same screen (src/party.py)
+            companion_name = name_selection.select_name(menu_ticks(), self.screen, self.game.cmd_menu,
+                                                        prompt=self.game._("Now the second hero's name.\n"))
+            if companion_name is None:
+                return BACK_TO_TITLE_MENU
         self.player.name = name
         self.choose_new_quest_options()
         self.player.set_initial_stats()
+        self.game.companion = new_hero(self.game, companion_name) if companion_name is not None else None
         self.sound.play_sound(self.directories.menu_button_sfx)
         self.game.start_at_throne_room()
         return None

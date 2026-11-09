@@ -1,7 +1,6 @@
-import random
-from functools import partial
+from functools import partial, wraps
 from collections.abc import Callable
-from typing import cast
+from typing import Any, cast
 
 from pygame import display, time, Rect
 from pygame.event import get, pump
@@ -16,13 +15,16 @@ from src.directories import Directories
 from src.items import MAX_HERBS, MAX_KEYS, bag_is_full, inventory_list
 from src import maps
 from src.maps import DragonWarriorMap
+from src.game_events import EventBus, GoldEarned, GoldSpent
 from src.maps_functions import get_center_point
 from src.npcs import GWAELIN_RESCUE
-from src.play_stats import PlayStats
+from src.party import acting, heroes, in_party_mode, someone_chosen
+from src.random_streams import world_random
+from src.records import king_lorik_charge
 from src.window_renderer import draw_window as generated_window
 from src.windows import BUY_SELL_LAYOUT, WindowLayout, shop_inventory_layout
 from src.menu_functions import draw_player_sprites, draw_character_sprites
-from src.shops import ShopInventories, FAIRY_WATER_COST, KEY_COSTS, buyback_price, \
+from src.shops import ShopInventories, FAIRY_WATER_COST, INN_COSTS, KEY_COSTS, buyback_price, \
     pay_player, sell_price
 from src.selection import run_selection, stop_at_edges
 from src.shop_preview import SHOP_PREVIEW_WINDOW, StatPreview, draw_shop_preview, stat_preview
@@ -36,6 +38,25 @@ from src.visual_effects import NES_RED, bw_screen_flash, greyscale_screen, scree
 from src.waiting import POLL_INTERVAL_MS, quit_if_requested, wait_frames
 
 NES_MAX_LEVEL = 30  # LVL_30
+# Whom a party's shopping is for (src/party.py): a window of the heroes' names, as wide as the longest name
+HERO_CHOICE_WINDOW = Window(5, 2, 6, 3)
+
+
+def for_a_chosen_hero(shop: Callable[..., Any]) -> Callable[..., Any]:
+    """A shop that is for one hero: in a party (src/party.py), the player first chooses the hero (B leaves), and the
+    shop runs with them as the player (``acting``), with the party's gold. One hero, or a hero already chosen (the
+    shop going round again), goes straight in."""
+    @wraps(shop)
+    def for_the_hero(self: 'DialogLookup', *args: Any, **kwargs: Any) -> Any:
+        game = self.command_menu.game
+        if not in_party_mode(game) or someone_chosen(game):
+            return shop(self, *args, **kwargs)
+        hero = self.choose_hero()
+        if hero is None or self.has_fallen(hero):
+            return None
+        with acting(game, hero):
+            return shop(self, *args, **kwargs)
+    return for_the_hero
 
 
 class DialogLookup:
@@ -45,9 +66,9 @@ class DialogLookup:
         return self.command_menu.color
 
     @property
-    def play_stats(self) -> PlayStats:
-        """The stats page's counts (src/play_stats.py): the gold the shops and inns are paid, and pay."""
-        return self.command_menu.game.play_stats
+    def event_bus(self) -> EventBus:
+        """The game's events (src/game_events.py): the gold the shops and inns are paid, and pay."""
+        return self.command_menu.game.event_bus
 
     def __init__(self, command_menu, config: dict):
         self.config = config
@@ -66,11 +87,11 @@ class DialogLookup:
         self.goodbye_tempt_not_the_fates = _("Goodbye now, {}.\n'Take care and tempt not the Fates.")
 
         where_is_princess_gwaelin = _("Where oh where can I find Princess Gwaelin?")
-        brecconary_inn_cost = 6
-        kol_inn_cost = 20
-        garinham_inn_cost = 25
-        rimuldar_inn_cost = 55
-        cantlin_inn_cost = 100
+        brecconary_inn_cost = INN_COSTS['Brecconary']
+        kol_inn_cost = INN_COSTS['Kol']
+        garinham_inn_cost = INN_COSTS['Garinham']
+        rimuldar_inn_cost = INN_COSTS['Rimuldar']
+        cantlin_inn_cost = INN_COSTS['Cantlin']
 
         self.tools_intro = _("Welcome.\n"
                              "We deal in tools.\n"
@@ -357,17 +378,7 @@ class DialogLookup:
             # The throne room: King Lorik (DoKingDialog). 'dialog' starts as the opening speech (MainGameEngine,
             # TextBlock17 entry 2) and CommandMenu.set_king_lorik_dialog switches it as the story goes on.
             0x6E: {
-                'dialog': (
-                    _("Descendant of Erdrick, listen now to my words."),
-                    _("It is told that in ages past Erdrick fought demons with a Ball of Light."),
-                    _("Then came the Dragonlord who stole the precious globe and hid it in the darkness."),
-                    _("Now, {}, thou must help us recover the Ball of Light and restore peace to our land.").format(
-                        self.player.name),
-                    _("The Dragonlord must be defeated."),
-                    _("Take now whatever thou may find in these Treasure Chests to aid thee in thy quest."),
-                    _("Then speak with the guards, for they have much knowledge that may aid thee."),
-                    _("May the light shine upon thee, {}.").format(self.player.name)
-                ),
+                'dialog': king_lorik_charge(self.player.name, _),
                 'post_initial_dialog': _(
                     "When thou art finished preparing for thy departure, please see me.\nI shall wait."),
                 # NES DoKingDialog, KingDialog2/LeftThRoom: TextBlock13 entry 0, then TextBlock1 entry 2 at
@@ -462,6 +473,7 @@ class DialogLookup:
         """NES DoGwaelinRescue (Bank03, LD072-LD09A): F_GOT_GWAELIN is set and DoSprites draws the hero carrying her,
         and ModMapBlock removes her block, all before "Princess Gwaelin embraces thee" and the music."""
         self.command_menu.game.story_flags.carrying_gwaelin = True
+        self.command_menu.game.gwaelin_carrier = self.player  # free roam: this hero carries her (src/party.py)
         self.player.images = self.current_map.scale_sprite_sheet(self.directories.HERO_CARRYING_PRINCESS_PATH)
         self.player.set_images(self.player.images)
         self.player.show_facing()
@@ -626,9 +638,10 @@ class DialogLookup:
                                 is_roaming=False)
 
     def princess_gwaelin_throne_room(self):
-        """NES PrincessDialog: two random bits pick what Gwaelin says when spoken to in the throne room."""
+        """NES PrincessDialog: bits 5-6 of RandNumUB (AND #$60) pick what Gwaelin says when spoken to in the throne
+        room: none set, both set, or one."""
         _ = self._
-        random_bits = random.randint(0, 3)
+        random_bits = (world_random.randint(0, 255) & 0x60) >> 5
         if random_bits == 0:
             self.even_when_we_two_are_parted()
         elif random_bits == 3:
@@ -991,6 +1004,21 @@ class DialogLookup:
         draw_text(text, text_x, text_y, self.screen, self.config, self.color, alignment=alignment,
                   letter_by_letter=False)
 
+    def choose_hero(self) -> Any:
+        """A party's hero, chosen in a window of their names (src/party.py), or None if B was pressed."""
+        game = self.command_menu.game
+        party = heroes(game)
+        self.command_menu.show_line_in_dialog_box(self._("Who will it be?"), skip_text=True)
+        chosen = self.select_from_text_menu([hero.name for hero in party], HERO_CHOICE_WINDOW)
+        return None if chosen is None else party[chosen]
+
+    def has_fallen(self, hero: Any) -> bool:
+        """Whether a party's hero has fallen and can't act (src/party.py): if so, the player is told."""
+        if not hero.is_dead:
+            return False
+        self.command_menu.show_line_in_dialog_box(self._("{} hath fallen.\n").format(hero.name), skip_text=True)
+        return True
+
     def select_from_text_menu(self, lines: list[str], window: Window, initial_index: int = 0) -> int | None:
         """A double spaced selection window of one column, like BuySellDat or YesNo1Dat: after the top border and a
         blank row, each line is at tile column 2 with a blank row after it (cursor home Y = 2)."""
@@ -1076,6 +1104,7 @@ class DialogLookup:
     # Weapon and armor shops (NES WeaponsDialog). They only sell; the only way to sell equipment is the buyback
     # offered when buying a replacement.
 
+    @for_a_chosen_hero
     def check_buy_weapons_armor(self, current_store_inventory):
         self.confirm(self._("We deal in weapons and armor.\n Dost thou wish to buy anything today?"),
                      yes_path_function=partial(self.choose_weapon_or_armor, current_store_inventory),
@@ -1118,8 +1147,8 @@ class DialogLookup:
         item_dict = current_store_inventory[item]
         item_type = item_dict['type']
         self.player.gold = pay_player(self.player.gold - item_dict['cost'], old_item_cost or 0)
-        self.play_stats.spend_gold(item_dict['cost'])
-        self.play_stats.earn_gold(old_item_cost or 0)  # the shop buys back what the hero had
+        self.event_bus.emit(GoldSpent(item_dict['cost']))
+        self.event_bus.emit(GoldEarned(old_item_cost or 0))  # the shop buys back what the hero had
         if item_type == 'weapon':
             self.player.weapon = item
         elif item_type == 'armor':
@@ -1134,6 +1163,7 @@ class DialogLookup:
 
     # Item shops (NES ToolsDialog)
 
+    @for_a_chosen_hero
     def tool_shop(self, current_store_inventory):
         self.say(self.tools_intro)
         # NES WND_BUY_SELL (BuySellDat): generated in English, drawn as text when translated
@@ -1169,7 +1199,7 @@ class DialogLookup:
             self.say(_("Thou cannot carry anymore."))
         else:
             self.player.gold -= cost
-            self.play_stats.spend_gold(cost)
+            self.event_bus.emit(GoldSpent(cost))
             self.player.inventory.append(selected_item)
             self.say(_("The {}?\nThank you very much.").format(_(selected_item)))
             self.command_menu.show_popup_window()  # NES PurchaseTool: the thanks, then Dowindow WND_POPUP
@@ -1212,7 +1242,7 @@ class DialogLookup:
             # NES DoSellTool only removes the item; a sold Dragon's Scale or Fighter's Ring stays "worn"
             self.player.inventory.remove(item)
             self.player.gold = pay_player(self.player.gold, price)
-            self.play_stats.earn_gold(price)
+            self.event_bus.emit(GoldEarned(price))
             self.command_menu.show_popup_window()  # NES DoneSellingTool: Dowindow WND_POPUP
         self.sell_more(current_store_inventory)
 
@@ -1224,6 +1254,7 @@ class DialogLookup:
 
     # Fairy Water shops (NES FairyDialog)
 
+    @for_a_chosen_hero
     def fairy_water_shop(self):
         self.confirm(self._("Will thou buy some Fairy Water for {} GOLD to keep the Dragonlord's minions away?").format(
             FAIRY_WATER_COST),
@@ -1242,7 +1273,7 @@ class DialogLookup:
             self.fairy_water_goodbye()
         else:
             self.player.gold -= FAIRY_WATER_COST
-            self.play_stats.spend_gold(FAIRY_WATER_COST)
+            self.event_bus.emit(GoldSpent(FAIRY_WATER_COST))
             self.player.inventory.append('Fairy Water')
             self.command_menu.show_popup_window()  # NES BuyFairyWater: Dowindow WND_POPUP, then the thanks
             self.confirm(_("I thank thee.\nWon't thou buy one more bottle?"),
@@ -1250,6 +1281,7 @@ class DialogLookup:
 
     # Magic Key shops (NES KeysDialog)
 
+    @for_a_chosen_hero
     def check_buy_magic_keys(self, magic_key_cost):
         self.confirm(self.magic_key_prompt.format(magic_key_cost),
                      yes_path_function=partial(self.buy_magic_key, magic_key_cost),
@@ -1268,7 +1300,7 @@ class DialogLookup:
             self.magic_key_goodbye()
         else:
             self.player.gold -= magic_key_cost
-            self.play_stats.spend_gold(magic_key_cost)
+            self.event_bus.emit(GoldSpent(magic_key_cost))
             self.player.inventory.append('Magic Key')
             self.command_menu.show_popup_window()  # NES BuyKey: Dowindow WND_POPUP, then "Here,take this key."
             self.confirm(_("Here,take this key.\nDost thou wish to purchase more?"),
@@ -1276,7 +1308,9 @@ class DialogLookup:
                          no_path_function=self.magic_key_goodbye)
 
     def check_stay_at_inn(self, inn_cost):
+        """NES InnDialog. A party (src/party.py) pays for each hero."""
         _ = self._
+        inn_cost *= len(heroes(self.command_menu.game))
         confirmation_prompt(self.command_menu, self.get_inn_intro(inn_cost),
                             yes_path_function=partial(self.check_money, inn_cost),
                             no_path_function=partial(self.command_menu.show_line_in_dialog_box,
@@ -1310,14 +1344,16 @@ class DialogLookup:
         game = self.command_menu.game
         config = game.game_state.config
         self.player.gold -= inn_cost
-        self.play_stats.spend_gold(inn_cost)
+        self.event_bus.emit(GoldSpent(inn_cost))
         self.command_menu.show_popup_window()
         self.command_menu.show_line_in_dialog_box(_("Good night."), skip_text=self.command_menu.skip_text)
         screen_fade(fade_out=True, screen=self.screen, config=self.config)  # PalFadeOut (LD8DC)
         # LD8DF-LD8FB, with the screen black: MSC_INN starts and HP and MP are restored,
         # WaitForMusicEnd lets the jingle finish, then MSC_VILLAGE starts, and only then PalFadeIn
-        self.player.restore_hp()
-        self.player.restore_mp()
+        for hero in heroes(game):  # a party's heroes all stay, and a fallen one is up again (src/party.py)
+            hero.is_dead = False
+            hero.restore_hp()
+            hero.restore_mp()
         game.music_player.play_until_end(self.directories.inn_music, config)
         game.music_player.load_and_play_music(self.directories.village_music)
         game.load_window_palette()

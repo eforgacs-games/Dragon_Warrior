@@ -131,18 +131,18 @@ msgstr ""
 "이곳은 도구점입니다.\n"
 "무슨 일로 오셨습니까?"
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "Descendant of Erdrick, listen now to my words."
 msgstr "용사 로토의 피를 이어받은 자여! 자네가 돌아오기를 기다리고 있었다네."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid ""
 "It is told that in ages past Erdrick fought demons with a Ball of Light."
 msgstr ""
 "먼 옛날, 전설의 용사 로토는 신으로부터 빛의 구슬을 부여받아 이 세상을 덮고 있"
 "던 마물들을 봉인했다고 하네."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid ""
 "Then came the Dragonlord who stole the precious globe and hid it in the "
 "darkness."
@@ -150,17 +150,17 @@ msgstr ""
 "허나 어디선가 나타난 악의 화신 용왕이 그 구슬을 어둠 속에 가두고 말았지! 이대"
 "로 가다가는 이 세상은 어둠에 집어 삼켜져 이윽고 멸망에 이르고 말 게야."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid ""
 "Now, {}, thou must help us recover the Ball of Light and restore peace to "
 "our land."
 msgstr "용사 {}! 용왕을 쓰러트리고 그 손으로 빛의 구슬을 되찾아 와 주게!"
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "The Dragonlord must be defeated."
 msgstr "용왕을 처치해야 합니다."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid ""
 "Take now whatever thou may find in these Treasure Chests to aid thee in thy "
 "quest."
@@ -168,12 +168,12 @@ msgstr ""
 "자네에게 선물을 주지! 거기 있는 보물 상자를 열도록 하게. 자네의 여행에 도움"
 "이 될 물건이 들어 있을 걸세."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid ""
 "Then speak with the guards, for they have much knowledge that may aid thee."
 msgstr "그리고 이 방에 있는 자에게 물어보면 모험 수칙을 알려 줄 걸세."
 
-#: data/text/dialog_lookup_table.py
+#: src/records.py
 msgid "May the light shine upon thee, {}."
 msgstr "그럼 또 보세! 용사 {}!"
 
@@ -822,31 +822,31 @@ msgstr "에르드릭의 태블릿"
 msgid "Tablet"
 msgstr "석판"
 
-#: src/menu.py
+#: src/records.py
 msgid "The tablet reads as follows:"
 msgstr "석판에는 이렇게 쓰여 있다."
 
-#: src/menu.py
+#: src/records.py
 msgid "I am Erdrick and thou art my descendant."
 msgstr "나의 이름은 로토.\n나의 피를 이어받은 자여."
 
-#: src/menu.py
+#: src/records.py
 msgid "Three items were needed to reach the Isle of Dragons, which is south of Brecconary."
 msgstr "라다톰 남쪽에 있는 마의 섬으로 건너가려면 세 가지 물건이 필요했다."
 
-#: src/menu.py
+#: src/records.py
 msgid "I gathered these items, reached the island, and there defeated a creature of great evil."
 msgstr "나는 그것들을 모아 마의 섬으로 건너가 그곳에서 마왕을 쓰러뜨렸다."
 
-#: src/menu.py
+#: src/records.py
 msgid "Now I have entrusted the three items to three worthy keepers."
 msgstr "그리고 이제 그 세 가지 신비한 물건을 세 명의 현자에게 맡긴다."
 
-#: src/menu.py
+#: src/records.py
 msgid "Their descendants will protect the items until thy quest leads thee to seek them out."
 msgstr "그대가 그것들을 찾아 나설 때까지 현자의 자손들이 지켜 줄 것이다."
 
-#: src/menu.py
+#: src/records.py
 msgid "When a new evil arises, find the three items, then fight!"
 msgstr "다시 악이 되살아나거든\n세 가지 물건을 모아 싸우거라!"
 

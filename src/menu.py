@@ -1,6 +1,6 @@
 import functools
-import random
 
+from src.random_streams import hero_random
 from src.spells import Spell
 from typing import TYPE_CHECKING, Any, TypedDict
 from collections.abc import Callable, Collection, Iterable, Iterator
@@ -28,6 +28,7 @@ from src.constants import DUNGEON_MAPS, FAIRY_WATER_TIMER, MAX_LEVEL, OUTSIDE_DE
     TEMP_TEXT_MS
 from src.dialog_box import ARROW_COLUMN, DIALOG_COLUMNS, DIALOG_ROWS, OPEN_QUOTES, SCROLL_ROWS_PER_FRAME, \
     DialogBuffer, DialogStep, ScrollStep, frames_per_character
+from src.game_events import ChestOpened, GoldEarned
 from src.direction import Direction
 from src.maps import CharlockB1, DragonWarriorMap, map_lookup
 from src.maps_functions import get_center_point
@@ -37,6 +38,7 @@ from src.save_file import ADVENTURE_LOGS, SaveFile, is_from_a_newer_build, log_b
     save_path, write_save
 from src.message_log import speaker_of
 from src.quest_journal import hear
+from src.records import TABLET, TABLET_HEADING, read as read_record, tablet_lines
 from src.selection import YES, frame_events, next_game_frame, run_selection, stop_at_edges
 from src.sound import SPELL_SFX_FRAMES, Sound
 from src.visual_effects import bw_screen_flash, rainbow_bridge_flash
@@ -52,6 +54,9 @@ from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENT
     YES_NO_WINDOW, item_menu_entry_tile_row, item_count_tile_row, item_menu_layout, item_menu_window, Window, \
     translated_name_halves
 from src.nes_random import one_in
+from src.follower import IDENTIFIER as FOLLOWER_IDENTIFIER
+from src.party import acting, first_hero, heroes, in_party_mode
+from src.sessions import HeroSession
 
 if TYPE_CHECKING:
     from src.battle import Battle  # src.battle imports this module
@@ -83,6 +88,11 @@ BATTLE_LINE: BattleLineOptions = {'add_quotes': False, 'disable_sound': True, 'h
 # "But nothing happened." (spell_fizzle). RADIANT in a dungeon returns at once (LDA83), and OUTSIDE and RETURN change
 # maps (ChangeMaps): no press.
 FIELD_SPELLS_ENDING_WITH_A_PRESS = (Spell.HEAL, Spell.REPEL, Spell.HEALMORE)
+# A party's (src/party.py) spells that act for the whole party on the map, as the first hero's: they move it, or light
+# or guard the way (CommandMenu.field_effect); HEAL and HEALMORE heal whoever casts them
+PARTY_SPELLS = frozenset({Spell.OUTSIDE, Spell.RETURN, Spell.REPEL, Spell.RADIANT})
+# The items that act on whoever uses them; every other works for the party, where the first hero stands
+OWN_ITEMS = frozenset({"Herb", "Dragon's Scale", "Fighter's Ring", "Cursed Belt", "Death Necklace", "Erdrick's Token"})
 
 # NES ShowWindow and RemoveWindow (Bank00, LA7A2) draw or take away one row of a window's blocks a frame
 WINDOW_ROW_FRAMES = 1
@@ -93,6 +103,14 @@ def wait_for_next_window_row(row_started: float, config: dict) -> None:
     WINDOW_ROW_FRAMES from when it started drawing (``row_started``, a ``game_ticks`` value), so drawing it doesn't
     lengthen it."""
     wait_until(row_started + WINDOW_ROW_FRAMES * 1000 / NES_FPS, config)
+
+
+def silver_harp_enemy() -> str:
+    """NES HarpRNGLoop: RandNumUB AND 7, rolled again while it's 5 or 7, is the enemy's number: #0-4 or #6, the six
+    SILVER_HARP_ENEMIES in order."""
+    while (number := hero_random.randint(0, 255) & 0x07) in (5, 7):
+        pass
+    return SILVER_HARP_ENEMIES[min(number, 5)]
 
 
 class CommandMenu:
@@ -128,6 +146,9 @@ class CommandMenu:
         # (src/command_window.py, src/cursor.py); drawn by draw_command_window
         self.menu = CommandWindow()
         self.cursor = self.menu.cursor
+        # While the ITEM or SPELL window is selecting (display_item_menu): its name and the entry under the cursor, for
+        # auto-grind's AUTO-HEAL to steer it (src/auto_grind.py)
+        self.item_menu_selection: tuple[str, int] | None = None
 
     def set_language(self, language: str) -> None:
         """Translate into ``language`` from now on (Game.set_language): a new ``_`` and a new DialogLookup, whose
@@ -263,8 +284,13 @@ class CommandMenu:
         Nor is a log saved by a newer build written over, or the save made when the file can't be written. Returns
         whether the deeds were recorded."""
         save_dir = self.directories.save_dir
-        name = self.player.name
-        log: int | None = self.player.adventure_log
+        # The adventure's first hero and where they are, whoever is at the king (free roam co-op, src/sessions.py)
+        hero, hero_map = self.player, self.game.current_map
+        main = getattr(self.game, 'main_session', None)
+        if isinstance(main, HeroSession) and main is not self.game.current_session:
+            hero, hero_map = getattr(main, 'player'), getattr(main, 'current_map')
+        name = hero.name
+        log: int | None = hero.adventure_log
         if log in ADVENTURE_LOGS and not log_belongs_to(save_dir, log, name):
             print(f"Adventure log {log} holds another hero now; {name} is saved where a new log would go.")
             log = None
@@ -276,9 +302,10 @@ class CommandMenu:
             print(f"Not saved: adventure log {log} was saved by a newer version of the game, which this one "
                   f"would downgrade.")
             return False
-        save = SaveFile.from_game(self.player, self.game.current_map.identifier, self.game.story_flags,
+        save = SaveFile.from_game(hero, hero_map.identifier, self.game.story_flags,
                                   options_from_config(self.game.game_state.config),
-                                  self.game.dungeon_map.to_save(), self.game.play_stats.to_save())
+                                  self.game.dungeon_map.to_save(), self.game.play_stats.to_save(),
+                                  companion=self.game.companion)
         try:
             write_save(save_path(save_dir, log), save.to_save())
         except OSError as error:
@@ -323,8 +350,8 @@ class CommandMenu:
             if character.get('dialog'):
                 self.dialog_lookup.camera_position = self.camera_position
                 self.show_text_in_dialog_box(character['dialog'], add_quotes=True, skip_text=self.skip_text)
-                # The quest journal remembers the goals the NPC spoke of
-                hear(self.game.story_flags, character.get('dialog_byte'))
+                # The quest journal remembers the goals the NPC spoke of, and where
+                hear(self.game.story_flags, character.get('dialog_byte'), current_map.identifier)
             else:
                 print(f"Character has no dialog: {dialog_character}")
                 self.show_text_in_dialog_box(self._("I have nothing to say."), add_quotes=True,
@@ -722,7 +749,7 @@ class CommandMenu:
     def open_chest(self) -> None:
         """NES GetTreasure: record the chest as taken, then play the chest sound and turn the chest into brick.
         With all 8 history slots in use the NES records nothing and leaves the chest where it is."""
-        self.game.play_stats.open_chest()
+        self.game.event_bus.emit(ChestOpened())
         if self.chest_history.record(self.map_name, (self.player.row, self.player.column)):
             self.sound.play_sound(self.directories.open_treasure_sfx)
             self.set_tile_by_coordinates('BRICK', self.player.column, self.player.row, self.player)
@@ -737,22 +764,30 @@ class CommandMenu:
         self.show_text_in_dialog_box(self._("Unfortunately, it is empty."), skip_text=self.skip_text)
 
     def take_counted_item(self, item_name: str, maximum: int) -> None:
-        """NES ChkTrsrKey/ChkTrsrHerb: Herbs and Magic Keys stop at 6. With 6 already, the chest is empty."""
-        if self.player.inventory.count(item_name) >= maximum:
+        """NES ChkTrsrKey/ChkTrsrHerb: Herbs and Magic Keys stop at 6. With 6 already, the chest is empty. In a party
+        (src/party.py) the first hero with fewer than 6 takes it."""
+        taker = next((hero for hero in heroes(self.game) if hero.inventory.count(item_name) < maximum), None)
+        if taker is None:
             self.take_empty_chest()
             return
-        self.player.inventory.append(item_name)
+        taker.inventory.append(item_name)
         self.open_chest()
-        self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
+        with acting(self.game, taker):
+            self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
 
     def take_item(self, item_name: str):
-        """NES SetTrsrDescByte: tell the player what was found, then add it to the inventory."""
+        """NES SetTrsrDescByte: tell the player what was found, then add it to the inventory. In a party (src/party.py)
+        the first hero with room takes it; with no room in either bag, the first hero may drop something for it."""
         self.open_chest()
-        self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
-        if item_name in UNSLOTTED_ITEMS or not bag_is_full(self.player.inventory, self.game.game_state.config):
-            self.player.inventory.append(item_name)  # NES AddInvItem: the first empty slot
-        else:
-            self.discard_for_item(item_name)
+        config = self.game.game_state.config
+        taker = next((hero for hero in heroes(self.game)
+                      if item_name in UNSLOTTED_ITEMS or not bag_is_full(hero.inventory, config)), None)
+        with acting(self.game, taker or self.player):
+            self.show_text_in_dialog_box(self.found_item_text(item_name), skip_text=self.skip_text)
+            if taker is not None:
+                self.player.inventory.append(item_name)  # NES AddInvItem: the first empty slot
+            else:
+                self.discard_for_item(item_name)
 
     def discard_for_item(self, item_name: str) -> None:
         """NES DiscardItem: with a full inventory, the player may drop something to make room, for a chest's item or
@@ -836,27 +871,21 @@ class CommandMenu:
             self.take_gold({'item': GOLD, 'gold': DEATH_NECKLACE_GOLD})
 
     def tablet(self, found_item_text):
-        self.show_text_in_dialog_box((
-            found_item_text,
-            self._("The tablet reads as follows:"),
-            self._("I am Erdrick and thou art my descendant."),
-            self._("Three items were needed to reach the Isle of Dragons, which is south of Brecconary."),
-            self._("I gathered these items, reached the island, and there defeated a creature of great evil."),
-            self._("Now I have entrusted the three items to three worthy keepers."),
-            self._("Their descendants will protect the items until thy quest leads thee to seek them out."),
-            self._("When a new evil arises, find the three items, then fight!")), drop_down=False)
+        self.show_text_in_dialog_box((found_item_text, self._(TABLET_HEADING)) + tablet_lines(self._),
+                                     drop_down=False)
 
     def take_tablet(self) -> None:
-        # NES ChkTrsrErdTablet: the tablet is read, not kept
+        # NES ChkTrsrErdTablet: the tablet is read, not kept. The quest journal keeps what it says (src/records.py).
         self.open_chest()
         self.tablet(self.found_item_text('Tablet'))
+        read_record(self.game.story_flags, TABLET)
 
     def take_gold(self, treasure_info: dict):
         """NES GetTrsrGold: the amount is rolled when the chest is opened, and gold stops at 65535."""
         gold_amount = roll_treasure_gold(treasure_info['gold'])
         self.open_chest()
         self.player.gold = min(self.player.gold + gold_amount, MAX_GOLD)
-        self.game.play_stats.earn_gold(gold_amount)
+        self.game.event_bus.emit(GoldEarned(gold_amount))
         # NES GainGoldDialog: the message, then Dowindow WND_POPUP with the new gold, then ResumeGamePlay closes the
         # dialog window
         self.show_text_in_dialog_box(self._("Of GOLD thou hast gained {}").format(gold_amount),
@@ -993,7 +1022,7 @@ class CommandMenu:
         self.game.music_player.play_until_end(self.directories.harp_music, self.game.game_state.config)
         self.game.game_state.unpause_all_movement()
         if self.current_map.identifier == 'Alefgard':
-            self.game.battle_ctrl.queue_scripted_battle(random.choice(SILVER_HARP_ENEMIES))
+            self.game.battle_ctrl.queue_scripted_battle(silver_harp_enemy())
             return
         self.resume_music()  # HarpFail: ResumeMusicTbl
         self.show_text_in_dialog_box(self._("But nothing happened."), skip_text=self.skip_text)
@@ -1163,7 +1192,7 @@ class CommandMenu:
         self.recover_health(10, 17)
 
     def recover_health(self, lowest: int, highest: int):
-        health_addition = random.randint(lowest, highest)
+        health_addition = hero_random.randint(lowest, highest)
         if self.player.current_hp + health_addition > self.player.max_hp:
             health_addition = self.player.max_hp - self.player.current_hp
         self.player.current_hp += health_addition
@@ -1178,7 +1207,7 @@ class CommandMenu:
 
     def battle_spell_resisted(self, resistance: float) -> bool:
         """NES ChkSpellFail: the spell fails if a 0-15 roll is below the enemy's resistance (n/16)."""
-        if random.randint(0, 15) < round(resistance * 16):
+        if hero_random.randint(0, 15) < round(resistance * 16):
             self.show_battle_line(self._("The spell will not work."))
             return True
         return False
@@ -1196,7 +1225,7 @@ class CommandMenu:
         if self.battle_spell_resisted(enemy.hurt_resist):
             return
         # Spell damage can't be dodged
-        damage = random.randint(lowest, highest)
+        damage = hero_random.randint(lowest, highest)
         self.sound.play_sound(self.directories.hit_sfx)
         # NES SetSpellDmg falls through to PlyrHitEn, so a damage spell flashes the enemy red too
         self.game.drawer.flash_enemy(self.screen, enemy.name)
@@ -1295,6 +1324,8 @@ class CommandMenu:
         across_from_npc = self.check_across_from_npc()
         if across_from_npc:
             for character_identifier, character_dict in self.characters.items():
+                if character_identifier == FOLLOWER_IDENTIFIER:
+                    continue  # the party's second hero (src/follower.py) isn't someone to talk to
                 if (character_dict['character'].row,
                     character_dict['character'].column) == self.player.next_coordinates or self.npc_is_across_counter(
                     character_dict):
@@ -1362,34 +1393,29 @@ class CommandMenu:
 
     def status(self) -> None:
         """
-        Display the current player's status.
+        Display the current player's status (each hero's in turn, in a party).
         :return: None
         """
-        show_status = True
-        x, y, width, height = STATUS_WINDOW
-        self.window_drop_down_effect(x, y, width, height)
-        window_rect = self.draw_status_window()
-        display.update(window_rect)
-        while show_status:
-            next_game_frame()  # one pass per NES frame of game time (src/selection.py)
-            # NES LCFA4: the status window waits in WaitForBtnRelease, so any button closes it
-            show_status = not any(current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS
-                                  for current_event in frame_events())
-        self.window_drop_up_effect(x, y, width, height)
-        # print(f"""
-        # NAME: {self.player.name}
-        # STRENGTH: {self.player.strength}
-        # AGILITY: {self.player.agility}
-        # MAXIMUM HP: {self.player.max_hp}
-        # MAXIMUM MP: {self.player.max_mp}
-        # ATTACK POWER: {self.player.attack_power}
-        # DEFENSE POWER: {self.player.defense_power}
-        # WEAPON: {self.player.weapon}
-        # ARMOR: {self.player.armor}
-        # SHIELD: {self.player.shield}
-        # """)
+        # A party (src/party.py): each hero's status in turn, the next on a button
+        self.show_status_of(heroes(self.game))
         self.game.unlaunch_menu(self)
         self.game.game_state.unpause_all_movement()
+
+    def show_status_of(self, shown: list[Any]) -> None:
+        """The status window, for each of these heroes in turn: any button shows the next, or closes it."""
+        x, y, width, height = STATUS_WINDOW
+        self.window_drop_down_effect(x, y, width, height)
+        for hero in shown:
+            with acting(self.game, hero):
+                window_rect = self.draw_status_window()
+            display.update(window_rect)
+            show_status = True
+            while show_status:
+                next_game_frame()  # one pass per NES frame of game time (src/selection.py)
+                # NES LCFA4: the status window waits in WaitForBtnRelease, so any button closes it
+                show_status = not any(current_event.type == KEYDOWN and current_event.key in ANY_BUTTON_KEYS
+                                      for current_event in frame_events())
+        self.window_drop_up_effect(x, y, width, height)
 
     def draw_status_window(self) -> Rect:
         """
@@ -1518,31 +1544,51 @@ class CommandMenu:
 
     def spell(self):
         """
-        Cast a magic spell.
+        Cast a magic spell. In a party (src/party.py), the caster is chosen first.
         """
+        with self.chosen_hero() as hero:
+            if hero is not None:
+                self.cast_a_spell()
+        self.game.unlaunch_menu(self)
+        self.game.game_state.unpause_all_movement()
+
+    @contextmanager
+    def chosen_hero(self) -> Iterator[Any]:
+        """For ITEM and SPELL on the map: in a party (src/party.py), the hero the player chooses ("Who will it be?"),
+        acting for the block; None if B was pressed. The one hero otherwise."""
+        if not in_party_mode(self.game):
+            yield self.player
+            return
+        hero = self.dialog_lookup.choose_hero()
+        if hero is None or self.dialog_lookup.has_fallen(hero):
+            yield None
+            return
+        with acting(self.game, hero):
+            yield hero
+
+    def cast_a_spell(self) -> None:
         # the implementation of this will vary upon which spell is being cast.
         if not self.player.spells:
             self.show_text_in_dialog_box(self._("{} cannot yet use the spell.").format(self.player.name),
                                          skip_text=self.skip_text)
         else:
             self.display_item_menu('spells')
-        self.game.unlaunch_menu(self)
-        self.game.game_state.unpause_all_movement()
 
     def item(self):
         """
-        View/use items. (Not yet implemented)
-        :return: To be determined upon implementation
+        Use an item. In a party (src/party.py), the hero is chosen first.
         """
-        # the implementation of this will vary upon which item is being used.
+        with self.chosen_hero() as hero:
+            if hero is not None:
+                self.use_an_item()
+        self.game.unlaunch_menu(self)
+        self.game.game_state.unpause_all_movement()
+
+    def use_an_item(self) -> None:
         if not self.player.inventory:
             self.show_text_in_dialog_box(self._("Nothing of use has yet been given to thee."), skip_text=self.skip_text)
         else:
             self.display_item_menu('inventory')
-
-            # self.show_text_in_dialog_box(inventory_string, skip_text=self.skip_text)
-        self.game.unlaunch_menu(self)
-        self.game.game_state.unpause_all_movement()
 
     def display_item_menu(self, menu_name: str):
         """Display a menu of selectable items.
@@ -1596,6 +1642,7 @@ class CommandMenu:
 
         def draw(index: int, cursor_visible: bool) -> None:
             nonlocal drawn_index, window_rect, first
+            self.item_menu_selection = (menu_name, index)
             if index != drawn_index:
                 # Redraw the window to erase the cursor from the entry it left
                 first = first_shown_entry(index, first, len(entries))
@@ -1611,8 +1658,11 @@ class CommandMenu:
         window = item_menu_window(menu_name, len(entries))
         # In a fight the window covers the battle scene, which remove_window doesn't draw: what it covers is kept
         covered = self.covered_area(window) if self.current_battle is not None else None
-        answer = run_selection(draw, 0, move=stop_at_edges(len(entries)), sound=self.play_menu_button_sound,
-                               sound_buttons=(IN_A,))
+        try:
+            answer = run_selection(draw, 0, move=stop_at_edges(len(entries)), sound=self.play_menu_button_sound,
+                                   sound_buttons=(IN_A,))
+        finally:
+            self.item_menu_selection = None
         # NES WindowSequence: RemoveWindow, chosen or not, before the choice is acted on
         self.remove_window(window, covered)
         if self.current_battle is not None:
@@ -1664,15 +1714,36 @@ class CommandMenu:
                     # NES: the MP is spent, but a stopspelled player's spell is blocked
                     self.show_battle_line(self._("But that spell hath been blocked."))
                 else:
-                    spell_function()
+                    self.field_effect(currently_selected_item, spell_function, self.current_battle is None
+                                      and currently_selected_item in PARTY_SPELLS)
                     if self.current_battle is None and currently_selected_item in FIELD_SPELLS_ENDING_WITH_A_PRESS:
                         self.wait_for_button(shows_arrow=False)
         elif menu_name == 'inventory':
             if self.current_battle is not None:
                 self.use_item_in_battle(currently_selected_item)
             else:
-                function_dict[currently_selected_item]()
+                self.field_effect(currently_selected_item, function_dict[currently_selected_item],
+                                  currently_selected_item not in OWN_ITEMS, lend=True)
         return currently_selected_item
+
+    def field_effect(self, name: str, effect: Callable[[], Any], for_the_party: bool, lend: bool = False) -> None:
+        """Run a spell's or an item's effect. In a party (src/party.py), the second hero's spell or item that acts for
+        the party (it moves it, or works where the party stands: PARTY_SPELLS, every item but OWN_ITEMS) works as the
+        first hero's, the one on the map. The cost was the second hero's: their MP, or their item, lent to the first
+        hero for the effect (``lend``) and given back unless the effect used it up."""
+        leader = first_hero(self.game)
+        if not for_the_party or self.player is leader:
+            effect()
+            return
+        user = self.player
+        if lend:
+            user.inventory.remove(name)
+            leader.inventory.append(name)
+        with acting(self.game, leader):
+            effect()
+        if lend and name in leader.inventory:
+            leader.inventory.remove(name)
+            user.inventory.append(name)
 
     def command_window_in_nes_font(self) -> bool:
         """Whether the COMMAND window's title and entries are shown untranslated, in the NES font, so the whole window is

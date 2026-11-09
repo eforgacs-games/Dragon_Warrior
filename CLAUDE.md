@@ -12,7 +12,7 @@ The goal is to match the NES game. Formulas, messages and behavior are checked a
 ## Development Commands
 
 ### Running the Game
-- **Main game**: `uv run python -m src.game` (or `python src/game.py`). Flags: `--dev` (`dev_config`), `--checkpoint <name>` (start from a playtest checkpoint; see `PLAYTEST.md`), `--language English|Korean|Japanese|"Traditional Chinese"|"Simplified Chinese"|English2014`, `--smoke-test` (load every game file, play a few scenes headless, exit 0 or 1; the release workflow runs it)
+- **Main game**: `uv run python -m src.game` (or `python src/game.py`). Flags: `--dev` (`dev_config`), `--checkpoint <name>` (start from a playtest checkpoint; see `PLAYTEST.md`), `--language English|Korean|Japanese|"Traditional Chinese"|"Simplified Chinese"|English2014`, `--seed <n>` (seed the random numbers: the same play meets the same rolls), `--host [PORT]` / `--join HOST[:PORT]` (network play, `src/netplay.py`: the host streams its screen, the client sends player 2's buttons), `--smoke-test` (load every game file, play a few scenes headless, exit 0 or 1; the release workflow runs it)
 - **Entry point**: `uv run python -m src.main` starts the game with `prod_config` and no flags (`python src/main.py` fails: it doesn't put the repository root on `sys.path` the way `src/game.py` does)
 
 ### Testing
@@ -75,6 +75,12 @@ The main `Game` class in `src/game.py` orchestrates:
 - `game_options.py`: every option of the options overlay, declared once (per adventure log or global settings)
 - `story_flags.py`: story progress (`StoryFlags`), saved with the game
 - `save_state.py`: full snapshots of the game on the map (not an NES feature)
+- `random_streams.py`: every roll's generator: the NES's own random number (RANDOMNESS NES, the default: NES UpdateRandNum, stepped every frame and every roll), or the hero's and the world's streams (SEEDED, which `--seed` and multiplayer lock it on)
+- `game_events.py`, `play_stats.py`, `achievements.py`: the event bus, the play statistics counted from its events, and the achievements (kept globally, next to the settings) checked on every event
+- `party.py`: co-op's party (the HEROES option): the second hero, `game.companion`, saved with the log as `Companion` (save format 2); `game.player` is the first hero, who leads on the map; `follower.py` walks the second one step behind; in a fight each hero's turn runs with them as `game.player` (`party.acting`), the second's on player 2's joypad (`controls.player_input`: key sets of NES buttons read the `P2_` actions)
+- `player_two_menu.py`: co-op's player 2's A on the map: the second hero's ITEM, SPELL and STATUS, on player 2's joypad
+- `tasks.py`, `sessions.py`: free roam co-op's base: the game's loops running side by side as greenlet tasks (inside a task, `waiting.wait` hands frames back instead of sleeping), and each hero's own part of the game (`SESSION_ATTRIBUTES`: `game.player`, `game.current_map`, `game.cmd_menu` ... are descriptors reading the session in use, a context variable; the first hero's by default)
+- `netplay.py`: network play: the host streams its screen (wrapping `display.flip`/`update`) and presses player 2's keys for the client's buttons (`RemoteJoypad`, added to `gamepad.Gamepads`) and sends the sound and music events (`sound.audio_event`); the client runs no game and plays them from its own files
 - `window_renderer.py`: draws NES windows tile by tile
 - `npc_movement.py`: where roaming NPCs may step
 - `checkpoints.py`: named playtest checkpoints in `data/checkpoints/`

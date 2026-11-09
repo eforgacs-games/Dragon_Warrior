@@ -65,7 +65,9 @@ is. Please attach it to a [new issue](https://github.com/eforgacs-games/Dragon_W
    dependencies, in a `.venv` folder inside the project.
 4. Start the game with `uv run python -m src.game`. Add `--language English`, `--language Korean`,
    `--language Japanese`, `--language "Traditional Chinese"`, `--language "Simplified Chinese"` or
-   `--language English2014` to choose the language.
+   `--language English2014` to choose the language. Add `--seed` with a number to play with that seed: the same play
+   gets the same rolls every time (the RANDOMNESS option stays on SEEDED). `--host` and `--join` are for network
+   play ([Network play](#network-play)).
 
 For the NES and SFC music, also install libgme (below). [CONTRIBUTING.md](CONTRIBUTING.md) has the rest: running
 without uv, the tests, playtest checkpoints and debug keys.
@@ -108,6 +110,8 @@ them bound.
 | H | Show the controls |
 | Q | The quest journal: the goals you've learned of (QUEST JOURNAL option) |
 | L | The message log: the last 50 messages, to read a hint again (MESSAGE LOG option) |
+| T | The achievements: which you've unlocked, and when (ACHIEVEMENTS option) |
+| Numpad | Player 2's joypad in co-op (HEROES on 2): 8, 2, 4, 6 the D-pad, 0 A, . B, + START, - SELECT. A second controller plugged in is player 2's too. On the map, player 2's A opens the second hero's own ITEM, SPELL and STATUS |
 | M | The dungeon map, on a dark floor: the blocks you've seen there (DUNGEON MAP option) |
 | P | The stats page: play time, steps, fights, gold, chests and monsters defeated (STATS PAGE option) |
 | 1 to 5 | Game speed: 1x, 2x, 4x, 8x or 16x (GAME SPEED option) |
@@ -172,7 +176,13 @@ on).
 - **Auto-grind** (G): on a map with random fights, the hero paces back and forth between two tiles and chooses FIGHT
   in every fight, until something needs you: HP at or below the GRIND STOP setting (checked at the start of every
   turn, so you can still heal or run), the hero asleep or his spells blocked, a guardian or the Dragonlord, or a level
-  up (press G to go on). G or any other key stops it.
+  up (press G to go on). G or any other key stops it. G at the battle's command window starts it from that turn.
+  With AUTO-HEAL on, low HP doesn't stop it while there's MP to heal: it casts HEAL or HEALMORE (whichever gives more
+  HP for the MP) through the menus, in a fight at the start of a turn or on the map after it, until HP is out of
+  danger, and stops when the MP runs out (KEEP 1 HEAL stops while there's still enough for one HEAL, for the way back).
+  With AUTO-INN on, instead of stopping on the map it walks to the nearest inn it can pay for (through towns, caves
+  and stairs as needed), stays the night, walks back to where it started and grinds on. Fights on the way are fought
+  as usual; HP low with no heal on the way stops it.
 
 The game speed, the window zoom and fullscreen are remembered for the next time you play.
 
@@ -259,7 +269,7 @@ With one of these OFF, its key does nothing, as on the NES.
 | SAVE STATES | F1 to F3 and Shift+F1 to F3 | OFF | OFF | ON |
 | REWIND | Backspace | OFF | OFF | ON |
 | AUTO-GRIND | G | OFF | OFF | ON |
-| GRIND STOP | When auto-grind stops: RED HP (the NES's low HP, where the windows turn red), HALF HP or 3/4 HP | RED HP | RED HP | RED HP |
+| GRIND STOP | When auto-grind stops (or heals): RED HP (the NES's low HP, where the windows turn red), HALF HP, 3/4 HP or DANGER (when the next enemy turn could kill the hero in a fight, or the next fight could on the map, from the strongest monster around and your armor) | RED HP | RED HP | RED HP |
 | MENU SPEED | NORMAL: the menus' cursor stays at normal speed whatever the game speed; FOLLOW GAME: it speeds up too | NORMAL | NORMAL | NORMAL |
 | CHEATS | F4 auto-battle and F9 invulnerability | OFF | OFF | OFF |
 | DUNGEON MAP | M on a dark floor shows the blocks you've seen there | OFF | OFF | ON |
@@ -272,7 +282,24 @@ With one of these OFF, its key does nothing, as on the NES.
 | --- | --- | --- | --- | --- |
 | CONFIRM NAME | OFF (NES): the 8th letter ends the name; ON: a full name waits on END so you can still change it, and START ends the name from anywhere | OFF | OFF | ON |
 | STATS PAGE | P shows the adventure's play statistics (play time, steps, fights won, fled and lost, deaths, gold earned and spent, chests opened, monsters defeated); they're counted either way | OFF | OFF | ON |
+| AUTO-HEAL | What auto-grind does at the GRIND STOP HP: OFF (NES): stops; ON: heals with all the MP; KEEP 1 HEAL: heals but keeps the MP for one HEAL | OFF | OFF | KEEP 1 HEAL |
+| AUTO-INN | When auto-grind can't go on (HP low with no heal, or no MP left for one): OFF (NES): it stops; ON: it goes to the nearest inn it can pay for and back | OFF | OFF | ON |
+| RANDOMNESS | NES: every roll comes from the NES's own random number, which moves on every frame as well as every roll, so when you press a button changes what happens, as on the NES; SEEDED: the hero's rolls and the world's (the townspeople's wandering) come from two separate generators, so the same play with the same `--seed` gets the same rolls. A seed keeps it on SEEDED (grayed out) | NES | NES | NES |
+| ACHIEVEMENTS | OFF (NES), or ON: achievements unlock as you play (story milestones, every monster, a low-level or deathless Dragonlord, and more), with a banner at the top of the map, and T lists them. They're kept for whoever plays on this computer, across every adventure log, in `achievements.json` next to the settings. Nothing unlocks while a cheat is on (CHEATS, `--dev`) | OFF | OFF | ON |
+| HEROES | How many heroes the next new quest starts with: 1 (NES), or 2, a co-op party (in progress: the second hero, in green, has stats, items and spells of their own, is saved with the adventure log and follows one step behind the first hero on the map. In a fight each hero standing chooses a command, then the enemy acts against one of them at random; a hero at 0 HP falls and sits the fight out; the fight is lost when both fall. Both heroes standing get the experience, the party the gold once. The second hero's turns are player 2's: the numpad (8, 2, 4 and 6 the D-pad, 0 A, . B, + START, - SELECT, all rebindable on the CONTROLS screen) or a second controller. Inns charge for each hero and both rest; at a shop the player first chooses who is shopping, and the gold is the party's; a chest's item goes to the first hero with room; STATUS shows each hero in turn; ITEM and SPELL on the map first ask which hero: the cost is theirs, HEAL and Herbs heal them, and what moves or helps the whole party, such as Wings, RETURN, OUTSIDE, REPEL or a Magic Key, works where the party stands). An adventure log keeps the party it started with | 1 | | |
+| FALLEN HEROES | In co-op, what becomes of a hero who falls in a fight that's won or fled. INN: they stay down, grey on the map, until the party stays at an inn (they can't fight, use items or spells, or shop, and get no experience; if the first hero falls, they still lead). GET UP: they get back up with 1 HP after the fight | INN | | |
+| CO-OP | How the two heroes of a co-op party play: PARTY, together, the second one step behind the first; or FREE ROAM (in progress), each going their own way on their own half of a window twice as wide, player 1 on the usual keys and player 2 on theirs (the numpad or the second controller): one world, so they meet on the same map, and each fights alone while the other plays on. The music is the first hero's. In network play, player 2's window shows the second hero's half and plays their sounds. Save states and the rewind are off while the heroes roam apart | PARTY | | |
 
+
+## Network play
+
+Player 2 can play the co-op party from another computer. The host plays as usual, started with `--host` (it listens
+on port 52528; `--host 6000` for another). Player 2 starts the game with `--join` and the host's address
+(`--join 192.168.0.5`, or `--join 192.168.0.5:6000`): their window shows the host's game, and their own keys and
+controller are player 2's joypad, so they choose the second hero's commands in a fight, and their A opens the second
+hero's ITEM, SPELL and STATUS on the map. There is one game, the host's; player 2's window plays its music and sounds
+from player 2's own copy of the game (the NES and SFC soundtracks need libgme there too). Play on a local network or
+over a VPN such as Tailscale rather than opening the port to the internet: whoever connects is player 2.
 
 ## Languages
 

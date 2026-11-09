@@ -21,8 +21,9 @@ surfaces, no sprites; a map is named, not copied). It holds everything the game'
 - the message log (src/message_log.py): putting a snapshot back puts back the messages shown up to then, so the log
   never shows what a rewind undid;
 - the play statistics (src/play_stats.py), the play time too: they're the adventure's as it was then;
-- the random number generator (Python's ``random``, which every roll in the game reads), so that loading a state and
-  pressing the same keys plays out the same way, fights included.
+- the party's second hero (src/party.py), as an adventure log keeps them;
+- the random number streams (src/random_streams.py: the hero's and the world's, which every roll in the game reads),
+  so that loading a state and pressing the same keys plays out the same way, fights included.
 
 Not kept: the game speed (keys 1 to 5), auto-battle and invulnerability (F4, F9), fullscreen and the zoom, which are
 settings of the session rather than of the game, as they aren't saved with the adventure log either.
@@ -38,11 +39,9 @@ format is brought up to date by STATE_MIGRATIONS (``migrate_snapshot``) before i
 or one that can't be read, is refused with a message. tests/test_save_compatibility.py loads a sample state of every
 format, kept in tests/sample_saves/.
 """
-import base64
 import json
 import os
 import random
-from array import array
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any
 
@@ -57,8 +56,11 @@ from src.maps import CharlockB1, map_lookup
 from src.menu import CommandMenu
 from src.message_log import decoded_entries
 from src.options_overlay import apply_log_options, apply_option
+from src.party import new_hero
 from src.play_stats import PlayStats
+from src.save_file import HeroSave
 from src.game_options import options_from_config, options_from_save, options_to_save
+from src.random_streams import RandomStreams, Stream, decode_random_state, encode_random_state
 from src.sprites.animated_sprite import AnimatedSprite
 from src.soundtrack import SOUNDTRACK_KEY, soundtrack
 from src.story_flags import StoryFlags
@@ -69,7 +71,7 @@ if TYPE_CHECKING:
 
 # Raise it whenever what a snapshot holds changes, with a STATE_MIGRATIONS step from the version before (and a sample
 # state of that version in tests/sample_saves/), so states saved before load as they should rather than wrong
-STATE_FORMAT_VERSION = 2
+STATE_FORMAT_VERSION = 5
 VERSION_KEY = 'version'
 SAVE_STATE_SLOTS = (1, 2, 3)
 # What a save state key asks for (MapHotkeys.press_save_state): (SAVE or LOAD, slot)
@@ -100,10 +102,13 @@ GAME_STATE_VALUES = ('tiles_moved_total', 'light_diameter', 'radiant_timer', 'li
 # Game's values: the step counts the fight rolls read, the repel timer and whether it's still to tick for the step
 # just taken, Magic Armor's step count, and whether ENCOUNTERS HALF skips the next fight
 GAME_VALUES = ('tiles_moved_since_spawn', 'last_amount_of_tiles_moved', 'repel_timer', 'repel_tick_pending',
-               'magic_armor_steps', 'last_zone', 'initial_dialog_enabled', 'skip_next_encounter')
+               'magic_armor_steps', 'last_zone', 'initial_dialog_enabled', 'skip_next_encounter', 'step_roll')
 # The Game and MovementController values version 2 added, and what a version 1 state had in effect (_from_version_1)
 GAME_VALUES_ADDED_IN_VERSION_2 = {'repel_tick_pending': False, 'skip_next_encounter': False}
 MOVEMENT_VALUES_ADDED_IN_VERSION_2 = {'running_step': False}
+# The Game value version 4 added: the step's RandNumUB (Game.step_roll). A version 3 state was saved either between
+# steps, when it isn't read again, or during a hill's pause, whose roll then reads 0 (a fight, on a hill).
+GAME_VALUES_ADDED_IN_VERSION_4 = {'step_roll': 0}
 # MovementController's frame counters (src/movement.py), and whether the hero's step under way is a running one
 # (RUN BUTTON)
 MOVEMENT_VALUES = ('hero_standing', 'step_ends', 'hill_pause_frames', 'freeze_wait_frames', 'running_step')
@@ -134,10 +139,36 @@ def _from_version_1(snapshot: dict[str, Any]) -> dict[str, Any]:
     return migrated
 
 
+def _from_version_2(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Version 2 to 3: the random number streams (src/random_streams.py) in place of Python's one generator. The old
+    generator rolled for everything, so the HERO stream carries on from it, and the hero's next rolls are the ones
+    version 2 would have made (unless an NPC would have rolled first). The WORLD stream starts from a generator seeded
+    with the old state, so a state loads the same way every time. The seed they came from isn't known (None)."""
+    old_state = decode_random_state(snapshot['random'])
+    world = random.Random(f"{snapshot['random'][1]}/{Stream.WORLD}")
+    return {**snapshot, 'random': {'seed': None, Stream.HERO.value: encode_random_state(old_state),
+                                   Stream.WORLD.value: encode_random_state(world.getstate())}}
+
+
+def _from_version_3(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Version 3 to 4: the step's RandNumUB (GAME_VALUES_ADDED_IN_VERSION_4) and the NES's random number (RANDOMNESS,
+    src/random_streams.py), which starts at 0."""
+    return {**snapshot, 'game': {**GAME_VALUES_ADDED_IN_VERSION_4, **snapshot['game']},
+            'random': {**snapshot['random'], 'nes': 0}}
+
+
+def _from_version_4(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Version 4 to 5: the party's second hero (src/party.py), which no version 4 state had."""
+    return {**snapshot, 'companion': None}
+
+
 # STATE_MIGRATIONS[n] turns a snapshot in format n into format n + 1, for every version from 1 (the first, in 1.0) up to
 # STATE_FORMAT_VERSION
 STATE_MIGRATIONS: dict[int, Callable[[dict[str, Any]], dict[str, Any]]] = {
     1: _from_version_1,
+    2: _from_version_2,
+    3: _from_version_3,
+    4: _from_version_4,
 }
 
 
@@ -224,23 +255,6 @@ def _rect(sprite: Any) -> list[int]:
     return [sprite.rect.x, sprite.rect.y]
 
 
-def encode_random_state(state: tuple) -> list:
-    """random.getstate() as JSON: the Mersenne Twister's 625 words packed into base64 (3.3 KB, where a list of them
-    would be about 7 KB of JSON and 25 KB of Python ints in memory)."""
-    version, internal_state, gauss_next = state
-    words = array('I', internal_state)
-    return [version, base64.b64encode(words.tobytes()).decode('ascii'), gauss_next]
-
-
-def decode_random_state(encoded: list) -> tuple:
-    version, packed, gauss_next = encoded
-    words = array('I')
-    words.frombytes(base64.b64decode(packed))
-    if len(words) != 625:
-        raise ValueError("not a random number generator state")
-    return int(version), tuple(words), None if gauss_next is None else float(gauss_next)
-
-
 def take_snapshot(game: 'Game') -> dict[str, Any]:
     """The game as it is now (see the module docstring), as JSON values. Taken between two map frames."""
     current_map = game.current_map
@@ -287,19 +301,35 @@ def take_snapshot(game: 'Game') -> dict[str, Any]:
         'pending_scripted_battle': game.battle_ctrl.pending_scripted_battle,
         'pop_up_window': game.drawer.display_hovering_stats,
         'options': options_to_save(options_from_config(game.game_state.config)),
-        'random': encode_random_state(random.getstate()),
+        'random': game.random_streams.to_save(),
         # What the hero has seen of each dark floor (src/dungeon_map.py)
         'dungeon_map': game.dungeon_map.to_save() if hasattr(game, 'dungeon_map') else {},
         # The messages shown so far (src/message_log.py), so the log doesn't show what a rewind undid
         'message_log': game.message_log.to_save(),
         # The play statistics (src/play_stats.py)
         'play_stats': game.play_stats.to_save(),
+        # The party's second hero (src/party.py), as an adventure log keeps them; None for one hero
+        'companion': None if game.companion is None else HeroSave.from_player(game.companion).to_save(),
     }
 
 
-def decode_snapshot(snapshot: Any) -> dict[str, Any]:
+def hero_block(hero: dict[str, Any], layout: list[list[int]], tile_size: int | None) -> tuple[int, int]:
+    """The block the hero is on: where their position (rect) is when they're standing on a block and ``tile_size`` is
+    known, their row and column otherwise (in a step: the block it started from). ValueError if it's off the map."""
+    row, column = int(hero['row']), int(hero['column'])
+    x, y = hero['rect']
+    if tile_size and not hero['is_moving'] and x % tile_size == 0 and y % tile_size == 0:
+        row, column = y // tile_size, x // tile_size
+    if not (0 <= row < len(layout) and 0 <= column < len(layout[row])):
+        raise ValueError(f"the hero's block {(row, column)} is off the map")
+    return row, column
+
+
+def decode_snapshot(snapshot: Any, tile_size: int | None = None) -> dict[str, Any]:
     """Check a snapshot and turn its JSON values back into the game's (tuples, the random state), without changing
-    the game. Raises StateError for one from a newer format version or one that can't be read."""
+    the game. Raises StateError for one from a newer format version or one that can't be read. With the game's
+    ``tile_size``, a hero standing on a block is put on the block their position (rect) is on: an autosave written as
+    the hero arrived on a map used to keep the last map's block (hero_block)."""
     if not isinstance(snapshot, dict):
         raise StateError(UNREADABLE)
     snapshot = migrate_snapshot(snapshot)
@@ -321,6 +351,7 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
         for name in PLAYER_LISTS:
             hero[name] = [None if value is None and name == 'inventory' else str(value) for value in hero[name]]
         hero['rect'] = [int(value) for value in hero['rect']]
+        hero['row'], hero['column'] = hero_block(hero, layouts[snapshot['map']], tile_size)
         roaming = []
         for values in snapshot['roaming']:
             values = dict(values)
@@ -362,12 +393,13 @@ def decode_snapshot(snapshot: Any) -> dict[str, Any]:
             'pending_scripted_battle': snapshot['pending_scripted_battle'],
             'pop_up_window': bool(snapshot['pop_up_window']),
             'options': options_from_save(dict(snapshot['options'])),
-            'random': decode_random_state(snapshot['random']),
+            'random': RandomStreams.decode_save(snapshot['random']),
             # a state saved before the dungeon map has none: every floor unexplored
             'dungeon_map': DungeonMap.from_save(snapshot.get('dungeon_map', {})),
             'message_log': decoded_entries(snapshot['message_log']),
             # a state saved before the play statistics has none: all 0
             'play_stats': PlayStats.from_save(snapshot.get('play_stats', {})),
+            'companion': None if snapshot['companion'] is None else HeroSave.from_save(snapshot['companion']),
         }
         if len(decoded['chest_history']) != len(TreasureChestHistory().slots) or len(decoded['camera']) != 2 \
                 or len(decoded['color']) != 3:
@@ -382,7 +414,7 @@ def restore_snapshot(game: 'Game', snapshot: dict[str, Any], fade_in: bool = Tru
     state: the screen cuts to black and the map fades in, as when a saved game is loaded (Game.load_game), and its
     music starts. Without it (the rewind), the map is just drawn, and its music only restarts if the map changes.
     Raises StateError, before anything has changed, if the snapshot can't be loaded."""
-    state = decode_snapshot(snapshot)
+    state = decode_snapshot(snapshot, game.tile_size)
     old_map = game.current_map
     old_tiles = map_layout_changes(old_map.identifier, old_map.layout) \
         if old_map.identifier in pristine_layouts() else None
@@ -442,7 +474,7 @@ def _rebuild_map(game: 'Game', state: dict[str, Any], cut_to_black_first: bool) 
     next_map.load_map(game.player, (hero['row'], hero['column']), game.tile_size)
     # NPCs a dialog took off the map (DialogLookup.remove_npc) stay off it; the others keep their mobile slots
     kept = {values['identifier'] for values in (*state['roaming'], *state['fixed'])}
-    for identifier in [identifier for identifier in next_map.characters if identifier != 'HERO']:
+    for identifier in [identifier for identifier in next_map.characters if not identifier.startswith('HERO')]:
         if identifier not in kept:
             character = next_map.characters.pop(identifier)['character']
             for characters in (next_map.fixed_characters, next_map.roaming_characters):
@@ -461,6 +493,10 @@ def _restore_values(game: 'Game', state: dict[str, Any]) -> None:
     game.dungeon_map = state['dungeon_map'].copy()  # a copy: the rewind can put the same snapshot back again
     game.message_log.restore(state['message_log'])
     game.play_stats = state['play_stats'].copy()  # a copy: the rewind can put the same snapshot back again
+    game.companion = None
+    if state['companion'] is not None:
+        game.companion = new_hero(game)
+        state['companion'].restore(game.companion)
     for name in (*PLAYER_VALUES, *PLAYER_CELLS):
         setattr(player, name, hero[name])
     for name in PLAYER_LISTS:
@@ -506,15 +542,17 @@ def _restore_values(game: 'Game', state: dict[str, Any]) -> None:
     game.hotkeys.clear_requests()
     game.cmd_menu.launch_signaled = False
     game.camera.pos = state['camera']
-    # The map is drawn in full on the next frame, with the pop-up window already open if it was (no drop-down)
+    # The map is drawn in full on the next frame (the hero and the NPCs may have left their last frames anywhere on
+    # it), with the pop-up window already open if it was (no drop-down)
     game.loop_count = 1
+    game.drawer.forget_drawn_in_full()
     game.drawer.display_hovering_stats = game.drawer.hovering_stats_displayed = state['pop_up_window']
     game.drawer.last_player_rect = None
     game.set_window_color(state['color'])
     game.set_player_images_by_equipment()
     for character_dict in current_map.characters.values():
         character_dict['character'].show_facing()
-    random.setstate(state['random'])
+    game.random_streams.restore(state['random'])
 
 
 def state_file_name(slot: int) -> str:

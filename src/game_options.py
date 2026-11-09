@@ -22,6 +22,7 @@ from typing import Any, override
 from src.display_filters import SCALING_KEY, SCALING_MODES, SCALING_SMOOTH, SCANLINES_KEY
 from src.languages import LANGUAGE_NAMES
 from src.items import BAG_SIZES, BIG_BAG_SLOTS, INVENTORY_SLOTS
+from src.random_streams import RANDOMNESS_NES, RANDOMNESS_SEEDED
 from src.quest_journal import JOURNAL_HINTS, JOURNAL_LEARNED, JOURNAL_OFF, JOURNAL_SETTINGS, LEGACY_JOURNAL_GOALS
 from src.soundtrack import DEFAULT_SOUNDTRACK, SOUNDTRACK_KEY, SOUNDTRACK_SAVE_KEY, SOUNDTRACKS, Soundtrack, \
     soundtrack, soundtrack_from_save
@@ -36,7 +37,8 @@ MESSAGE_SPEED_NAMES = ('Fast', 'Normal', 'Slow')
 CLASSIC = 'Classic'  # the NES dialog window (src/dialog_box.py), the default
 MODERN = 'Modern'  # each message replaces the last one, as this game drew dialog before it matched the NES
 DIALOG_STYLES = (CLASSIC, MODERN)
-AUTO_GRIND_STOP_VALUES = ('RedHP', 'HalfHP', 'ThreeQuartersHP')
+AUTO_GRIND_STOP_VALUES = ('RedHP', 'HalfHP', 'ThreeQuartersHP', 'Danger')
+AUTO_HEAL_OFF, AUTO_HEAL_ON, AUTO_HEAL_KEEP_ONE = AUTO_HEAL_SETTINGS = ('Off', 'On', 'KeepOneHeal')
 ENCOUNTERS_NES, ENCOUNTERS_HALF, ENCOUNTERS_OFF = ENCOUNTER_SETTINGS = ('NES', 'Half', 'Off')
 EXP_GOLD_MULTIPLIERS = (1, 2, 4)
 STATUS_WINDOW_NES, STATUS_WINDOW_ALWAYS = STATUS_WINDOW_SETTINGS = ('NES', 'Always')
@@ -55,7 +57,8 @@ def same_value(value: Any, choice: Any) -> bool:
 class Option:
     """One option (see the module docstring). ``name`` is its Options field (per log) or its Settings field (global);
     ``presets`` is its (NES, MODERN) values, or None for an option the presets leave alone; ``renamed`` maps a value
-    an older build saved to the value it is now."""
+    an older build saved to the value it is now. While any of the config keys in ``locked_by`` is set (not None or
+    False), the option is ``locked_value`` whatever it says (``in_force``), and the overlay grays its row out."""
     name: str
     config_key: str
     values: tuple[Any, ...]
@@ -63,6 +66,8 @@ class Option:
     presets: tuple[Any, Any] | None = None
     save_key: str | None = None
     renamed: tuple[tuple[Any, Any], ...] = ()
+    locked_by: tuple[str, ...] = ()
+    locked_value: Any = None
 
     @property
     def per_log(self) -> bool:
@@ -75,6 +80,14 @@ class Option:
         if any(same_value(value, choice) for choice in self.values):
             return value
         return self.default
+
+    def locked(self, config: dict) -> bool:
+        return any(config.get(key) is not None and config.get(key) is not False for key in self.locked_by)  # SEED 0 too
+
+    def in_force(self, config: dict) -> Any:
+        """What the game goes by: the config's value, or ``locked_value`` while the option is locked. The config's
+        value is kept as it is (and saved with the adventure log), in force again once nothing locks it."""
+        return self.locked_value if self.locked(config) else self.from_config(config)
 
     def from_save(self, save: dict) -> Any:
         """The value a save file (or a save state's options) holds."""
@@ -182,18 +195,46 @@ BAG_SIZE = Option('bag_size', 'BAG_SIZE', BAG_SIZES, INVENTORY_SLOTS, (INVENTORY
 # SMART A (#404): A on the map does TALK, TAKE, DOOR or STAIRS when one applies, instead of opening COMMAND
 # (MapHotkeys.smart_command)
 SMART_A = Option('smart_a', 'SMART_A', ON_OFF, False, (False, True), 'SmartA')
-# MESSAGE LOG (#405): the MESSAGE LOG key (L) shows the last messages on the map (src/message_log.py)
-MESSAGE_LOG = Option('message_log', 'MESSAGE_LOG', ON_OFF, False, (False, True), 'MessageLog')
+# MESSAGE LOG (#405): the MESSAGE LOG key (L) shows the last messages on the map (src/message_log.py). Off in MODERN
+# too: the quest journal (Q) keeps what matters (the hints with who said them, and the records: src/records.py)
+MESSAGE_LOG = Option('message_log', 'MESSAGE_LOG', ON_OFF, False, (False, False), 'MessageLog')
 # STATS PAGE (#414): the STATS key (P) shows the adventure's play statistics on the map (src/stats_screen.py). They're
 # counted whatever it says (src/play_stats.py). Information only: on in MODERN.
 STATS_PAGE = Option('stats_page', 'STATS_PAGE', ON_OFF, False, (False, True), 'StatsPage')
+# ACHIEVEMENTS (#425): achievements are unlocked, shown in a banner and on the TROPHIES key's page (T,
+# src/achievements.py). Off, nothing is unlocked.
+ACHIEVEMENTS = Option('achievements', 'ACHIEVEMENTS', ON_OFF, False, (False, True), 'Achievements')
+# FALLEN HEROES (co-op, src/party.py): a party's hero brought to 0 HP in a fight stays down until an inn (INN, the
+# stricter rule and the default, as in the later Dragon Quests) or gets back up with 1 HP once the fight is won or fled
+# (GET UP). The NES has one hero, so no preset changes it.
+FALLEN_INN, FALLEN_GET_UP = 'Inn', 'GetUp'
+FALLEN = Option('fallen', 'FALLEN', (FALLEN_INN, FALLEN_GET_UP), FALLEN_INN, None, 'FallenHeroes')
+# CO-OP (#438): a party's two heroes travel together (PARTY, the default) or roam apart, each on their own half of the
+# screen (FREE ROAM, src/sessions.py, Game.update_free_roam). Co-op isn't on the NES: no preset changes it.
+COOP_PARTY, COOP_FREE_ROAM = 'Party', 'FreeRoam'
+COOP = Option('coop', 'COOP', (COOP_PARTY, COOP_FREE_ROAM), COOP_PARTY, None, 'CoopMode')
 # AUTOSAVE: the autosave slot (src/autosave.py); the NES only saves with King Lorik
 AUTOSAVE = AutosaveOption('autosave', 'AUTOSAVE', ON_OFF, None, (False, True), 'Autosave')
+# AUTO-HEAL: when auto-grind's HP is low (GRIND STOP), it casts HEAL or HEALMORE instead of stopping, until HP is out
+# of danger, with all the MP or keeping enough for one HEAL (src/auto_grind.py). Off, it stops.
+AUTO_HEAL = Option('auto_heal', 'AUTO_HEAL', AUTO_HEAL_SETTINGS, AUTO_HEAL_OFF, (AUTO_HEAL_OFF, AUTO_HEAL_KEEP_ONE),
+                   'AutoHeal')
+# AUTO-INN: when auto-grind can't go on (HP low with no heal, or no MP left for one), it walks to the nearest inn it can
+# pay for, stays the night and walks back (src/inn_trip.py). Off, it stops.
+AUTO_INN = Option('auto_inn', 'AUTO_INN', ON_OFF, False, (False, True), 'AutoInn')
+
+# RANDOMNESS (src/random_streams.py): every roll from the NES's own random number (UpdateRandNum, stepped every frame and
+# every roll), or SEEDED, from the hero's and the world's streams, which a seed and multiplayer need: --seed (SEED) and
+# a multiplayer game (MULTIPLAYER) lock it on SEEDED. The NES's in both presets: SEEDED changes how the dice are
+# thrown, not what they give.
+RANDOMNESS = Option('randomness', 'RANDOMNESS', (RANDOMNESS_NES, RANDOMNESS_SEEDED), RANDOMNESS_NES,
+                    (RANDOMNESS_NES, RANDOMNESS_NES), 'Randomness', locked_by=('SEED', 'MULTIPLAYER'),
+                    locked_value=RANDOMNESS_SEEDED)
 
 PER_LOG_OPTIONS = (MESSAGE_SPEED, DIALOG_STYLE, NPCS_MAKE_WAY, FADE_STYLE, AUTO_STAIRS, AUTO_GRIND_STOP, MENU_SPEED,
                    MUSIC, GAME_SPEED_KEYS, SAVE_STATES, REWIND, AUTO_GRIND, CHEAT_KEYS, QUICK_ACTION, ENCOUNTERS,
                    EXP_GOLD, RUN_BUTTON, STATUS_WINDOW, SHOP_PREVIEW, QUEST_JOURNAL, BAG_SIZE, SMART_A, MESSAGE_LOG,
-                   STATS_PAGE, AUTOSAVE)
+                   STATS_PAGE, AUTOSAVE, AUTO_HEAL, AUTO_INN, RANDOMNESS, ACHIEVEMENTS, FALLEN, COOP)
 
 # Global, in the order of Settings' fields
 
@@ -210,7 +251,12 @@ DUNGEON_MAP = Option('dungeon_map', 'DUNGEON_MAP', ON_OFF, False, (False, True))
 # CONFIRM NAME: a full name waits on END, START ends the name (src/name_entry.py)
 NAME_CONFIRM = Option('name_confirm', 'NAME_CONFIRM', ON_OFF, False, (False, True))
 
-GLOBAL_OPTIONS = (LANGUAGE, SCANLINES, SCALING, VIEW, DUNGEON_MAP, NAME_CONFIRM)
+# HEROES (co-op, #438): how many heroes a new quest starts with, the NES's one or a party of two (src/party.py). It
+# only changes the next BEGIN A NEW QUEST: a log keeps the party it was started with. Co-op isn't a convenience: no
+# preset changes it.
+PARTY = Option('party', 'PARTY', (1, 2), 1)
+
+GLOBAL_OPTIONS = (LANGUAGE, SCANLINES, SCALING, VIEW, DUNGEON_MAP, NAME_CONFIRM, PARTY)
 
 ALL_OPTIONS = PER_LOG_OPTIONS + GLOBAL_OPTIONS
 OPTIONS_BY_CONFIG_KEY = {option.config_key: option for option in ALL_OPTIONS}
@@ -245,6 +291,12 @@ class Options:
     message_log: bool = MESSAGE_LOG.default
     stats_page: bool = STATS_PAGE.default
     autosave: bool | None = AUTOSAVE.default  # None: the config's AUTOSAVE is kept
+    auto_heal: str = AUTO_HEAL.default
+    auto_inn: bool = AUTO_INN.default
+    randomness: str = RANDOMNESS.default
+    achievements: bool = ACHIEVEMENTS.default
+    fallen: str = FALLEN.default
+    coop: str = COOP.default
 
 
 # A new quest's settings when none are chosen: the default message speed and the NES preset's values, as base_config

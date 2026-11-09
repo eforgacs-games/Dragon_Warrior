@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from os.path import sep
+from typing import Any
 
 from pygame import mixer
 
@@ -9,6 +11,21 @@ from src.waiting import NES_FPS, game_ticks, wait
 # Sound
 
 _sound_library: dict[str, object] = {}
+
+# Whoever wants to know what the game plays (network play sends it to player 2's window, src/netplay.py): called with
+# each sound effect and music event, (what, path or None, parameters), whether the sound and the music are on or not
+_audio_listener: Callable[[str, str | None, dict], None] | None = None
+
+
+def set_audio_listener(listener: Callable[[str, str | None, dict], None] | None) -> None:
+    global _audio_listener
+    _audio_listener = listener
+
+
+def audio_event(what: str, path: str | None = None, **parameters: Any) -> None:
+    """Tell the audio listener, if there is one, what the game plays now (Sound and src/music_player.py MusicPlayer)."""
+    if _audio_listener is not None:
+        _audio_listener(what, path, parameters)
 
 # NES SpellSFX (Bank01, $848E): 7 notes of 6 counts each, 42 frames (the recording's audible part is 0.72 s)
 SPELL_SFX_FRAMES = 42
@@ -49,6 +66,7 @@ class Sound:
         wait(max(0.0, end_ticks - game_ticks()), config)
 
     def _play_in_sfx_slot(self, path):
+        audio_event('sfx', path)
         self._sfx_started_ticks = game_ticks()
         if self.config["SOUND_ENABLED"]:
             sound = retrieve_audio_resource(_sound_library, path, _sound_library.get(path))
@@ -58,6 +76,7 @@ class Sound:
     def stop_sfx(self):
         """Silences the SFX slot. On the NES, starting an SFX does this right away (DoSFX writes $30, constant volume 0,
         to SQ2Cntrl0 and NoiseCntrl0), and the new sound only starts at the next frame's UpdateSound."""
+        audio_event('stop_sfx')
         if self.config["SOUND_ENABLED"] and mixer.get_init():
             sfx_channel().stop()
 
