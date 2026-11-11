@@ -171,12 +171,12 @@ unsigned app on each OS. Allow about 4 to 5 hours, spread over several sessions.
 
 ### Getting the build
 
-Pushing a tag such as `v1.0-rc1` runs the release workflow (`.github/workflows/release.yml`). It builds Windows (x64),
+Pushing a tag such as `v1.0.0-rc1` runs the release workflow (`.github/workflows/release.yml`). It builds Windows (x64),
 macOS (Apple Silicon) and Linux (x64) with PyInstaller (`dragon_warrior.spec`), smoke tests each archive, and
 publishes them on the [Releases page](https://github.com/eforgacs-games/Dragon_Warrior/releases) under that tag:
 
 ```bash
-gh release download v1.0-rc1 --repo eforgacs-games/Dragon_Warrior --pattern '*linux-x64*'  # or windows-x64, macos-arm64
+gh release download v1.0.0-rc1 --repo eforgacs-games/Dragon_Warrior --pattern '*linux-x64*'  # or windows-x64, macos-arm64
 ```
 
 Unpack it and start it as [README.md](README.md#download-and-play) says, the way a player would. The first start is
@@ -280,5 +280,5 @@ Example: *`charlock_throne`, `--dev`, CharlockB1, `Current coordinates: (17, 7)`
 stairs appeared but no sound played.*
 
 Open each bug as an [issue](https://github.com/eforgacs-games/Dragon_Warrior/issues) with the `bug` label (and `v1.0`
-if it should block the release). From a build, also give the OS, the release tag (e.g. `v1.0-rc1`), and attach the
+if it should block the release). From a build, also give the OS, the release tag (e.g. `v1.0.0-rc1`), and attach the
 crash log if the game wrote one (it says where).

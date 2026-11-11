@@ -5,7 +5,7 @@ All notable changes to this project are written down here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html): from 1.0 on, adventure logs and save states made by any
 1.x version load in every later 1.x version.
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-11-11
 
 The first release: the whole of *Dragon Warrior*, from King Lorik's throne room to the Dragonlord and the ending,
 playable start to finish, alone as on the NES or with a friend as a co-op party, with downloads for Windows, macOS
