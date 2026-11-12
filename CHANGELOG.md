@@ -61,9 +61,12 @@ off on its own.
   [#504](https://github.com/eforgacs-games/Dragon_Warrior/pull/504)).
 - A **shop preview** of the attack or defense power a weapon or armor would give you, part of the presets (off with
   NES, on with MODERN).
-- Townspeople who step aside, stairs taken by stepping on them, QUICK ACTION and SMART A (talk, take, open a door or
-  take the stairs with one key), a run button, a bigger bag (16 slots), an always-on status window, encounters at half
-  or off, x2 or x4 experience and gold, and a modern dialog style.
+- **QUICK ACTION** and **SMART A**: talk, take, open a door or take the stairs with one key. A pressed while walking
+  acts where the step ends, as the NES reads commands only between steps
+  ([#527](https://github.com/eforgacs-games/Dragon_Warrior/pull/527),
+  [#528](https://github.com/eforgacs-games/Dragon_Warrior/pull/528)).
+- Townspeople who step aside, stairs taken by stepping on them, a run button, a bigger bag (16 slots), an always-on
+  status window, encounters at half or off, x2 or x4 experience and gold, and a modern dialog style.
 - Name entry where a full name waits on END so you can still change it.
 - Cheats (F4 auto-battle, F9 invulnerability) are off unless you switch them on in the options.
 - FAST is the default message speed.
