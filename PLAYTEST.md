@@ -171,12 +171,12 @@ unsigned app on each OS. Allow about 4 to 5 hours, spread over several sessions.
 
 ### Getting the build
 
-Pushing a tag such as `v1.0-rc1` runs the release workflow (`.github/workflows/release.yml`). It builds Windows (x64),
+Pushing a tag such as `v1.0.0-rc1` runs the release workflow (`.github/workflows/release.yml`). It builds Windows (x64),
 macOS (Apple Silicon) and Linux (x64) with PyInstaller (`dragon_warrior.spec`), smoke tests each archive, and
 publishes them on the [Releases page](https://github.com/eforgacs-games/Dragon_Warrior/releases) under that tag:
 
 ```bash
-gh release download v1.0-rc1 --repo eforgacs-games/Dragon_Warrior --pattern '*linux-x64*'  # or windows-x64, macos-arm64
+gh release download v1.0.0-rc1 --repo eforgacs-games/Dragon_Warrior --pattern '*linux-x64*'  # or windows-x64, macos-arm64
 ```
 
 Unpack it and start it as [README.md](README.md#download-and-play) says, the way a player would. The first start is
@@ -253,6 +253,16 @@ start and the end are played in full. Times are rough.
       lists only what you've heard of, and goals are marked done as you finish them.
 - [ ] **Controller**, if you have one: plug it in while the game runs. Moving, Start (the command window), Select (the
       options), and choosing letters on the name entry screen.
+- [ ] **Co-op party**: set HEROES to 2 and begin a new quest; it asks for two names. Walk out of Tantegel: the second
+      hero (green) follows one step behind. Fight a few fights with player 2 on the numpad (or a second controller):
+      each hero chooses a command, and the fight goes on when one falls. Stay at the inn in Brecconary (both rest and
+      a fallen hero gets up), buy something for the second hero, and open player 2's own menu with their A (numpad 0).
+      Save with the king, quit and CONTINUE: both heroes are back.
+- [ ] **Free roam**: switch CO-OP to FREE ROAM. The window doubles in width; walk the heroes apart, into a town with one
+      and a fight with the other at the same time. Save with the king as the second hero, then switch back to PARTY.
+- [ ] **Network play**, with a second computer on the same network: start one build with `--host` and the other with
+      `--join <host's address>`. Player 2 sees the game and hears its music, and their keys play the second hero, in
+      PARTY and in FREE ROAM (where they see only their own half).
 - [ ] **Quitting**: close the window on the map, in a fight and in a menu. The game exits cleanly, with no crash log.
 
 ## Reporting a bug
@@ -270,5 +280,5 @@ Example: *`charlock_throne`, `--dev`, CharlockB1, `Current coordinates: (17, 7)`
 stairs appeared but no sound played.*
 
 Open each bug as an [issue](https://github.com/eforgacs-games/Dragon_Warrior/issues) with the `bug` label (and `v1.0`
-if it should block the release). From a build, also give the OS, the release tag (e.g. `v1.0-rc1`), and attach the
+if it should block the release). From a build, also give the OS, the release tag (e.g. `v1.0.0-rc1`), and attach the
 crash log if the game wrote one (it says where).
