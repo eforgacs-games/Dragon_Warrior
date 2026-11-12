@@ -661,6 +661,7 @@ class Game:
                 self.step_triggers.tick_repel_timer_after_step()  # the hill's fight roll has just been made
             event.pump()
             return
+        stepping = self.player.is_moving
         self.movement.handle_player_movement()
         self.follower.frame()
         self.field_encounters.handle_battles()
@@ -671,6 +672,10 @@ class Game:
         self._handle_map_updates()
         # The dungeon map (src/dungeon_map.py): the blocks the light shows around the hero on a dark floor are seen
         self.dungeon_map.see(self.current_map, self.player.row, self.player.column, self.game_state.lit_diameter)
+        if stepping and not self.player.is_moving:
+            # A step has just ended: the hero's tiles from where he is now, for a command held until the step's end
+            # (SMART A, resolve_pending_freezes), which is handled before this frame's post-move checks
+            self.update_hero_surroundings()
         self.movement.resolve_pending_freezes()
         self._handle_post_move_checks()
         self.ending.check_for_end_game_trigger()
@@ -708,19 +713,18 @@ class Game:
         """
         Sets the player's next tile, updates images, environment damage, and death checks.
         """
-        self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // self.tile_size,
-                                                              self.player.rect.y // self.tile_size,
-                                                              self.current_map)
-        self.cmd_menu.current_tile = self.player.current_tile
-        self.update_hero_facing()
+        self.update_hero_surroundings()
         self.set_player_images_by_equipment()
         self.follower.update_images()
         self.hero_damage.handle_environment_damage()
         self.hero_death.handle_death()
 
-    def update_hero_facing(self) -> None:
-        """The tiles in front of the hero, from where he is now. SMART A (MapHotkeys.run_smart_command) reads them
-        before this frame's post-move checks, on the frame a step ends."""
+    def update_hero_surroundings(self) -> None:
+        """The tile the hero stands on and the ones in front of him, from where he is now."""
+        self.player.current_tile = get_tile_id_by_coordinates(self.player.rect.x // self.tile_size,
+                                                              self.player.rect.y // self.tile_size,
+                                                              self.current_map)
+        self.cmd_menu.current_tile = self.player.current_tile
         self.player.next_tile_id = self.calculation.get_next_tile_identifier(self.player.column, self.player.row,
                                                                              self.player.direction_value,
                                                                              self.current_map)
