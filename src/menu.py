@@ -54,7 +54,7 @@ from src.windows import COMMAND_BORDER_LAYOUT, COMMAND_CURSOR_TILES, COMMAND_ENT
     YES_NO_WINDOW, item_menu_entry_tile_row, item_count_tile_row, item_menu_layout, item_menu_window, Window, \
     translated_name_halves
 from src.nes_random import one_in
-from src.follower import IDENTIFIER as FOLLOWER_IDENTIFIER
+from src.follower import IDENTIFIER as FOLLOWER_IDENTIFIER, LEADER
 from src.party import acting, first_hero, heroes, in_party_mode
 from src.sessions import HeroSession
 
@@ -67,6 +67,8 @@ if TYPE_CHECKING:
 COMMAND_METHODS = ('talk', 'status', 'stairs', 'search', 'spell', 'item', 'door', 'take')
 # The stairs the STAIRS command takes (Bank03 CheckStairs)
 STAIR_TILES = ('BRICK_STAIR_DOWN', 'BRICK_STAIR_UP', 'GRASS_STAIR_DOWN')
+# The heroes among a map's characters (src/sessions.py hero_key): no one to talk to, for each other or themselves
+HERO_KEYS = (LEADER, FOLLOWER_IDENTIFIER)
 
 
 
@@ -1324,8 +1326,8 @@ class CommandMenu:
         across_from_npc = self.check_across_from_npc()
         if across_from_npc:
             for character_identifier, character_dict in self.characters.items():
-                if character_identifier == FOLLOWER_IDENTIFIER:
-                    continue  # the party's second hero (src/follower.py) isn't someone to talk to
+                if character_identifier in HERO_KEYS:
+                    continue  # the heroes (the party's second one, src/follower.py, too) aren't someone to talk to
                 if (character_dict['character'].row,
                     character_dict['character'].column) == self.player.next_coordinates or self.npc_is_across_counter(
                     character_dict):
@@ -1385,7 +1387,7 @@ class CommandMenu:
 
     def check_across_from_npc(self):
         character_coordinates = [(character_dict['character'].row, character_dict['character'].column) for
-                                 character_dict in self.characters.values()]
+                                 identifier, character_dict in self.characters.items() if identifier not in HERO_KEYS]
         across_from_npc = any(c in character_coordinates for c in [self.player.next_coordinates]) or any(
             c in character_coordinates for c in
             [self.player.next_next_coordinates]) and self.player.next_tile_id == 'WOOD'

@@ -270,6 +270,9 @@ class MapHotkeys:
         game = self.game
         if game.player.is_moving or game.movement.world_frozen or game.movement.freeze_pending:
             return False
+        # A freeze pending at the end of a step resolves before the frame's post-move checks, so the tiles in front of
+        # the hero would still be from before the step: TALK would find the hero himself in front of him
+        game.update_hero_facing()
         command = self.smart_command()
         if command is None:
             return False

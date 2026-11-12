@@ -712,6 +712,15 @@ class Game:
                                                               self.player.rect.y // self.tile_size,
                                                               self.current_map)
         self.cmd_menu.current_tile = self.player.current_tile
+        self.update_hero_facing()
+        self.set_player_images_by_equipment()
+        self.follower.update_images()
+        self.hero_damage.handle_environment_damage()
+        self.hero_death.handle_death()
+
+    def update_hero_facing(self) -> None:
+        """The tiles in front of the hero, from where he is now. SMART A (MapHotkeys.run_smart_command) reads them
+        before this frame's post-move checks, on the frame a step ends."""
         self.player.next_tile_id = self.calculation.get_next_tile_identifier(self.player.column, self.player.row,
                                                                              self.player.direction_value,
                                                                              self.current_map)
@@ -720,10 +729,6 @@ class Game:
         self.player.next_next_coordinates = step(self.player.rect.y // self.tile_size,
                                                  self.player.rect.x // self.tile_size, self.player.direction_value,
                                                  offset=2)
-        self.set_player_images_by_equipment()
-        self.follower.update_images()
-        self.hero_damage.handle_environment_damage()
-        self.hero_death.handle_death()
 
     def _handle_map_updates(self) -> None:
         """

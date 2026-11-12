@@ -378,6 +378,7 @@ class TestCommandsOnlyBetweenSteps(FreezeTestCase):
         self.assertEqual([], self.commands_used)
 
     def test_enter_shortcut_still_works_standing_still(self):
+        self.game.player.direction_value = Direction.DOWN.value  # not facing King Lorik, or TALK would come first
         self.game.player.current_tile = 'TREASURE_BOX'
         self.game.hotkeys.press_smart_a_key(keydown(K_RETURN))
         self.assertEqual(['take'], [name for name, *_ in self.commands_used])
